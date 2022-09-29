@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wesh</string>
+    <string name="facebook_app_id">1065914927446004</string>
+    <string name="fb_login_protocol_scheme">fb1065914927446004</string>
+    <string name="facebook_client_token">d0423d28f1bf48044fca122d1f760099</string>
+</resources>
