@@ -1,13 +1,11 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:wesh/pages/login.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/textfieldcontainer.dart';
-
 import '../services/auth.methods.dart';
-import '../services/internet_connection_checher.dart';
+import '../services/internet_connection_checker.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   ForgotPasswordPage({Key? key}) : super(key: key);
@@ -36,7 +34,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
       isPageLoading = false;
     });
     if (isConnected) {
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
 
       // Validate Form & Login
       var email = emailController.text.trim();
@@ -57,7 +55,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
         showSnackbar(context, 'vérifiez $email', kSuccessColor);
       }
     } else {
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
     }
   }

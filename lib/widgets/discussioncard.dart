@@ -86,7 +86,7 @@ class DiscussionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${DateFormat('hh:mm').format(discussion.lastMessageDate)}',
+                '${DateFormat('HH:mm').format(discussion.lastMessageDate)}',
                 style:
                     TextStyle(color: kSecondColor, fontWeight: FontWeight.bold),
               ),

@@ -13,6 +13,12 @@ class UserSimplePreferences {
   static const _countryKey = 'country';
   static const _nameKey = 'name';
   static const _birthday = 'birthday';
+  //
+  static const _redirectToAddEmailandPasswordPage =
+      'redirectToAddEmailandPasswordPage';
+  static const _redirectToAddEmailPagekey = '_redirectToAddEmailPageValue';
+  static const _redirectToUpdatePasswordPagekey =
+      '_redirectToUpdatePasswordPageValue';
 
   static Future init() async =>
       _preferences = await SharedPreferences.getInstance();
@@ -88,4 +94,28 @@ class UserSimplePreferences {
   }
 
   static String? getBirthday() => _preferences.getString(_birthday);
+
+  // Redirect To Add Email and Password Page
+  static Future setRedirectToAddEmailandPasswordPageValue(bool value) async {
+    _preferences.setBool(_redirectToAddEmailandPasswordPage, value);
+  }
+
+  static bool? getRedirectToAddEmailandPasswordPageValue() =>
+      _preferences.getBool(_redirectToAddEmailandPasswordPage);
+
+  // Redirect To Add Email Page
+  static Future setRedirectToAddEmailPageValue(bool value) async {
+    _preferences.setBool(_redirectToAddEmailPagekey, value);
+  }
+
+  static bool? getRedirectToAddEmailPageValue() =>
+      _preferences.getBool(_redirectToAddEmailPagekey);
+
+  // Redirect To Update Password Page
+  static Future setRedirectToUpdatePasswordPageValue(bool value) async {
+    _preferences.setBool(_redirectToUpdatePasswordPagekey, value);
+  }
+
+  static bool? getRedirectToUpdatePasswordPageValue() =>
+      _preferences.getBool(_redirectToUpdatePasswordPagekey);
 }

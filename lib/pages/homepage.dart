@@ -70,7 +70,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
             child: SvgPicture.asset(
-              weehLogo,
+              weshLogoColored,
               height: 40,
               color: kSecondColor,
             ),
@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                   return buildEventContainer(appointment: appointment);
                 }),
                 onTap: (calendarTapDetails) {
-                  print('sfC: ${calendarTapDetails.date}');
+                  debugPrint('sfC: ${calendarTapDetails.date}');
                 },
                 headerHeight: 0,
                 dataSource: EventDataSource(_getDataSource()),
@@ -144,18 +144,18 @@ class buildEventContainer extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       onTap: () {
         // Show EventView Modal
-        showModalBottomSheet(
-          enableDrag: true,
-          isScrollControlled: true,
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: ((context) => Modal(
-                maxChildSize: 1,
-                initialChildSize: .8,
-                minChildSize: .8,
-                child: EventView(eventId: appointment.eventId),
-              )),
-        );
+        // showModalBottomSheet(
+        //   enableDrag: true,
+        //   isScrollControlled: true,
+        //   context: context,
+        //   backgroundColor: Colors.transparent,
+        //   builder: ((context) => Modal(
+        //         maxChildSize: 1,
+        //         initialChildSize: .8,
+        //         minChildSize: .8,
+        //         child: EventView(eventId: appointment.eventId),
+        //       )),
+        // );
       },
       child: Container(
         padding: EdgeInsets.all(14),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import '../utils/constants.dart';
+import 'buildWidgets.dart';
 
 class ImagePickerModal extends StatefulWidget {
   const ImagePickerModal({Key? key}) : super(key: key);
@@ -9,7 +12,7 @@ class ImagePickerModal extends StatefulWidget {
 }
 
 class _ImagePickerModalState extends State<ImagePickerModal> {
-  late XFile? file;
+  late dynamic file;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -17,57 +20,64 @@ class _ImagePickerModalState extends State<ImagePickerModal> {
     return Column(
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: const Text(
+          padding: EdgeInsets.only(top: 13, bottom: 20),
+          child: Text(
             'Choisir une image',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black,
               fontSize: 19,
             ),
           ),
         ),
-        Column(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            InkWell(
-              onTap: () async {
+            // Camera Picker
+            buttonPicker(
+              icon: const Icon(FontAwesomeIcons.camera,
+                  color: Colors.white, size: 22),
+              label: 'Camera',
+              widgetColor: kSecondColor,
+              function: () async {
                 // Take Picture From Camera
-                final XFile? file =
-                    await _picker.pickImage(source: ImageSource.camera);
+                file = await _picker.pickImage(source: ImageSource.camera);
 
                 Navigator.pop(context, file);
               },
-              child: ListTile(
-                leading: Icon(Icons.camera_alt_rounded),
-                title: Text('À partir de la camera'),
-              ),
             ),
-            InkWell(
-              onTap: () async {
+
+            // Image Picker
+            buttonPicker(
+              icon: const Icon(FontAwesomeIcons.image,
+                  color: Colors.white, size: 22),
+              label: 'Galerie',
+              widgetColor: Colors.green,
+              function: () async {
                 // Take Picture From Gallery
-                final XFile? file =
-                    await _picker.pickImage(source: ImageSource.gallery);
+
+                file = await _picker.pickImage(source: ImageSource.gallery);
 
                 Navigator.pop(context, file);
               },
-              child: ListTile(
-                leading: Icon(Icons.image),
-                title: Text('À partir de la galerie'),
-              ),
             ),
-            InkWell(
-              onTap: () {
+
+            // Remove Image
+            buttonPicker(
+              icon: const Icon(FontAwesomeIcons.trash,
+                  color: Colors.white, size: 21),
+              label: 'Retirer',
+              widgetColor: Colors.grey,
+              function: () {
                 // Remove image
-                file = null;
+
+                file = 'remove';
 
                 Navigator.pop(context, file);
               },
-              child: ListTile(
-                leading: Icon(Icons.remove_circle_outline_rounded),
-                title: Text('Retirer l\'image'),
-              ),
-            )
+            ),
           ],
         ),
       ],

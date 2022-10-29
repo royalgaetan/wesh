@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:wesh/models/contact.dart';
 import 'package:wesh/models/discussion.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/models/message.dart';
 import 'package:wesh/models/messagestatus.dart';
 import 'package:wesh/models/messagetype.dart';
-import 'package:wesh/models/reminder.dart';
 import 'package:wesh/models/user.dart';
 import 'package:wesh/widgets/storycard.dart';
 
@@ -13,91 +11,95 @@ const myId = '3';
 const someoneId = '3';
 final DateTime today = DateTime.now();
 
-User currentprofile = User(
-  id: myId,
-  email: 'royal@gmail.com',
+// User currentprofile = User(
+//   id: myId,
+//   email: 'royal@gmail.com',
 
-  facebookID: '',
-  googleID: '',
-  phone: '00242069108281',
-  country: 'CG',
-  username: 'royal_g',
-  name: 'Royal GAETAN',
-  bio: 'Just a simple bio 😋 Happy to be here !',
-  profilePicture: 'assets/images/avatar 1.jpeg',
-  linkinbio: 'www.linkintr.ee/royalg',
-  birthday: DateTime(2003, 6, 16, 10),
-  events: [],
-  story: [],
-  followers: [],
-  following: [],
-  // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
-  reminders: [],
-);
+//   facebookID: '',
+//   googleID: '',
+//   phone: '00242069108281',
+//   country: 'CG',
+//   lastStoryUpdateDateTime: DateTime(1997, 8, 22),
+//   username: 'royal_g',
+//   name: 'Royal GAETAN',
+//   bio: 'Just a simple bio 😋 Happy to be here !',
+//   profilePicture: 'assets/images/avatar 1.jpeg',
+//   linkinbio: 'www.linkintr.ee/royalg',
+//   birthday: DateTime(2003, 6, 16, 10),
+//   events: [],
+//   stories: [],
+//   followers: [],
+//   following: [],
+//   // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
+//   reminders: [],
+// );
 
-List<User> usersList = [
-  User(
-    id: '4',
-    email: 'freezz@gmail.com',
-    facebookID: '',
-    googleID: '',
-    phone: '0',
-    country: 'FR',
-    username: 'freezz',
-    name: 'Freezz Delano',
-    bio:
-        'Hava a lot to say, look at my content here for you! if you want to deal with me, pls DM me',
-    profilePicture: 'assets/images/avatar 3.jpg',
-    linkinbio: 'www.freezz.com',
-    birthday: DateTime(2004, 5, 1),
-    events: [],
-    story: [],
-    followers: [],
-    following: [],
-    // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
-    reminders: [],
-  ),
-  User(
-    id: '5',
-    email: 'marcop@gmail.com',
-    facebookID: '',
-    googleID: '',
-    phone: '00242069108281',
-    country: 'UK',
-    username: 'marcos33',
-    name: 'Marco Polo',
-    bio: 'No shit to say 😎',
-    profilePicture: 'assets/images/avatar 8.jpg',
-    linkinbio: '',
-    birthday: DateTime(1990, 9, 4),
-    events: [],
-    story: [],
-    followers: [],
-    following: [],
-    // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
-    reminders: [],
-  ),
-  User(
-    id: '6',
-    email: '',
-    facebookID: '',
-    googleID: '',
-    phone: '00242069108281',
-    country: 'CG',
-    username: 'kabund_0_',
-    name: 'Kabundélé Makassi',
-    bio: 'No shit to say 😎',
-    profilePicture: 'assets/images/avatar 10.jpg',
-    linkinbio: '',
-    birthday: DateTime(1997, 8, 22),
-    events: [],
-    story: [],
-    followers: [],
-    following: [],
-    // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
-    reminders: [],
-  ),
-];
+// List<User> usersList = [
+//   User(
+//     id: '4',
+//     email: 'freezz@gmail.com',
+//     facebookID: '',
+//     googleID: '',
+//     phone: '0',
+//     country: 'FR',
+//     username: 'freezz',
+//     name: 'Freezz Delano',
+//     bio:
+//         'Hava a lot to say, look at my content here for you! if you want to deal with me, pls DM me',
+//     profilePicture: 'assets/images/avatar 3.jpg',
+//     linkinbio: 'www.freezz.com',
+//     birthday: DateTime(2004, 5, 1),
+//     lastStoryUpdateDateTime: DateTime(1997, 8, 22),
+//     events: [],
+//     stories: [],
+//     followers: [],
+//     following: [],
+//     // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
+//     reminders: [],
+//   ),
+//   User(
+//     id: '5',
+//     email: 'marcop@gmail.com',
+//     facebookID: '',
+//     googleID: '',
+//     phone: '00242069108281',
+//     country: 'UK',
+//     username: 'marcos33',
+//     name: 'Marco Polo',
+//     bio: 'No shit to say 😎',
+//     profilePicture: 'assets/images/avatar 8.jpg',
+//     linkinbio: '',
+//     birthday: DateTime(1990, 9, 4),
+//     events: [],
+//     lastStoryUpdateDateTime: DateTime(1997, 8, 22),
+//     stories: [],
+//     followers: [],
+//     following: [],
+//     // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
+//     reminders: [],
+//   ),
+//   User(
+//     id: '6',
+//     email: '',
+//     facebookID: '',
+//     googleID: '',
+//     phone: '00242069108281',
+//     country: 'CG',
+//     username: 'kabund_0_',
+//     name: 'Kabundélé Makassi',
+//     bio: 'No shit to say 😎',
+//     profilePicture: 'assets/images/avatar 10.jpg',
+//     linkinbio: '',
+//     birthday: DateTime(1997, 8, 22),
+//     lastStoryUpdateDateTime: DateTime(1997, 8, 22),
+//     events: [],
+//     stories: [],
+//     followers: [],
+//     following: [],
+//     // reminders: [Reminder(3, 0, 5), Reminder(4, 0, 5)],
+//     reminders: [],
+//   ),
+// ];
 
 List<Contact> contactsList = [
   Contact(
@@ -352,37 +354,37 @@ List<Message> messagesList = [
 ];
 
 List<StoryCard> storiesList = [
-  StoryCard(
-    profilePicture: 'assets/images/avatar 10.jpg',
-    username: 'Kipokolo Kabundelé',
-    lastStoryTime: DateTime.now(),
-    type: 'unread',
-  ),
-  StoryCard(
-    profilePicture: 'assets/images/avatar 4.jpg',
-    username: 'Lay Claura',
-    lastStoryTime: DateTime.now(),
-    type: 'unread',
-  ),
-  StoryCard(
-    profilePicture: 'assets/images/avatar 15.jpg',
-    username: 'Eva Mendes',
-    lastStoryTime: DateTime.now(),
-    type: 'unread',
-  ),
+  // StoryCard(
+  //   profilePicture: 'assets/images/avatar 10.jpg',
+  //   username: 'Kipokolo Kabundelé',
+  //   lastStoryTime: DateTime.now(),
+  //   type: 'unread',
+  // ),
+  // StoryCard(
+  //   profilePicture: 'assets/images/avatar 4.jpg',
+  //   username: 'Lay Claura',
+  //   lastStoryTime: DateTime.now(),
+  //   type: 'unread',
+  // ),
+  // StoryCard(
+  //   profilePicture: 'assets/images/avatar 15.jpg',
+  //   username: 'Eva Mendes',
+  //   lastStoryTime: DateTime.now(),
+  //   type: 'unread',
+  // ),
 ];
 
 List<StoryCard> storiesSeenList = [
-  StoryCard(
-    profilePicture: 'assets/images/avatar 13.jpg',
-    username: 'Vanessa Lau',
-    lastStoryTime: DateTime.now(),
-    type: 'seen',
-  ),
-  StoryCard(
-    profilePicture: 'assets/images/avatar 7.jpg',
-    username: 'Claude RR',
-    lastStoryTime: DateTime.now(),
-    type: 'seen',
-  ),
+  // StoryCard(
+  //   profilePicture: 'assets/images/avatar 13.jpg',
+  //   username: 'Vanessa Lau',
+  //   lastStoryTime: DateTime.now(),
+  //   type: 'seen',
+  // ),
+  // StoryCard(
+  //   profilePicture: 'assets/images/avatar 7.jpg',
+  //   username: 'Claude RR',
+  //   lastStoryTime: DateTime.now(),
+  //   type: 'seen',
+  // ),
 ];

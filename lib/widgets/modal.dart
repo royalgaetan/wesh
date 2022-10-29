@@ -31,7 +31,8 @@ class Modal extends StatelessWidget {
                 controller: scrollController,
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
                     child: child,
                   )
                 ],

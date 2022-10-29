@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:timeago/timeago.dart';
 import 'package:wesh/google_provider.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/providers/user.provider.dart';
@@ -17,6 +18,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await UserSimplePreferences.init();
+
+  setLocaleMessages('fr', FrMessages());
 
   // await FirebaseAppCheck.instance.activate(
   //   webRecaptchaSiteKey:
@@ -41,17 +44,42 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      supportedLocales: [
-        const Locale('fr'),
+      supportedLocales: const [
+        Locale('fr'),
       ],
-      localizationsDelegates: [
+      localizationsDelegates: const [
         CountryLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
       theme: ThemeData.light().copyWith(
+        switchTheme: SwitchThemeData(
+          thumbColor: MaterialStateProperty.resolveWith<Color>(
+            (states) {
+              if (states.contains(MaterialState.selected)) {
+                return kSecondColor;
+              }
+
+              return Colors.white;
+            },
+          ),
+          trackColor: MaterialStateProperty.resolveWith<Color>(
+            (states) {
+              if (states.contains(MaterialState.selected)) {
+                return kSecondColor.withOpacity(.2);
+              }
+              return Colors.black26;
+            },
+          ),
+        ),
         colorScheme: ColorScheme(
           brightness: Brightness.light,
           primary: kSecondColor,
@@ -77,7 +105,7 @@ class _AppState extends State<App> {
               );
             }
             if (snapshot.hasData) {
-              return StartPage();
+              return const StartPage();
             } else if (snapshot.hasError) {
               return Scaffold(
                 appBar: AppBar(),
@@ -86,7 +114,11 @@ class _AppState extends State<App> {
                 ),
               );
             } else {
-              return LoginPage();
+              return LoginPage(
+                redirectToAddEmailandPasswordPage: false,
+                redirectToAddEmailPage: false,
+                redirectToUpdatePasswordPage: false,
+              );
             }
           },
         ),

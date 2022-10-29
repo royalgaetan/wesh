@@ -108,7 +108,7 @@ class Event {
         EventFields.uid: uid,
         EventFields.title: title,
         EventFields.caption: caption,
-        EventFields.trailing: type,
+        EventFields.type: type,
         EventFields.trailing: trailing,
         EventFields.color: color,
         EventFields.location: location,
@@ -121,21 +121,33 @@ class Event {
       };
 
   // fromJson
-  static Event fromJson(Map<String, Object?> json) => Event(
-        eventId: json[EventFields.eventId] as String,
-        uid: json[EventFields.uid] as String,
-        type: json[EventFields.type] as String,
-        trailing: json[EventFields.trailing] as String,
-        title: json[EventFields.title] as String,
-        color: json[EventFields.color] as int,
-        link: json[EventFields.link] as String,
-        caption: json[EventFields.caption] as String,
-        location: json[EventFields.location] as String,
-        createdAt: DateTime.parse(json[EventFields.createdAt] as String),
-        modifiedAt: DateTime.parse(json[EventFields.modifiedAt] as String),
-        startDateTime:
-            DateTime.parse(json[EventFields.startDateTime] as String),
-        endDateTime: DateTime.parse(json[EventFields.endDateTime] as String),
-        status: json[EventFields.status] as String,
+  static Event fromJson(Map<String, dynamic> json) => Event(
+        eventId: (json[EventFields.eventId]) ?? '',
+        uid: json[EventFields.uid] ?? '',
+        type: json[EventFields.type] ?? '',
+        trailing: json[EventFields.trailing] ?? '',
+        title: json[EventFields.title] ?? '',
+        color: json[EventFields.color] ?? 0,
+        link: json[EventFields.link] ?? '',
+        caption: json[EventFields.caption] ?? '',
+        location: json[EventFields.location] ?? '',
+        //
+        createdAt: json[EventFields.createdAt] != null
+            ? DateTime.parse(json[EventFields.createdAt])
+            : DateTime.now(),
+        //
+        modifiedAt: json[EventFields.modifiedAt] != null
+            ? DateTime.parse(json[EventFields.modifiedAt])
+            : DateTime.now(),
+        //
+        startDateTime: json[EventFields.startDateTime] != null
+            ? DateTime.parse(json[EventFields.startDateTime])
+            : DateTime.now(),
+        //
+        endDateTime: json[EventFields.endDateTime] != null
+            ? DateTime.parse(json[EventFields.endDateTime])
+            : DateTime.now(),
+        //
+        status: json[EventFields.status] ?? '',
       );
 }

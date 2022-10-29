@@ -9,6 +9,7 @@ class MessageFields {
     '_id',
     'messageId',
     'eventId',
+    'storyId',
     'senderId',
     'receiverId',
     'createdAt',
@@ -21,6 +22,7 @@ class MessageFields {
   static final String id = '_id';
   static final String messageId = 'messageId';
   static final String eventId = 'eventId';
+  static final String storyId = 'storyId';
   static final String senderId = 'senderId';
   static final String receiverId = 'receiverId';
   static final String createdAt = 'createdAt';
@@ -34,6 +36,7 @@ class Message {
   final int? id;
   final String messageId;
   final String? eventId;
+  final String? storyId;
   final String senderId;
   final String receiverId;
   final DateTime createdAt;
@@ -43,23 +46,26 @@ class Message {
   final String caption;
 
 // Constructor
-  Message(
-      {this.id,
-      required this.messageId,
-      required this.senderId,
-      required this.receiverId,
-      required this.createdAt,
-      required this.status,
-      required this.type,
-      required this.data,
-      required this.caption,
-      this.eventId});
+  Message({
+    this.id,
+    required this.messageId,
+    required this.senderId,
+    required this.receiverId,
+    required this.createdAt,
+    required this.status,
+    required this.type,
+    required this.data,
+    required this.caption,
+    this.eventId,
+    this.storyId,
+  });
 
   // Copy
   Message copy({
     int? id,
     String? messageId,
     String? eventId,
+    String? storyId,
     String? senderId,
     String? receiverId,
     DateTime? createdAt,
@@ -72,6 +78,7 @@ class Message {
         id: id ?? this.id,
         messageId: messageId ?? this.messageId,
         eventId: eventId ?? this.eventId,
+        storyId: storyId ?? this.storyId,
         senderId: senderId ?? this.senderId,
         receiverId: receiverId ?? this.receiverId,
         createdAt: createdAt ?? this.createdAt,
@@ -86,6 +93,7 @@ class Message {
         MessageFields.id: id,
         MessageFields.messageId: messageId,
         MessageFields.eventId: eventId,
+        MessageFields.storyId: storyId,
         MessageFields.senderId: senderId,
         MessageFields.receiverId: receiverId,
         MessageFields.createdAt: createdAt.toIso8601String(),
@@ -100,6 +108,7 @@ class Message {
         id: json[MessageFields.id] as int,
         messageId: json[MessageFields.messageId] as String,
         eventId: json[MessageFields.eventId] as String,
+        storyId: json[MessageFields.storyId] as String,
         senderId: json[MessageFields.senderId] as String,
         receiverId: json[MessageFields.receiverId] as String,
         createdAt: DateTime.parse(json[MessageFields.createdAt] as String),

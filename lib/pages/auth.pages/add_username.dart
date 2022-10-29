@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path/path.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wesh/pages/auth.pages/add_name_and_birthday.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/internet_connection_checher.dart';
+import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/button.dart';
 import '../../widgets/textfieldcontainer.dart';
-import 'signupmethodspage.dart';
 
 class AddUsernamePage extends StatefulWidget {
   AddUsernamePage({Key? key}) : super(key: key);
@@ -100,9 +96,11 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                       onChanged: (value) async {
                         bool isUsed =
                             await checkIfUsernameInUse(context, value);
-                        setState(() {
-                          isUsernameUsed = isUsed;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            isUsernameUsed = isUsed;
+                          });
+                        }
                       },
                       keyboardType: TextInputType.text,
                       controller: usernameController,
@@ -134,14 +132,16 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                       });
                       var isConnected =
                           await InternetConnection().isConnected(context);
-                      setState(() {
-                        isPageLoading = false;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          isPageLoading = false;
+                        });
+                      }
                       if (isConnected) {
-                        print("Has connection : $isConnected");
+                        debugPrint("Has connection : $isConnected");
                         checkUsername(context, usernameController.text);
                       } else {
-                        print("Has connection : $isConnected");
+                        debugPrint("Has connection : $isConnected");
                         showSnackbar(context,
                             'Veuillez vérifier votre connexion internet', null);
                       }
@@ -161,10 +161,10 @@ class _CheckUsernameState extends State<AddUsernamePage> {
 }
 
 checkUsername(context, String username) async {
-  if ((username.isNotEmpty)) {
+  if (username.isNotEmpty && username.length > 4) {
     bool isUsed = await checkIfUsernameInUse(context, username);
 
-    print('Username isUsed: $isUsed');
+    debugPrint('Username isUsed: $isUsed');
     if (!isUsed) {
       // Check Username
       await UserSimplePreferences.setUsername(username);
@@ -178,7 +178,7 @@ checkUsername(context, String username) async {
       showSnackbar(context, 'Ce nom d\'utilisateur est déjà pris', null);
     }
   } else {
-    showSnackbar(
-        context, 'Veuillez entrer un nom d\'utilisateur correct', null);
+    showSnackbar(context,
+        'Veuillez entrer un nom d\'utilisateur de plus de 4 caractères', null);
   }
 }

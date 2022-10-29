@@ -4,15 +4,17 @@ import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/textformfield.dart';
 
+import '../../models/event.dart';
+
 class Suggestions extends StatefulWidget {
   final String suggestionType;
   final String uid;
-  String? eventIdAttached;
+  Event? eventAttached;
 
   Suggestions(
       {Key? key,
       required this.suggestionType,
-      this.eventIdAttached,
+      this.eventAttached,
       required this.uid})
       : super(key: key);
 

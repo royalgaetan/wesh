@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:wesh/models/contact.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
@@ -80,7 +79,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
             ),
             onPressed: () {
               // Import from Contacts (NATIVE)
-              print('Import from Contacts selected !');
+              debugPrint('Import from Contacts selected !');
             },
             child: Text(
               'Importer',
@@ -221,7 +220,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                               : widget.contact!.birthday,
                           type: 'date',
                           onTap: () {
-                            print('Pick start date');
+                            debugPrint('Pick start date');
                           },
                         ),
                       ),
@@ -247,11 +246,11 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                       if (widget.contact == null) {
                         // Create New Contact
                         // TO DO
-                        print('Contact Created !');
+                        debugPrint('Contact Created !');
                       } else if (widget.contact != null) {
                         // Update an existing Contact
                         // TO DO
-                        print('Contact Updated !');
+                        debugPrint('Contact Updated !');
                       }
 
                       // Pop the Screen once contact created or updated

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wesh/pages/profile.dart';
 
+import '../utils/constants.dart';
+
 class userposterheader extends StatelessWidget {
   final String uid;
   final String profilepic;
@@ -25,9 +27,8 @@ class userposterheader extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute<void>(
-            builder: (BuildContext context) => profilePage(
-              uid: uid,
-            ),
+            builder: (BuildContext context) =>
+                ProfilePage(uid: uid, showBackButton: true),
           ),
         );
       },
@@ -36,6 +37,7 @@ class userposterheader extends StatelessWidget {
           profilepic.isNotEmpty
               ? CircleAvatar(
                   radius: radius,
+                  backgroundColor: kGreyColor,
                   backgroundImage: AssetImage(profilepic),
                 )
               : CircleAvatar(
@@ -46,10 +48,10 @@ class userposterheader extends StatelessWidget {
             width: spacebetween ?? 15,
           ),
           Text(
-            '$username',
+            username,
             style: TextStyle(
                 fontSize: 15,
-                color: usernameColor != null ? usernameColor : Colors.black,
+                color: usernameColor ?? Colors.black,
                 fontWeight: FontWeight.bold),
           )
         ],

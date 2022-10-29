@@ -1,85 +1,50 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:wesh/models/discussion.dart';
+import 'package:lottie/lottie.dart';
 import 'package:wesh/models/event.dart';
+import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/db.dart';
-import 'package:wesh/widgets/discussioncard.dart';
 import 'package:wesh/widgets/searcheventcard.dart';
+import '../utils/functions.dart';
+import 'eventcard.dart';
 
 class EventSelector extends StatefulWidget {
-  final String? uid;
-  const EventSelector({this.uid});
+  const EventSelector();
 
   @override
   State<EventSelector> createState() => _EventSelectorState();
 }
 
 class _EventSelectorState extends State<EventSelector> {
-  List<Widget> getEventsResults() {
-    List<Widget> eventsResultsWidgets = [];
-    Event event;
-
-    for (var event in eventsList) {
-      var eventwidget = GestureDetector(
-        child: SearchEventCard(
-            event: event,
-            onTap: () {
-              // Pop Event Selector Modal
-              // Send back Selected EventId
-              Navigator.pop(context, event);
-            }),
-      );
-
-      if (widget.uid != null && widget.uid == event.uid) {
-        eventsResultsWidgets.add(eventwidget);
-      } else if (widget.uid == null) {
-        eventsResultsWidgets.add(eventwidget);
-      }
-    }
-
-    return eventsResultsWidgets;
-  }
+  String query = '';
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Search Event Bar
-        Visibility(
-          visible: widget.uid != null ? false : true,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 0, vertical: 5),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              padding: EdgeInsets.all(10),
-              child: CupertinoSearchTextField(
-                prefixIcon: Container(),
-                placeholder: "Rechercher un évenement...",
-                backgroundColor: Color(0xFFF0F0F0),
-              ),
+        Padding(
+          padding: const EdgeInsets.only(top: 5, bottom: 15),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F0F0),
+              borderRadius: BorderRadius.circular(15),
             ),
-          ),
-        ),
-
-        Visibility(
-          visible: widget.uid == null ? false : true,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 12, top: 20),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(10),
-              child: Text(
-                'Evénements de ${widget.uid}',
-                style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 25),
-              ),
+            padding: const EdgeInsets.all(10),
+            child: CupertinoSearchTextField(
+              autofocus: true,
+              prefixIcon: Container(),
+              placeholder: "Rechercher un évenement...",
+              backgroundColor: const Color(0xFFF0F0F0),
+              onChanged: (text) {
+                setState(() {
+                  // Create Query Variations
+                  query = text;
+                });
+                debugPrint('Query : $query');
+              },
             ),
           ),
         ),
@@ -89,7 +54,7 @@ class _EventSelectorState extends State<EventSelector> {
           onTap: () {
             // Pop the modal
             // Send back the Selected Event
-            Navigator.pop(context, null);
+            Navigator.pop(context, 'remove');
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
@@ -98,12 +63,12 @@ class _EventSelectorState extends State<EventSelector> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.grey.shade400,
-                  child: Icon(
+                  child: const Icon(
                     FontAwesomeIcons.linkSlash,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 10,
                 ),
                 Expanded(
@@ -134,19 +99,105 @@ class _EventSelectorState extends State<EventSelector> {
 
         // Events List
 
-        Column(
-          children: getEventsResults(),
-        )
-        // ListView(children: [
-        //   SearchEventCard(
-        //     event: eventsList[0],
-        //     onTap: () {
-        //       // Pop the modal
-        //       // Send back the Selected Event
-        //       Navigator.pop(context, eventsList[0].eventId);
-        //     },
-        //   )
-        // ])
+        StreamBuilder<List<Event>>(
+          stream: FirestoreMethods().getAllEvents(),
+          builder: (context, snapshot) {
+            // QUERY SETTLED
+            if (query.isNotEmpty) {
+              // Handle Errors
+              if (snapshot.hasError) {
+                return Container(
+                  padding: const EdgeInsets.all(50),
+                  height: 300,
+                  child: const Text(
+                    'Une erreur s\'est produite',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black45,
+                    ),
+                  ),
+                );
+              }
+
+              // Handle Data and perform search
+              if (snapshot.hasData) {
+                List<Event> result = snapshot.data!
+                    .where((event) => event.title
+                        .toString()
+                        .toLowerCase()
+                        .contains(query.toLowerCase()))
+                    .toList();
+
+                // DATA FOUND
+                if (result.isNotEmpty) {
+                  return Column(
+                    children: result.map((event) {
+                      return SearchEventCard(
+                        event: event,
+                        onTap: () {
+                          // Pop Event Selector Modal
+                          // Send back Selected EventId
+                          Navigator.pop(context, event);
+                        },
+                      );
+                    }).toList(),
+                  );
+                }
+
+                // NO DATA FOUND
+                else {
+                  return Container(
+                    padding: const EdgeInsets.all(50),
+                    height: 300,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Lottie.asset(
+                          height: 150,
+                          'assets/animations/112136-empty-red.json',
+                          width: double.infinity,
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        const Text(
+                          'Aucun évenement trouvé !',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              }
+
+              // Display Loading while waiting
+              return Container(
+                padding: const EdgeInsets.all(50),
+                height: 100,
+                child: const CupertinoActivityIndicator(),
+              );
+            }
+
+            // QUERY EMPTY
+            else {
+              return Container(
+                padding: const EdgeInsets.all(50),
+                height: 300,
+                child: const Text(
+                  'Saisissez le nom d\'un évenement',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black45,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
       ],
     );
   }

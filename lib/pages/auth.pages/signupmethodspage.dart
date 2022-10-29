@@ -10,7 +10,7 @@ import 'package:wesh/pages/auth.pages/otp.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
 
 import '../../services/auth.methods.dart';
-import '../../services/internet_connection_checher.dart';
+import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
@@ -99,9 +99,9 @@ class _CheckUsernameState extends State<SignUpMethodPage>
             showSnackbar(context, 'Votre numéro est incorrect !', null);
           }
 
-          print("Has connection : $isConnected");
+          debugPrint("Has connection : $isConnected");
         } else {
-          print("Has connection : $isConnected");
+          debugPrint("Has connection : $isConnected");
           showSnackbar(
               context, 'Veuillez vérifier votre connexion internet', null);
         }
@@ -111,6 +111,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
       }
     }
 
+    // IF method == Email
     if (_tabController.index == 1) {
       if (emailController.text.isEmpty ||
           !EmailValidator.validate(emailController.text)) {
@@ -143,7 +144,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => CreatePassword(),
+          builder: (_) => const CreatePassword(isUpdatingEmail: false),
         ),
       );
     }
@@ -161,12 +162,12 @@ class _CheckUsernameState extends State<SignUpMethodPage>
     if (isConnected) {
       // Continue with Google
 
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
 
       List isAllowedToContinue =
           await AuthMethods().continueWithGoogle(context, 'signup');
 
-      print("isAllowedToContinue: $isAllowedToContinue");
+      debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
       if (isAllowedToContinue[0]) {
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -182,7 +183,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
         showSnackbar(context, isAllowedToContinue[1], null);
       }
     } else {
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
     }
   }
@@ -199,12 +200,12 @@ class _CheckUsernameState extends State<SignUpMethodPage>
     if (isConnected) {
       // Continue with Google
 
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
 
       List isAllowedToContinue =
           await AuthMethods().continueWithFacebook(context, 'signup');
 
-      print("isAllowedToContinue: $isAllowedToContinue");
+      debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
       if (isAllowedToContinue[0]) {
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -220,7 +221,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
         showSnackbar(context, isAllowedToContinue[1], null);
       }
     } else {
-      print("Has connection : $isConnected");
+      debugPrint("Has connection : $isConnected");
       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
     }
   }
@@ -364,7 +365,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
                                           phoneCode = country.phoneCode;
                                           regionCode = country.countryCode;
                                         });
-                                        print(
+                                        debugPrint(
                                           'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
                                         );
                                       },
@@ -379,6 +380,10 @@ class _CheckUsernameState extends State<SignUpMethodPage>
                               ),
                               Expanded(
                                 child: TextField(
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp("[0-9]")),
+                                  ],
                                   keyboardType: TextInputType.phone,
                                   controller: phoneController,
                                   decoration: const InputDecoration(

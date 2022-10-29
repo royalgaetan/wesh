@@ -13,18 +13,20 @@ import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/eventselector.dart';
 import 'package:wesh/widgets/modal.dart';
 
+import '../../models/event.dart';
+
 class PreviewMessageFile extends StatefulWidget {
   final String filetype;
   final XFile? file;
   final String uid;
-  String? eventIdAttached;
+  Event? eventAttached;
 
   PreviewMessageFile(
       {Key? key,
       required this.filetype,
       this.file,
       required this.uid,
-      this.eventIdAttached})
+      this.eventAttached})
       : super(key: key);
 
   @override
@@ -99,7 +101,7 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                 left: 10,
                 right: 10,
                 bottom: 10,
-                top: widget.eventIdAttached != null ? 0 : 10),
+                top: widget.eventAttached != null ? 0 : 10),
             child: Row(
               children: [
                 // Entry Message Fields
@@ -146,7 +148,7 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                           splashColor: kSecondColor,
                           onPressed: () async {
                             // Show Event Selector
-                            String? selectedEvent = await showModalBottomSheet(
+                            Event? selectedEvent = await showModalBottomSheet(
                               isDismissible: true,
                               enableDrag: true,
                               isScrollControlled: true,
@@ -154,28 +156,27 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                               backgroundColor: Colors.transparent,
                               builder: ((context) => Modal(
                                     minChildSize: .4,
-                                    child: EventSelector(
-                                      uid: widget.uid,
-                                    ),
+                                    child: const EventSelector(),
                                   )),
                             );
 
                             // Check the Event Selected
                             if (selectedEvent != null) {
                               setState(() {
-                                widget.eventIdAttached = selectedEvent;
+                                widget.eventAttached = selectedEvent;
+                                widget.eventAttached = selectedEvent;
                               });
-                              print('selected event is: $selectedEvent');
+                              debugPrint('selected event is: $selectedEvent');
                             } else if (selectedEvent == null) {
                               setState(() {
-                                widget.eventIdAttached = selectedEvent;
+                                widget.eventAttached = selectedEvent;
                               });
-                              print('selected event is: $selectedEvent');
+                              debugPrint('selected event is: $selectedEvent');
                             }
                           },
                           icon: Icon(
                             FontAwesomeIcons.splotch,
-                            color: widget.eventIdAttached != null
+                            color: widget.eventAttached != null
                                 ? kSecondColor
                                 : Colors.grey.shade600,
                           ),
@@ -214,20 +215,21 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                         }
 
                         var res = widget.file!.saveTo(path).whenComplete(() =>
-                            print('Message File was saved correctly at $path'));
+                            debugPrint(
+                                'Message File was saved correctly at $path'));
 
                         // Save msg to Sql DB
-                        final newMessage = Message(
-                          messageId: 'message_${const Uuid().v4()}',
-                          eventId: widget.eventIdAttached ?? '',
-                          senderId: '3',
-                          receiverId: '4',
-                          createdAt: DateTime.now(),
-                          status: 'pending',
-                          type: widget.filetype,
-                          data: path,
-                          caption: captionMessageController.text,
-                        );
+                        // final newMessage = Message(
+                        //   messageId: 'message_${const Uuid().v4()}',
+                        //   eventId: widget.eventAttached != null ?? null,
+                        //   senderId: '3',
+                        //   receiverId: '4',
+                        //   createdAt: DateTime.now(),
+                        //   status: 'pending',
+                        //   type: widget.filetype,
+                        //   data: path,
+                        //   caption: captionMessageController.text,
+                        // );
 
                         // await SqlDatabase.instance
                         //     .createMessage(newMessage)

@@ -1,14 +1,18 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:wesh/pages/addpage.dart';
 import 'package:wesh/pages/homePage.dart';
 import 'package:wesh/pages/discussions.dart';
 import 'package:wesh/pages/in.pages/introductionpages.dart';
+import 'package:wesh/pages/in.pages/settings.dart';
 import 'package:wesh/pages/profile.dart';
 import 'package:wesh/pages/stories.dart';
 import 'package:wesh/utils/constants.dart';
-
+import '../models/user.dart' as UserModel;
+import '../providers/user.provider.dart';
 import '../services/sharedpreferences.service.dart';
 
 class StartPage extends StatefulWidget {
@@ -26,9 +30,10 @@ class _StartPageState extends State<StartPage> {
   final List<Widget> _pages = [
     HomePage(),
     MessagesPage(),
-    AddPage(),
+    const AddPage(),
     StoriesPage(),
-    profilePage(uid: '2')
+    ProfilePage(
+        uid: FirebaseAuth.instance.currentUser!.uid, showBackButton: false),
   ];
 
   @override
@@ -39,13 +44,75 @@ class _StartPageState extends State<StartPage> {
     //Check Introduction Pages Handler
     showIntroductionPages =
         UserSimplePreferences.getShowIntroductionPagesHandler() ?? false;
-
     if (showIntroductionPages) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => IntroductionScreensPage(),
+          ),
+        );
+      });
+    }
+
+    //  Redirect To SettingPage [IF RedirectToAddEmailandPasswordPageValue == true]
+    //  Redirect To SettingPage [OR IF RedirectToAddEmailPageValue == true]
+    //  Redirect To SettingPage [OR IF RedirectToUpdatePasswordPageValue == true]
+    redirectToSettingPage();
+  }
+
+  Future redirectToSettingPage() async {
+    var valueToRedirect1 =
+        UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ??
+            false;
+    debugPrint("Redirect to Setting Page [START PAGE]: $valueToRedirect1 ");
+    if (valueToRedirect1) {
+      UserModel.User? user =
+          await Provider.of<UserProvider>(context, listen: false)
+              .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SettingsPage(user: user!),
+          ),
+        );
+      });
+    }
+
+    //
+    var valueToRedirect2 =
+        UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
+    debugPrint("Redirect2 to Setting Page [START PAGE]: $valueToRedirect2 ");
+    if (valueToRedirect2) {
+      UserModel.User? user =
+          // ignore: use_build_context_synchronously
+          await Provider.of<UserProvider>(context, listen: false)
+              .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SettingsPage(user: user!),
+          ),
+        );
+      });
+    }
+
+    //
+    var valueToRedirect3 =
+        UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
+    debugPrint("Redirect3 to Setting Page [START PAGE]: $valueToRedirect3 ");
+    if (valueToRedirect3) {
+      UserModel.User? user =
+          // ignore: use_build_context_synchronously
+          await Provider.of<UserProvider>(context, listen: false)
+              .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SettingsPage(user: user!),
           ),
         );
       });
@@ -61,6 +128,7 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(child: _pages[_currentPageIndex]),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentPageIndex,

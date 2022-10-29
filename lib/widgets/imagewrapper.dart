@@ -28,7 +28,7 @@ class ImageWrapper extends StatelessWidget {
           final imageProvider = AssetImage(picture);
           showImageViewer(context, imageProvider,
               useSafeArea: true, swipeDismissible: true, onViewerDismissed: () {
-            print("dismissed");
+            debugPrint("dismissed");
           });
         }
 

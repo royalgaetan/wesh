@@ -32,7 +32,7 @@ class _AuthPageControllerState extends State<AuthPageController> {
 
       if (result != ConnectivityResult.none) {
         // HAS CONNECTION
-        print("HAS CONNECTION");
+        debugPrint("HAS CONNECTION");
         setState(() {
           hasConnection = true;
         });
@@ -58,7 +58,7 @@ class _AuthPageControllerState extends State<AuthPageController> {
             (route) => false);
       } else {
         // NO CONNECTION
-        print("NO CONNECTION");
+        debugPrint("NO CONNECTION");
         setState(() {
           hasConnection = false;
         });
@@ -76,6 +76,7 @@ class _AuthPageControllerState extends State<AuthPageController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(25.0),
         child: Column(

@@ -115,44 +115,44 @@ class _ContactsPageState extends State<PeoplePage> {
                 ),
 
                 // Followers Section
-                ListView.builder(
-                  itemCount: usersList.length,
-                  itemBuilder: ((context, index) => UserCard(
-                        status: status2,
-                        name: usersList[index].name,
-                        id: '${usersList[index].id}',
-                        username: usersList[index].username,
-                        profilePicture: usersList[index].profilePicture,
-                        onTap: () {
-                          // Remove Follower
-                          setState(() {
-                            status2 = '';
-                          });
-                        },
-                      )),
-                ),
+                // ListView.builder(
+                //   itemCount: usersList.length,
+                //   itemBuilder: ((context, index) => UserCard(
+                //         status: status2,
+                //         name: usersList[index].name,
+                //         id: '${usersList[index].id}',
+                //         username: usersList[index].username,
+                //         profilePicture: usersList[index].profilePicture,
+                //         onTap: () {
+                //           // Remove Follower
+                //           setState(() {
+                //             status2 = '';
+                //           });
+                //         },
+                //       )),
+                // ),
 
                 // Following Section
-                ListView.builder(
-                  itemCount: 2,
-                  itemBuilder: ((context, index) => UserCard(
-                        status: status,
-                        id: '${usersList[index].id}',
-                        name: usersList[index].name,
-                        username: usersList[index].username,
-                        profilePicture: usersList[index].profilePicture,
-                        onTap: () {
-                          // Follow Unfollow Status
-                          setState(() {
-                            if (status == 'notfollowing') {
-                              status = 'isfollowing';
-                            } else if (status == 'isfollowing') {
-                              status = 'notfollowing';
-                            }
-                          });
-                        },
-                      )),
-                ),
+                // ListView.builder(
+                //   itemCount: 2,
+                //   itemBuilder: ((context, index) => UserCard(
+                //         status: status,
+                //         id: '${usersList[index].id}',
+                //         name: usersList[index].name,
+                //         username: usersList[index].username,
+                //         profilePicture: usersList[index].profilePicture,
+                //         onTap: () {
+                //           // Follow Unfollow Status
+                //           setState(() {
+                //             if (status == 'notfollowing') {
+                //               status = 'isfollowing';
+                //             } else if (status == 'isfollowing') {
+                //               status = 'notfollowing';
+                //             }
+                //           });
+                //         },
+                //       )),
+                // ),
               ],
             )),
       ),

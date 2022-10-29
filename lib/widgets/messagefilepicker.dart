@@ -12,10 +12,13 @@ import 'package:wesh/pages/in.pages/sendpayment.dart';
 import 'package:wesh/pages/in.pages/suggestions.dart';
 import 'package:wesh/utils/constants.dart';
 
+import '../models/event.dart';
+import 'buildWidgets.dart';
+
 class MessageFilePicker extends StatefulWidget {
   final String uid;
-  final String? eventIdAttached;
-  const MessageFilePicker({Key? key, required this.uid, this.eventIdAttached})
+  final Event? eventAttached;
+  const MessageFilePicker({Key? key, required this.uid, this.eventAttached})
       : super(key: key);
 
   @override
@@ -31,11 +34,11 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
     return Column(
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: const Text(
+          padding: EdgeInsets.only(top: 13, bottom: 20),
+          child: Text(
             'Envoyer...',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black,
               fontSize: 19,
@@ -48,8 +51,8 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
           children: [
             // Camera Picker
             buttonPicker(
-              icon:
-                  Icon(Icons.camera_alt_rounded, color: Colors.white, size: 27),
+              icon: const Icon(FontAwesomeIcons.camera,
+                  color: Colors.white, size: 22),
               label: 'Camera',
               widgetColor: kSecondColor,
               function: () async {
@@ -57,14 +60,14 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                 filePicked =
                     await _picker.pickImage(source: ImageSource.camera);
 
-                print('File picked iz: $filePicked');
+                debugPrint('File picked iz: $filePicked');
                 if (filePicked != null) {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PreviewMessageFile(
                             uid: widget.uid,
-                            eventIdAttached: widget.eventIdAttached,
+                            eventAttached: widget.eventAttached,
                             filetype: 'image',
                             file: filePicked),
                       ));
@@ -76,7 +79,8 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
 
             // Image Picker
             buttonPicker(
-              icon: Icon(FontAwesomeIcons.image, color: Colors.white, size: 20),
+              icon: const Icon(FontAwesomeIcons.image,
+                  color: Colors.white, size: 21),
               label: 'Image',
               widgetColor: Colors.grey,
               function: () async {
@@ -84,14 +88,14 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                 filePicked =
                     await _picker.pickImage(source: ImageSource.gallery);
 
-                print('File picked iz: $filePicked');
+                debugPrint('File picked iz: $filePicked');
                 if (filePicked != null) {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PreviewMessageFile(
                             uid: widget.uid,
-                            eventIdAttached: widget.eventIdAttached,
+                            eventAttached: widget.eventAttached,
                             filetype: 'image',
                             file: filePicked),
                       ));
@@ -103,7 +107,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
 
             // Video Picker
             buttonPicker(
-              icon: Icon(FontAwesomeIcons.play, color: Colors.white, size: 20),
+              icon: Icon(FontAwesomeIcons.play, color: Colors.white, size: 22),
               label: 'Video',
               widgetColor: Colors.red,
               function: () async {
@@ -117,7 +121,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                       MaterialPageRoute(
                         builder: (context) => PreviewMessageFile(
                             uid: widget.uid,
-                            eventIdAttached: widget.eventIdAttached,
+                            eventAttached: widget.eventAttached,
                             filetype: 'video',
                             file: filePicked),
                       ));
@@ -128,6 +132,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
             ),
           ],
         ),
+        SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -135,7 +140,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
             // Mucic Picker
             buttonPicker(
               icon: Icon(FontAwesomeIcons.itunesNote,
-                  color: Colors.white, size: 20),
+                  color: Colors.white, size: 22),
               label: 'Son',
               widgetColor: Colors.purple.shade300,
               function: () async {
@@ -156,21 +161,21 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                     File finalFilePath =
                         File(file.path as String).copySync(path);
                     if (finalFilePath != null)
-                      print(
+                      debugPrint(
                           'Message File was saved correctly at $finalFilePath');
 
                     // Save msg to Sql DB
-                    final newMessage = Message(
-                      messageId: 'message_${const Uuid().v4()}',
-                      eventId: widget.eventIdAttached ?? '',
-                      senderId: '3',
-                      receiverId: '4',
-                      createdAt: DateTime.now(),
-                      status: 'pending',
-                      type: 'music',
-                      data: '$finalFilePath',
-                      caption: '',
-                    );
+                    // final newMessage = Message(
+                    //   messageId: 'message_${const Uuid().v4()}',
+                    //   eventId: widget.eventAttached ?? '',
+                    //   senderId: '3',
+                    //   receiverId: '4',
+                    //   createdAt: DateTime.now(),
+                    //   status: 'pending',
+                    //   type: 'music',
+                    //   data: '$finalFilePath',
+                    //   caption: '',
+                    // );
 
                     // await SqlDatabase.instance.createMessage(newMessage);
                   } catch (e) {
@@ -188,7 +193,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
             // Payment Picker
             buttonPicker(
               icon: Icon(FontAwesomeIcons.dollarSign,
-                  color: Colors.white, size: 20),
+                  color: Colors.white, size: 22),
               label: 'Argent',
               widgetColor: Colors.green.shade300,
               function: () {
@@ -203,7 +208,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                     MaterialPageRoute(
                       builder: (context) => SendPayment(
                         uid: widget.uid,
-                        eventIdAttached: widget.eventIdAttached,
+                        eventAttached: widget.eventAttached,
                         filetype: 'payment',
                       ),
                     ));
@@ -212,7 +217,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
 
             // Gift Picker
             buttonPicker(
-              icon: Icon(FontAwesomeIcons.gift, color: Colors.white, size: 20),
+              icon: Icon(FontAwesomeIcons.gift, color: Colors.white, size: 22),
               label: 'Cadeau',
               widgetColor: Colors.orangeAccent,
               function: () {
@@ -228,7 +233,7 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
                       builder: (context) => Suggestions(
                         suggestionType: 'gift',
                         uid: widget.uid,
-                        eventIdAttached: widget.eventIdAttached,
+                        eventAttached: widget.eventAttached,
                       ),
                     ));
               },
@@ -236,53 +241,6 @@ class _DeleteDecisionState extends State<MessageFilePicker> {
           ],
         )
       ],
-    );
-  }
-}
-
-class buttonPicker extends StatelessWidget {
-  final Widget icon;
-  final Color widgetColor;
-  final String label;
-  final VoidCallback function;
-
-  const buttonPicker({
-    Key? key,
-    required this.icon,
-    required this.widgetColor,
-    required this.label,
-    required this.function,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-      child: InkWell(
-          onTap: () async {
-            // Return selected file
-            function();
-          },
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: widgetColor,
-                child: icon,
-              ),
-              const SizedBox(
-                height: 4,
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontSize: 15,
-                ),
-              )
-            ],
-          )),
     );
   }
 }

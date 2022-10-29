@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
-  final dynamic data;
+  final data;
 
   VideoPlayerWidget({required this.data});
   @override
@@ -13,11 +13,22 @@ class VideoPlayerWidget extends StatefulWidget {
 
 class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _controller;
+  String finalData = '';
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.file(File(widget.data));
+    if (widget.data.runtimeType == ValueNotifier<String>) {
+      setState(() {
+        finalData = widget.data.value;
+      });
+    } else {
+      setState(() {
+        finalData = widget.data;
+      });
+    }
+
+    _controller = VideoPlayerController.file(File(finalData));
 
     _controller.addListener(() {
       setState(() {});
@@ -25,6 +36,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _controller.setLooping(false);
     _controller.initialize().then((_) => setState(() {}));
     _controller.play();
+    setState(() {});
   }
 
   @override

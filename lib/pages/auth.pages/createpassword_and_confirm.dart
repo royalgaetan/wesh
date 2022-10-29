@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wesh/pages/auth_controller_page.dart';
-import 'package:wesh/pages/in.pages/introductionpages.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/services/auth.methods.dart';
-
 import '../../services/sharedpreferences.service.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
@@ -11,7 +8,9 @@ import '../../widgets/button.dart';
 import '../../widgets/textfieldcontainer.dart';
 
 class CreatePassword extends StatefulWidget {
-  CreatePassword({Key? key}) : super(key: key);
+  final bool isUpdatingEmail;
+  const CreatePassword({Key? key, required this.isUpdatingEmail})
+      : super(key: key);
 
   @override
   State<CreatePassword> createState() => _CreatePasswordState();
@@ -34,6 +33,18 @@ class _CreatePasswordState extends State<CreatePassword> {
     passwordConfirmationController.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    toggleRedirectToUpdatePasswordPageValue();
+  }
+
+  Future toggleRedirectToUpdatePasswordPageValue() async {
+    await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(false);
+    debugPrint(
+        "New value Redirect to UpdatePassword Page [UpdatePasswordPage]: ${UserSimplePreferences.getRedirectToUpdatePasswordPageValue()}");
+  }
+
   checkPasswords(context, password, confirmPassword) async {
     String psw = password.toString();
     String confirmPsw = confirmPassword.toString();
@@ -53,22 +64,34 @@ class _CreatePasswordState extends State<CreatePassword> {
 
     // IF PASSWORD CHECKED
 
-    passwordController.clear();
-    passwordConfirmationController.clear();
-
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
 
-    String? emailCached = UserSimplePreferences.getEmail() ?? '';
-    var result = await AuthMethods()
-        .createUserWithEmailAndPassword(context, emailCached, password);
+    // UPDATING PASSWORD
+    if (widget.isUpdatingEmail) {
+      // Link Password Provider
+      List result = await AuthMethods().updateCurrentUserPassword(context, psw);
+      if (result[0]) {
+        // Redirect to Settings Security Page
+        Navigator.of(context).pop();
+      }
+    }
+    // CREATE NEW USER
+    else {
+      passwordController.clear();
+      passwordConfirmationController.clear();
 
-    if (result) {
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StartPage(),
-          ),
-          (route) => false);
+      String? emailCached = UserSimplePreferences.getEmail() ?? '';
+      var result = await AuthMethods()
+          .createUserWithEmailAndPassword(context, emailCached, password);
+
+      if (result) {
+        Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const StartPage(),
+            ),
+            (route) => false);
+      }
     }
   }
 
@@ -140,15 +163,15 @@ class _CreatePasswordState extends State<CreatePassword> {
                                 });
                               },
                               icon: isPswVisible
-                                  ? Icon(Icons.visibility_rounded)
-                                  : Icon(Icons.visibility_off_rounded))
-                          : Container(
+                                  ? const Icon(Icons.visibility_rounded)
+                                  : const Icon(Icons.visibility_off_rounded))
+                          : const SizedBox(
                               width: 2,
                               height: 2,
                             )),
                 ),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 20,
               ),
 
@@ -190,16 +213,17 @@ class _CreatePasswordState extends State<CreatePassword> {
                                           });
                                         },
                                         icon: isPswConfirmationVisible
-                                            ? Icon(Icons.visibility_rounded)
-                                            : Icon(
+                                            ? const Icon(
+                                                Icons.visibility_rounded)
+                                            : const Icon(
                                                 Icons.visibility_off_rounded))
-                                    : Container(
+                                    : const SizedBox(
                                         width: 2,
                                         height: 2,
                                       )),
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 40,
                         ),
                       ],

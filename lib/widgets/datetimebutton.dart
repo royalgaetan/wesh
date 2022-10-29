@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../utils/functions.dart';
+
 class DateTimeButton extends StatelessWidget {
-  final DateTime date;
+  final DateTime? date;
+  final TimeOfDay? timeOfDay;
   final String type;
   final VoidCallback onTap;
 
   const DateTimeButton({
-    required this.date,
+    this.date,
+    this.timeOfDay,
     required this.type,
     required this.onTap,
   });
@@ -25,8 +29,12 @@ class DateTimeButton extends StatelessWidget {
         ),
         child: Text(
           type == "time"
-              ? '${DateFormat('hh:mm', 'fr_FR').format(date)}'
-              : '${DateFormat('EEE, d MMM yyyy', 'fr_FR').format(date)}',
+              ? DateFormat('HH:mm', 'fr').format(
+                  formatTimeOfDay(
+                    timeOfDay!,
+                  ),
+                )
+              : DateFormat('EEE, d MMM yyyy', 'fr_FR').format(date!),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ),

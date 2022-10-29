@@ -1,23 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:wesh/pages/profile.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
+import '../models/user.dart' as UserModel;
 
 class UserCard extends StatefulWidget {
-  final String id;
-  final String name;
-  final String profilePicture;
-  final String username;
+  final UserModel.User user;
   final String status;
   final VoidCallback onTap;
 
   const UserCard({
-    required this.id,
-    required this.name,
-    required this.username,
-    required this.profilePicture,
+    required this.user,
     required this.status,
     required this.onTap,
   });
@@ -43,15 +37,16 @@ class _UserCardState extends State<UserCard> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => profilePage(uid: widget.id),
+                        builder: (context) => ProfilePage(
+                            uid: widget.user.id, showBackButton: true),
                       ));
                 },
                 child: CircleAvatar(
                   radius: 22,
-                  backgroundImage: AssetImage(widget.profilePicture),
+                  backgroundImage: NetworkImage(widget.user.profilePicture),
                 ),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 10,
               ),
 
@@ -62,7 +57,8 @@ class _UserCardState extends State<UserCard> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => profilePage(uid: widget.id),
+                        builder: (context) => ProfilePage(
+                            uid: widget.user.id, showBackButton: true),
                       ));
                 },
                 child: Expanded(
@@ -71,17 +67,19 @@ class _UserCardState extends State<UserCard> {
                     children: [
                       // Contact name
                       Text(
-                        '${widget.name}',
-                        style: TextStyle(
+                        widget.user.id == FirebaseAuth.instance.currentUser!.uid
+                            ? 'Vous'
+                            : widget.user.name,
+                        style: const TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 17),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 5,
                       ),
 
                       // Contact username
                       Text(
-                        '@${widget.username}',
+                        '@${widget.user.username}',
                         style: TextStyle(
                             fontSize: 14, color: Colors.grey.shade700),
                       ),
@@ -89,7 +87,7 @@ class _UserCardState extends State<UserCard> {
                   ),
                 ),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 5,
               ),
             ],

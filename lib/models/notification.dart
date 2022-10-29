@@ -33,22 +33,6 @@ class Notification {
     required this.createdAt,
   });
 
-  // Copy
-  Notification copy({
-    String? notificationId,
-    String? uid,
-    String? contentId,
-    String? type,
-    DateTime? createdAt,
-  }) =>
-      Notification(
-        notificationId: notificationId ?? this.notificationId,
-        contentId: contentId ?? this.contentId,
-        uid: uid ?? this.uid,
-        type: type ?? this.type,
-        createdAt: createdAt ?? this.createdAt,
-      );
-
   // toJson
   Map<String, Object?> toJson() => {
         NotificationFields.notificationId: notificationId,
@@ -59,11 +43,14 @@ class Notification {
       };
 
   // fromJson
-  static Notification fromJson(Map<String, Object?> json) => Notification(
-        notificationId: json[NotificationFields.notificationId] as String,
-        uid: json[NotificationFields.uid] as String,
-        contentId: json[NotificationFields.contentId] as String,
-        type: json[NotificationFields.type] as String,
-        createdAt: DateTime.parse(json[NotificationFields.createdAt] as String),
+  static Notification fromJson(Map<String, dynamic> json) => Notification(
+        notificationId: (json[NotificationFields.notificationId]) ?? '',
+        uid: json[NotificationFields.uid] ?? '',
+        contentId: json[NotificationFields.contentId] ?? '',
+        type: json[NotificationFields.type] ?? '',
+        //
+        createdAt: json[NotificationFields.createdAt] != null
+            ? DateTime.parse(json[NotificationFields.createdAt])
+            : DateTime.now(),
       );
 }

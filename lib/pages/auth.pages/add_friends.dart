@@ -53,28 +53,29 @@ class _AddFriendsState extends State<AddFriends> {
               // ),
 
               // Suggestions List
-              Expanded(
-                child: ListView.builder(
-                  itemCount: 3,
-                  itemBuilder: ((context, index) => UserCard(
-                        status: 'isfollowing',
-                        id: '${usersList[index].id}',
-                        name: usersList[index].name,
-                        username: usersList[index].username,
-                        profilePicture: usersList[index].profilePicture,
-                        onTap: () {
-                          // Follow Unfollow Status
-                          // setState(() {
-                          //   if (status == 'notfollowing') {
-                          //     status = 'isfollowing';
-                          //   } else if (status == 'isfollowing') {
-                          //     status = 'notfollowing';
-                          //   }
-                          // });
-                        },
-                      )),
-                ),
-              ),
+              // Expanded(
+              //   child:
+              //   ListView.builder(
+              //     itemCount: 3,
+              //     itemBuilder: ((context, index) => UserCard(
+              //           status: 'isfollowing',
+              //           id: '${usersList[index].id}',
+              //           name: usersList[index].name,
+              //           username: usersList[index].username,
+              //           profilePicture: usersList[index].profilePicture,
+              //           onTap: () {
+              //             // Follow Unfollow Status
+              //             // setState(() {
+              //             //   if (status == 'notfollowing') {
+              //             //     status = 'isfollowing';
+              //             //   } else if (status == 'isfollowing') {
+              //             //     status = 'notfollowing';
+              //             //   }
+              //             // });
+              //           },
+              //         )),
+              //   ),
+              // ),
             ],
           ),
         ),

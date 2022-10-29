@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/cupertino.dart';
+import '../models/event.dart';
+import 'buildWidgets.dart';
+import 'eventview.dart';
+import 'modal.dart';
 
 class EventCard extends StatefulWidget {
-  final String trailing;
-  final String title;
-  final String caption;
-  final DateTime date;
-  final DateTime startTime;
-  final DateTime endTime;
+  final Event event;
 
-  EventCard(
-      {required this.trailing,
-      required this.title,
-      required this.caption,
-      required this.date,
-      required this.startTime,
-      required this.endTime});
+  EventCard({required this.event});
 
   @override
   State<EventCard> createState() => _EventCardState();
@@ -24,123 +18,171 @@ class EventCard extends StatefulWidget {
 
 class _EventCardState extends State<EventCard> {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10.0),
-      margin: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Trailing
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(10),
-                margin: EdgeInsets.all(10),
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color: Colors.purple.shade300,
-                  // boxShadow: [
-                  //   BoxShadow(
-                  //       color: Colors.black.withOpacity(0.4),
-                  //       offset: Offset(1, 4),
-                  //       blurRadius: 3,
-                  //       spreadRadius: 3),
-                  // ],
-                ),
-                child: Image.asset(widget.trailing),
-              ),
-            ],
-          ),
-          SizedBox(
-            width: 5,
-          ),
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
 
-          // Event content
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Show EventView Modal
+        showModalBottomSheet(
+          enableDrag: true,
+          isScrollControlled: true,
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: ((context) => Modal(
+                maxChildSize: 1,
+                initialChildSize: .8,
+                minChildSize: .8,
+                child: EventView(event: widget.event),
+              )),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10.0),
+        margin: const EdgeInsets.only(top: 5, bottom: 5, right: 10),
+        child: Column(
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.title,
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                // Trailing
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      widget.event.trailing.isNotEmpty
+                          ? CircleAvatar(
+                              radius: 30,
+                              backgroundImage:
+                                  NetworkImage(widget.event.trailing))
+                          : CircleAvatar(
+                              radius: 30,
+                              backgroundImage: AssetImage(
+                                  'assets/images/eventtype.icons/${widget.event.type}.png'),
+                            ),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 10),
-                Text(
-                  widget.caption,
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.black.withOpacity(0.6)),
+                const SizedBox(
+                  width: 5,
                 ),
-                SizedBox(height: 10),
 
-                // Event Info
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Avatar + Username
-                    Row(
-                      children: const [
-                        CircleAvatar(
-                          radius: 13,
-                          backgroundImage:
-                              AssetImage('assets/images/avatar 6.jpg'),
-                        ),
-                        SizedBox(
-                          width: 7,
-                        ),
-                        Text(
-                          'Username',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                // Event content
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.event.title,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                            fontSize: 19, fontWeight: FontWeight.bold),
+                      ),
 
-                    // Time info
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          FontAwesomeIcons.clock,
-                          size: 19,
-                        ),
-                        const SizedBox(
-                          width: 7,
-                        ),
-                        Text(
-                          '${DateFormat('hh:mm', 'fr_Fr').format(widget.startTime)} à ${DateFormat('hh:mm', 'fr_Fr').format(widget.endTime)}',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Container(
-                  width: double.infinity,
-                  child: Divider(),
+                      widget.event.caption.isNotEmpty
+                          ? Column(
+                              children: [
+                                SizedBox(height: 10),
+                                Text(
+                                  widget.event.caption,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                      overflow: TextOverflow.ellipsis,
+                                      fontSize: 14,
+                                      color: Colors.black.withOpacity(0.6)),
+                                )
+                              ],
+                            )
+                          : Container(),
+                      SizedBox(height: 10),
+
+                      // Event Info
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Avatar + Username
+                          buildAvatarAndUsername(uidPoster: widget.event.uid),
+
+                          // Time and Date info
+                          Expanded(
+                            child: Column(
+                              children: [
+                                // Date Info
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    const Icon(FontAwesomeIcons.calendar,
+                                        size: 15, color: Colors.black54),
+                                    const SizedBox(
+                                      width: 7,
+                                    ),
+                                    Text(
+                                      DateFormat('EEE, d MMM yyyy', 'fr_Fr')
+                                          .format(widget.event.startDateTime),
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+
+                                // Time Info
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    const Icon(FontAwesomeIcons.clock,
+                                        size: 15, color: Colors.black54),
+                                    const SizedBox(
+                                      width: 7,
+                                    ),
+                                    Text(
+                                      '${DateFormat('HH:mm', 'fr_Fr').format(widget.event.startDateTime)} à ${DateFormat('HH:mm', 'fr_Fr').format(widget.event.endDateTime)}',
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // Divider
+            const SizedBox(height: 10),
+
+            const SizedBox(
+              width: double.infinity,
+              child: Divider(
+                height: 1,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-//  ListTile(
-//         leading: Container(
-//             padding: EdgeInsets.all(10),
-//             decoration: BoxDecoration(
-//                 borderRadius: BorderRadius.circular(15),
-//                 color: Colors.grey.shade200),
-//             child: Icon(event.icon)),
-//         title: Text(event.title),
-//         subtitle: Text(event.subTitle),
-//       );

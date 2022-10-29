@@ -43,29 +43,30 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
     });
     if (nameController.text.isNotEmpty) {
       if (birthday != DateTime(0)) {
-        DateDuration age = AgeCalculator.age(birthday);
-        if (age.years > 13) {
-          // FirestoreMethods().updateCurrentUserName(context, nameController.text);
-          // FirestoreMethods().updateCurrentUserBirthday(context, birthday);
+        // DateDuration age = AgeCalculator.age(birthday);
+        // if (age.years > 13) {
+        // FirestoreMethods().updateCurrentUserName(context, nameController.text);
+        // FirestoreMethods().updateCurrentUserBirthday(context, birthday);
 
-          await UserSimplePreferences.setName(nameController.text);
-          await UserSimplePreferences.setBirthday(birthday.toIso8601String());
+        await UserSimplePreferences.setName(nameController.text);
+        await UserSimplePreferences.setBirthday(birthday.toIso8601String());
 
-          setState(() {
-            isPageLoading = false;
-          });
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SignUpMethodPage(),
-              ));
-        } else {
-          setState(() {
-            isPageLoading = false;
-          });
-          return showSnackbar(context,
-              'Vous devez avoir plus de 13 ans pour continuer...', null);
-        }
+        setState(() {
+          isPageLoading = false;
+        });
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SignUpMethodPage(),
+            ));
+        // }
+        // else {
+        //   setState(() {
+        //     isPageLoading = false;
+        //   });
+        //   return showSnackbar(context,
+        //       'Vous devez avoir plus de 13 ans pour continuer...', null);
+        // }
       } else {
         setState(() {
           isPageLoading = false;
@@ -177,7 +178,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
                                 context: context,
                                 initialDate: DateTime(2000),
                                 firstDate: DateTime(1900),
-                                lastDate: DateTime(2015),
+                                lastDate: DateTime.now(),
                               );
 
                               if (pickedDate == null) {

@@ -100,34 +100,34 @@ class _SearchPageState extends State<SearchPage> {
                     event: eventsList[index],
                     onTap: () {
                       // Show EventView Modal
-                      showModalBottomSheet(
-                        enableDrag: true,
-                        isScrollControlled: true,
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        builder: ((context) => Modal(
-                              maxChildSize: 1,
-                              initialChildSize: .8,
-                              minChildSize: .8,
-                              child:
-                                  EventView(eventId: eventsList[index].eventId),
-                            )),
-                      );
+                      // showModalBottomSheet(
+                      //   enableDrag: true,
+                      //   isScrollControlled: true,
+                      //   context: context,
+                      //   backgroundColor: Colors.transparent,
+                      //   builder: ((context) => Modal(
+                      //         maxChildSize: 1,
+                      //         initialChildSize: .8,
+                      //         minChildSize: .8,
+                      //         child:
+                      //             EventView(eventId: eventsList[index].eventId),
+                      //       )),
+                      // );
                     }),
               ),
 
               // Accounts Section --> Search Results
-              ListView.builder(
-                itemCount: usersList.length,
-                itemBuilder: ((context, index) => UserCard(
-                      status: '',
-                      id: '${usersList[index].id}',
-                      name: usersList[index].name,
-                      username: usersList[index].username,
-                      profilePicture: usersList[index].profilePicture,
-                      onTap: () {},
-                    )),
-              ),
+              // ListView.builder(
+              //   itemCount: usersList.length,
+              //   itemBuilder: ((context, index) => UserCard(
+              //         status: '',
+              //         id: '${usersList[index].id}',
+              //         name: usersList[index].name,
+              //         username: usersList[index].username,
+              //         profilePicture: usersList[index].profilePicture,
+              //         onTap: () {},
+              //       )),
+              // ),
 
               // Contacts Section --> Search Results
               ListView.builder(

@@ -4,16 +4,15 @@ import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/textformfield.dart';
 
+import '../../models/event.dart';
+
 class SendPayment extends StatefulWidget {
   final String filetype;
   final String uid;
-  String? eventIdAttached;
+  Event? eventAttached;
 
   SendPayment(
-      {Key? key,
-      required this.filetype,
-      this.eventIdAttached,
-      required this.uid})
+      {Key? key, required this.filetype, this.eventAttached, required this.uid})
       : super(key: key);
 
   @override
@@ -93,6 +92,9 @@ class _SendPaymentState extends State<SendPayment> {
                           }
                           return null;
                         },
+                        onChanged: (value) async {
+                          return await null;
+                        },
                       ),
 
                       // Add Amount
@@ -107,12 +109,15 @@ class _SendPaymentState extends State<SendPayment> {
                           }
                           return null;
                         },
+                        onChanged: (value) async {
+                          return await null;
+                        },
                       ),
 
                       // Add Pin Code
                       buildTextFormField(
                         controller: receiverPhoneNumberController,
-                        hintText: 'Ajouter votre code pin',
+                        hintText: 'Ajoutez votre code pin',
                         icon: Icon(Icons.lock_outline_rounded),
                         textInputType: TextInputType.number,
                         validateFn: (pincode) {
@@ -120,6 +125,9 @@ class _SendPaymentState extends State<SendPayment> {
                             return 'Veuillez entrer un code pin valide';
                           }
                           return null;
+                        },
+                        onChanged: (value) async {
+                          return await null;
                         },
                       ),
                     ],

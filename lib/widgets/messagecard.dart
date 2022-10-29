@@ -35,7 +35,7 @@ class _MessageCardState extends State<MessageCard> {
   //   setState(() {
   //     messagea = message;
   //   });
-  //   print("MEEEUU: ${messagea!.caption}");
+  //   debugPrint("MEEEUU: ${messagea!.caption}");
   //   return messagea;
   // }
 

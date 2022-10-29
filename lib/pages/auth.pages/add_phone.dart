@@ -1,17 +1,18 @@
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phone_number/phone_number.dart';
 import 'package:wesh/pages/auth.pages/otp.dart';
-import 'package:wesh/services/sharedpreferences.service.dart';
-import '../../services/internet_connection_checher.dart';
+import '../../services/auth.methods.dart';
+import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/button.dart';
-import '../../widgets/textfieldcontainer.dart';
 
 class AddPhonePage extends StatefulWidget {
-  AddPhonePage({Key? key}) : super(key: key);
+  final bool isUpdatingPhoneNumber;
+
+  const AddPhonePage({Key? key, required this.isUpdatingPhoneNumber, e})
+      : super(key: key);
 
   @override
   State<AddPhonePage> createState() => _AddPhonePageState();
@@ -68,14 +69,16 @@ class _AddPhonePageState extends State<AddPhonePage> {
                 reverse: true,
                 children: [
                   Column(
-                    children: const [
+                    children: [
                       Text(
-                        'Ajoutez votre numéro de téléphone',
+                        widget.isUpdatingPhoneNumber
+                            ? 'Ajouter le numéro de téléphone'
+                            : 'Ajoutez votre numéro de téléphone',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 24),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 12,
                       ),
                     ],
@@ -141,7 +144,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
                                     phoneCode = country.phoneCode;
                                     regionCode = country.countryCode;
                                   });
-                                  print(
+                                  debugPrint(
                                     'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
                                   );
                                 },
@@ -155,6 +158,10 @@ class _AddPhonePageState extends State<AddPhonePage> {
                         ),
                         Expanded(
                           child: TextField(
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp("[0-9]")),
+                            ],
                             keyboardType: TextInputType.phone,
                             controller: phoneController,
                             decoration: const InputDecoration(
@@ -187,32 +194,77 @@ class _AddPhonePageState extends State<AddPhonePage> {
                       });
                       if (isConnected) {
                         // Check phone number
-
-                        bool isPhoneValid = await isPhoneNumberValid(
-                          context: context,
-                          countryName: countryName,
-                          phoneCode: phoneCode,
-                          phoneContent: phoneController.text,
-                          regionCode: regionCode,
-                        );
-
-                        if (isPhoneValid) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OTPverificationPage(
-                                authType: 'login',
-                              ),
-                            ),
+                        if (phoneController.text.isNotEmpty) {
+                          bool? isPhoneValid = await isPhoneNumberValid(
+                            context: context,
+                            countryName: countryName,
+                            phoneCode: phoneCode,
+                            phoneContent: phoneController.text,
+                            regionCode: regionCode,
                           );
+
+                          if (isPhoneValid) {
+                            // UPDATE PHONE NUMBER
+                            if (widget.isUpdatingPhoneNumber) {
+                              bool isUserExisting = await AuthMethods()
+                                  .checkUserWithPhoneExistenceInDb(
+                                      '+$phoneCode${phoneController.text}');
+                              if (isUserExisting == true) {
+                                // ignore: use_build_context_synchronously
+                                showSnackbar(context,
+                                    'Ce numéro est déjà pris...', null);
+                                return;
+                              } else {
+                                // ignore: use_build_context_synchronously
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OTPverificationPage(
+                                      authType: 'updatePhoneNumber',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+
+                            // LOGIN WITH PHONE NUMBER
+                            else {
+                              bool isUserExisting = await AuthMethods()
+                                  .checkUserWithPhoneExistenceInDb(
+                                      '+$phoneCode${phoneController.text}');
+                              if (isUserExisting == false) {
+                                // ignore: use_build_context_synchronously
+                                showSnackbar(
+                                    context,
+                                    'Aucun compte n\'existe avec numéro...',
+                                    null);
+                                return;
+                              } else {
+                                // ignore: use_build_context_synchronously
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OTPverificationPage(
+                                      authType: 'login',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            showSnackbar(
+                                context, 'Votre numéro est incorrect !', null);
+                          }
                         } else {
+                          // ignore: use_build_context_synchronously
                           showSnackbar(
-                              context, 'Votre numéro est incorrect !', null);
+                              context, 'Veuillez entrer un numéro...', null);
                         }
 
-                        print("Has connection : $isConnected");
+                        debugPrint("Has connection : $isConnected");
                       } else {
-                        print("Has connection : $isConnected");
+                        debugPrint("Has connection : $isConnected");
                         showSnackbar(context,
                             'Veuillez vérifier votre connexion internet', null);
                       }

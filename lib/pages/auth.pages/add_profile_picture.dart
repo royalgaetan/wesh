@@ -57,55 +57,64 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
 
             // Profile Picture Picker
             InkWell(
-                onTap: () async {
-                  // Pick image
-                  // TODO: check image format, size,...
-                  //
-                  //
+              onTap: () async {
+                // Pick image
+                // TODO: check image format, size,...
+                //
+                //
 
-                  XFile? file = await showModalBottomSheet(
-                    enableDrag: true,
-                    isScrollControlled: true,
-                    context: context,
-                    backgroundColor: Colors.transparent,
-                    builder: ((context) => Modal(
-                          initialChildSize: .4,
-                          maxChildSize: .4,
-                          minChildSize: .4,
-                          child: ImagePickerModal(),
-                        )),
-                  );
-
-                  if (file != null) {
-                    // final Directory directory =
-                    //     await getApplicationDocumentsDirectory();
-                    // final filename = 'profilepicture_${const Uuid().v4()}';
-                    // final path = '${directory.path}/$filename.jpg';
-
-                    // var res = file.saveTo(path).whenComplete(
-                    //     () => print('File was saved correctly at $path'));
-
-                    setState(() {
-                      profilePicturePath = file.path;
-                    });
-                  } else if (file == null) {
-                    setState(() {
-                      profilePicturePath = '';
-                    });
-                  }
-                },
-                child: profilePicturePath == ''
-                    ? const CircleAvatar(
-                        radius: 100,
-                        backgroundImage: AssetImage(
-                            'assets/images/default_profile_picture.jpg'),
-                      )
-                    : CircleAvatar(
-                        radius: 100,
-                        backgroundImage: FileImage(
-                          File(profilePicturePath),
-                        ),
+                dynamic file = await showModalBottomSheet(
+                  enableDrag: true,
+                  isScrollControlled: true,
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: ((context) => Modal(
+                        initialChildSize: .4,
+                        maxChildSize: .4,
+                        minChildSize: .4,
+                        child: const ImagePickerModal(),
                       )),
+                );
+
+                if (file != null && file != 'remove') {
+                  setState(() {
+                    profilePicturePath = file.path;
+                  });
+                } else if (file == 'remove') {
+                  setState(() {
+                    profilePicturePath = '';
+                  });
+                }
+              },
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  (() {
+                    if (profilePicturePath.contains('/data/user/')) {
+                      return CircleAvatar(
+                        radius: 100,
+                        backgroundColor: kGreyColor,
+                        backgroundImage: FileImage(File(profilePicturePath)),
+                      );
+                    }
+                    return const CircleAvatar(
+                      radius: 100,
+                      backgroundColor: kGreyColor,
+                      backgroundImage: AssetImage(
+                          'assets/images/default_profile_picture.jpg'),
+                    );
+                  }()),
+                  Transform.translate(
+                    offset: const Offset(0, -10),
+                    child: const CircleAvatar(
+                      radius: 20,
+                      backgroundColor: kSecondColor,
+                      child: Icon(Icons.edit, color: Colors.white),
+                    ),
+                  )
+                ],
+              ),
+            ),
             const SizedBox(
               height: 27,
             ),
@@ -117,17 +126,20 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
             // Button Action : Update Profile Picture
             Column(
               children: [
-                Button(
-                  height: 50,
-                  width: double.infinity,
-                  text: 'Ajouter la photo de profil',
-                  color: kSecondColor,
-                  onTap: () {
-                    // Add Picture Profile
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Button(
+                    height: 50,
+                    width: double.infinity,
+                    text: 'Confirmer',
+                    color: kSecondColor,
+                    onTap: () {
+                      // Add Picture Profile
 
-                    // AND Redirect to Add_Friends_And_Contacts_Page
-                    updateProfilePicture(profilePicturePath);
-                  },
+                      // AND Redirect to Add_Friends_And_Contacts_Page
+                      updateProfilePicture(profilePicturePath);
+                    },
+                  ),
                 ),
                 const SizedBox(
                   height: 20,

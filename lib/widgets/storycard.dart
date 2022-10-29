@@ -1,78 +1,42 @@
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:wesh/pages/in.pages/storypage.dart';
-import 'package:wesh/pages/startPage.dart';
-import 'package:wesh/utils/constants.dart';
-import 'package:wesh/widgets/imagewrapper.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:wesh/pages/in.pages/storyviewer_user_stories.dart';
+import '../../models/user.dart' as UserModel;
+import '../utils/constants.dart';
 
 class StoryCard extends StatelessWidget {
-  final String profilePicture;
-  final String username;
-  final DateTime lastStoryTime;
+  final UserModel.User user;
   final String? type;
 
-  const StoryCard(
-      {required this.profilePicture,
-      required this.username,
-      required this.lastStoryTime,
-      required this.type});
+  const StoryCard({Key? key, required this.user, required this.type})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => const CreateStory(),
+        //   ),
+        // );
+
         // Story Page View
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StoryPage(username: username),
-          ),
-        );
+        context.pushTransparentRoute(StoryPage(
+          user: user,
+        ));
       },
       child: Padding(
         padding: const EdgeInsets.all(15),
         child: Row(
           children: [
             // Trailing Avatar
-            Hero(
-              tag: '$username',
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  type != 'addstory'
-                      ? ImageWrapper(
-                          type: 'hasStories',
-                          picture: profilePicture,
-                          borderradius: 3,
-                          borderpadding: 3,
-                          bordercolor:
-                              type == "unread" ? kSecondColor : Colors.grey,
-                          child: CircleAvatar(
-                            radius: 25,
-                            backgroundImage: AssetImage(profilePicture),
-                          ),
-                        )
-                      : Container(),
-                  type == 'addstory'
-                      ? CircleAvatar(
-                          radius: 25,
-                          backgroundImage: AssetImage(profilePicture),
-                        )
-                      : Container(),
-                  type == "addstory"
-                      ? const CircleAvatar(
-                          radius: 10,
-                          backgroundColor: kSecondColor,
-                          child: Icon(
-                            FontAwesomeIcons.plus,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Container()
-                ],
-              ),
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: kGreyColor,
+              backgroundImage: NetworkImage(user.profilePicture),
             ),
 
             // Username + Last Story Sent
@@ -81,30 +45,33 @@ class StoryCard extends StatelessWidget {
             ),
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$username',
+                    '${user.name}',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    height: 6,
                   ),
 
                   // Last Message Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${DateFormat('hh:mm').format(lastStoryTime)}',
-                          style: TextStyle(
-                              overflow: TextOverflow.ellipsis,
-                              fontSize: 16,
-                              color: Colors.black.withOpacity(0.7)),
-                        ),
-                      ),
-                    ],
-                  )
+                  user.lastStoryUpdateDateTime != DateTime(0)
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            (() {
+                              timeago.setLocaleMessages(
+                                  'fr', timeago.FrMessages());
+                              return timeago.format(
+                                  user.lastStoryUpdateDateTime,
+                                  locale: 'fr');
+                            }()),
+                            style: TextStyle(
+                                overflow: TextOverflow.ellipsis,
+                                fontSize: 16,
+                                color: Colors.black.withOpacity(0.7)),
+                          ),
+                        )
+                      : Container()
                 ],
               ),
             ),
@@ -112,6 +79,5 @@ class StoryCard extends StatelessWidget {
         ),
       ),
     );
-    ;
   }
 }

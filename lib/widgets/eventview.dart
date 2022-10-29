@@ -1,288 +1,278 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wesh/models/event.dart';
-import 'package:wesh/models/reminder.dart';
 import 'package:wesh/pages/in.pages/create_or_update_event.dart';
 import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/utils/constants.dart';
-import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/reminderselector.dart';
 import 'package:wesh/widgets/userposterheader.dart';
 
+import '../utils/functions.dart';
+import 'buildWidgets.dart';
+
 class EventView extends StatefulWidget {
-  final String eventId;
-
   late DateTime? reminderDate = null;
+  final Event event;
 
-  EventView({required this.eventId});
+  EventView({required this.event});
 
   @override
   State<EventView> createState() => _EventViewState();
 }
 
 class _EventViewState extends State<EventView> {
-  late Event event;
-  bool isLoading = false;
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    // Get Event
-    refreshEvent();
-
     // Check if the Event Date has a Reminder
     // TO DO
   }
 
-  Future refreshEvent() async {
-    setState(() => isLoading = true);
-    // event = await SqlDatabase.instance.readEvent(widget.eventId);
-    setState(() => isLoading = false);
-
-    return event;
-  }
-
   @override
   Widget build(BuildContext context) {
-    const int myId = 3;
-    return isLoading
-        ? const Expanded(
-            child: Center(
-              child: Expanded(
-                child: CupertinoActivityIndicator(
-                  radius: 12,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Event Trailing
+          widget.event.trailing.isEmpty
+              ? CircleAvatar(
+                  radius: 70,
+                  backgroundColor: kGreyColor,
+                  backgroundImage: AssetImage(
+                      'assets/images/eventtype.icons/${widget.event.type}.png'),
+                )
+              : CircleAvatar(
+                  radius: 70,
+                  backgroundColor: kGreyColor,
+                  backgroundImage: NetworkImage(widget.event.trailing),
+                ),
+
+          // Event Name
+          const SizedBox(height: 20),
+          Text(
+            widget.event.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+
+          // Event Action Button
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // MESSAGE BUTTON OR EDIT EVENT BUTTON
+              widget.event.uid != FirebaseAuth.instance.currentUser!.uid
+                  ? Button(
+                      text: 'Message',
+                      height: 45,
+                      width: 150,
+                      fontsize: 16,
+                      fontColor: Colors.black,
+                      color: Colors.white,
+                      isBordered: true,
+                      prefixIcon: FontAwesomeIcons.message,
+                      prefixIconColor: Colors.black,
+                      prefixIconSize: 22,
+                      onTap: () {
+                        // Message for the Event
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => (InboxPage(
+                                uid: widget.event.uid,
+                                eventAttached: widget.event)),
+                          ),
+                        );
+                      },
+                    )
+                  : Button(
+                      text: 'Modifier',
+                      height: 45,
+                      width: 150,
+                      fontsize: 16,
+                      fontColor: Colors.black,
+                      color: Colors.white,
+                      isBordered: true,
+                      prefixIcon: Icons.edit,
+                      prefixIconColor: Colors.black,
+                      prefixIconSize: 22,
+                      onTap: () {
+                        // Edit Event here !
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => (CreateOrUpdateEventPage(
+                              event: widget.event,
+                            )),
+                          ),
+                        );
+                        ;
+                      },
+                    ),
+
+              const SizedBox(width: 14),
+
+              // REMINDER BUTTON
+              Button(
+                text: widget.reminderDate == null ? 'Me rappeler' : 'Rappel',
+                height: 45,
+                width: 150,
+                fontsize: 16,
+                fontColor: Colors.white,
+                color: kSecondColor,
+                prefixIcon: widget.reminderDate == null
+                    ? Icons.timer_outlined
+                    : Icons.done,
+                prefixIconColor: Colors.white,
+                prefixIconSize: 22,
+                onTap: () async {
+                  // Set a reminder to an Event
+
+                  Duration? selectedDuration = await showModalBottomSheet(
+                      context: context,
+                      isDismissible: true,
+                      enableDrag: true,
+                      isScrollControlled: true,
+                      builder: (context) => ReminderSelector());
+
+                  // Substract SelectedDuration from Event Time
+                  // TO DO
+
+                  if (selectedDuration != null) {
+                    setState(() {
+                      widget.reminderDate =
+                          DateTime.now().subtract(selectedDuration);
+                      debugPrint(
+                          'Reminder is setted at: ${widget.reminderDate}');
+                    });
+                  }
+                  if (selectedDuration == null) {
+                    setState(() {
+                      widget.reminderDate = null;
+                      debugPrint(
+                          'Reminder is setted at: ${widget.reminderDate}');
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+
+          // Event Info
+          const SizedBox(height: 20),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Event Date
+              EventInfoRow(
+                icon: FontAwesomeIcons.calendar,
+                label: DateFormat('EEE, d MMM yyyy', 'fr_Fr')
+                    .format(widget.event.startDateTime),
+                type: 'date',
+              ),
+
+              // Event Time
+              EventInfoRow(
+                icon: FontAwesomeIcons.clock,
+                label:
+                    '${DateFormat('HH:mm', 'fr_Fr').format(widget.event.startDateTime)} à ${DateFormat('HH:mm', 'fr_Fr').format(widget.event.endDateTime)}',
+                type: 'time',
+              ),
+
+              // Event Location
+              widget.event.location.isNotEmpty
+                  ? EventInfoRow(
+                      icon: FontAwesomeIcons.locationDot,
+                      label: widget.event.location,
+                      type: 'location',
+                    )
+                  : Container(),
+
+              // Event Link
+              widget.event.link.isNotEmpty
+                  ? InkWell(
+                      onTap: () async {
+                        final Uri url = Uri.parse(widget.event.link);
+
+                        Uri urlToLaunch = Uri.parse(widget.event.link);
+
+                        if (!widget.event.link.startsWith("http://") &&
+                            !widget.event.link.startsWith("https://")) {
+                          urlToLaunch =
+                              Uri.parse("http://${widget.event.link}");
+                        }
+
+                        if (!await launchUrl(urlToLaunch)) {
+                          showSnackbar(
+                              context, 'Impossible de lancer cette url', null);
+                          throw 'Could not launch $urlToLaunch';
+                        }
+                      },
+                      child: EventInfoRow(
+                        icon: FontAwesomeIcons.link,
+                        label: widget.event.link,
+                        type: 'link',
+                      ),
+                    )
+                  : Container(),
+
+              // Event User Poster
+              Padding(
+                padding: const EdgeInsets.only(top: 15),
+                child: buildAvatarAndUsername(uidPoster: widget.event.uid),
+              ),
+
+              // Event Descrtiption
+              widget.event.caption.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: Text(
+                        widget.event.caption,
+                        style: const TextStyle(
+                            fontSize: 15, color: Colors.black87),
+                      ),
+                    )
+                  : Container(),
+
+              // Event CreatedAt
+              Padding(
+                padding: const EdgeInsets.only(top: 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // getEventStatus(widget.event.status),
+                    // SizedBox(
+                    //   width: 7,
+                    // ),
+                    Text(
+                      'Crée ${(() {
+                        timeago.setLocaleMessages('fr', timeago.FrMessages());
+                        return timeago.format(widget.event.createdAt,
+                            locale: 'fr');
+                      }())}',
+                      style:
+                          TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          )
-        : Column(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Event Trailing
-                  event.trailing.isEmpty
-                      ? CircleAvatar(
-                          radius: 70,
-                          backgroundImage: AssetImage(
-                              'assets/images/event_default_cover.png'),
-                        )
-                      : CircleAvatar(
-                          radius: 70,
-                          backgroundImage: FileImage(File(event.trailing)),
-                        ),
-
-                  // Event Name
-                  SizedBox(height: 20),
-                  Text(
-                    '${event.title}',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-
-                  // Event Action Button
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // MESSAGE BUTTON OR EDIT EVENT BUTTON
-                      event.uid != myId.toString()
-                          ? Button(
-                              text: 'Message',
-                              height: 45,
-                              width: 150,
-                              fontsize: 16,
-                              fontColor: Colors.black,
-                              color: Colors.white,
-                              isBordered: true,
-                              prefixIcon: FontAwesomeIcons.message,
-                              prefixIconColor: Colors.black,
-                              prefixIconSize: 22,
-                              onTap: () {
-                                // Message for the Event
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => (InboxPage(
-                                        uid: event.uid,
-                                        eventIdAttached: event.eventId)),
-                                  ),
-                                );
-                              },
-                            )
-                          : Button(
-                              text: 'Modifier',
-                              height: 40,
-                              width: 150,
-                              fontsize: 16,
-                              fontColor: Colors.black,
-                              color: Colors.white,
-                              isBordered: true,
-                              prefixIcon: Icons.edit,
-                              prefixIconColor: Colors.black,
-                              prefixIconSize: 22,
-                              onTap: () {
-                                // Edit Contact here !
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => (CreateOrUpdateEventPage(
-                                      event: event,
-                                    )),
-                                  ),
-                                );
-                                ;
-                              },
-                            ),
-
-                      SizedBox(width: 14),
-
-                      // REMINDER BUTTON
-                      Button(
-                        text: widget.reminderDate == null
-                            ? 'Me rappeler'
-                            : 'Rappel',
-                        height: 45,
-                        width: 150,
-                        fontsize: 16,
-                        fontColor: Colors.white,
-                        color: kSecondColor,
-                        prefixIcon: widget.reminderDate == null
-                            ? Icons.timer_outlined
-                            : Icons.done,
-                        prefixIconColor: Colors.white,
-                        prefixIconSize: 22,
-                        onTap: () async {
-                          // Set a reminder to an Event
-
-                          Duration? selectedDuration =
-                              await showModalBottomSheet(
-                                  context: context,
-                                  isDismissible: true,
-                                  enableDrag: true,
-                                  isScrollControlled: true,
-                                  builder: (context) => ReminderSelector());
-
-                          // Substract SelectedDuration from Event Time
-                          // TO DO
-
-                          if (selectedDuration != null) {
-                            setState(() {
-                              widget.reminderDate =
-                                  DateTime.now().subtract(selectedDuration);
-                              print(
-                                  'Reminder is setted at: ${widget.reminderDate}');
-                            });
-                          }
-                          if (selectedDuration == null) {
-                            setState(() {
-                              widget.reminderDate = null;
-                              print(
-                                  'Reminder is setted at: ${widget.reminderDate}');
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-
-                  // Event Info
-                  SizedBox(height: 20),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Event Date
-                      EventInfoRow(
-                        icon: FontAwesomeIcons.calendar,
-                        label:
-                            '${DateFormat('EEE, d MMM yyyy', 'fr_Fr').format(event.startDateTime)}',
-                        type: 'date',
-                      ),
-
-                      // Event Time
-                      EventInfoRow(
-                        icon: FontAwesomeIcons.clock,
-                        label:
-                            '${DateFormat('hh:mm', 'fr_Fr').format(event.startDateTime)} à ${DateFormat('hh:mm', 'fr_Fr').format(event.endDateTime)}',
-                        type: 'time',
-                      ),
-
-                      // Event Location
-                      EventInfoRow(
-                        icon: FontAwesomeIcons.locationDot,
-                        label: '${event.location}',
-                        type: 'location',
-                      ),
-
-                      // Event Link
-                      InkWell(
-                        onTap: () async {
-                          final Uri _url = Uri.parse('${event.link}');
-
-                          if (!await launchUrl(_url)) {
-                            throw 'Could not launch $_url';
-                          }
-                        },
-                        child: EventInfoRow(
-                          icon: FontAwesomeIcons.link,
-                          label: '${event.link}',
-                          type: 'link',
-                        ),
-                      ),
-
-                      // Event User Poster
-                      Padding(
-                        padding: EdgeInsets.only(top: 15),
-                        child: userposterheader(
-                            uid: event.uid,
-                            profilepic: 'assets/images/avatar 6.jpg',
-                            radius: 15,
-                            username: '${event.uid}'),
-                      ),
-
-                      // Event Descrtiption
-                      Padding(
-                        padding: const EdgeInsets.only(top: 15),
-                        child: Text(
-                          '${event.caption}',
-                          style: TextStyle(fontSize: 15, color: Colors.black87),
-                        ),
-                      ),
-
-                      // Event CreatedAt
-                      Padding(
-                        padding: const EdgeInsets.only(top: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            getEventStatus(event.status),
-                            SizedBox(
-                              width: 7,
-                            ),
-                            Text(
-                              '${timeago.format(event.createdAt, locale: 'fr')}',
-                              style: TextStyle(
-                                  fontSize: 15, color: Colors.grey.shade600),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
             ],
-          );
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -332,7 +322,7 @@ class EventInfoRow extends StatelessWidget {
             size: 18,
             color: Colors.grey.shade600,
           ),
-          SizedBox(
+          const SizedBox(
             width: 15,
           ),
           getLabelData(type)
