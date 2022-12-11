@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/contact.dart';
 import 'package:wesh/pages/in.pages/create_or_update_contactpage.dart';
 import 'package:wesh/utils/constants.dart';
@@ -30,21 +32,22 @@ class _ContactsPageState extends State<PeoplePage> {
       length: 3,
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
+        appBar: MorphingAppBar(
+          heroTag: 'peoplePageAppBar',
           backgroundColor: Colors.white,
           titleSpacing: 0,
           elevation: 0,
           leading: IconButton(
-            splashRadius: 25,
+            splashRadius: 0.06.sw,
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_ios_rounded,
               color: Colors.black,
             ),
           ),
-          title: Text(
+          title: const Text(
             'Personnes',
             style: TextStyle(color: Colors.black),
           ),
@@ -55,12 +58,12 @@ class _ContactsPageState extends State<PeoplePage> {
                 //
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  SwipeablePageRoute(
                     builder: (_) => (CreateOrUpdateContactPage()),
                   ),
                 );
               },
-              icon: Icon(
+              icon: const Icon(
                 Icons.person_add,
                 color: Colors.black,
               ),

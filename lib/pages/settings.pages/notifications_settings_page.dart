@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/user.dart' as UserModel;
 import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
@@ -16,8 +20,7 @@ class NotificationsSettingsPage extends StatefulWidget {
   const NotificationsSettingsPage({super.key, required this.user});
 
   @override
-  State<NotificationsSettingsPage> createState() =>
-      _NotificationsSettingsPageState();
+  State<NotificationsSettingsPage> createState() => _NotificationsSettingsPageState();
 }
 
 class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
@@ -31,14 +34,12 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     // init user notifications settings
     setState(() {
       showEventsNotifications = widget.user.settingShowEventsNotifications;
-      showRemindersNotifications =
-          widget.user.settingShowRemindersNotifications;
+      showRemindersNotifications = widget.user.settingShowRemindersNotifications;
       showStoriesNotifications = widget.user.settingShowStoriesNotifications;
       showMessagesNotifications = widget.user.settingShowMessagesNotifications;
     });
@@ -68,8 +69,8 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 13.sp, color: Colors.white),
       ),
     );
 
@@ -84,9 +85,8 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
       };
 
       // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateUserWithSpecificFields(
-          context, widget.user.id, userFieldToUpdate);
-      debugPrint('Profile updated (with Notifications Preferences)');
+      result = await FirestoreMethods().updateUserWithSpecificFields(context, widget.user.id, userFieldToUpdate);
+      log('Profile updated (with Notifications Preferences)');
     }
 
     UserModel.User? user =
@@ -110,187 +110,208 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        titleSpacing: 0,
-        elevation: 0,
-        leading: IconButton(
-          splashRadius: 25,
-          onPressed: () async {
-            //
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
+    return Stack(
+      children: [
+        // MAIN CONTENT
+        Scaffold(
+          backgroundColor: Colors.white,
+          appBar: MorphingAppBar(
+            heroTag: 'notificationsSettingsPageAppBar',
+            backgroundColor: Colors.white,
+            titleSpacing: 0,
+            elevation: 0,
+            leading: IconButton(
+              splashRadius: 0.06.sw,
+              onPressed: () async {
+                //
+                Navigator.pop(context);
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_rounded,
+                color: Colors.black,
+              ),
+            ),
+            title: const Text(
+              'Notifications',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 27,
+                  ),
+
+                  // Enable or Disable all notifications
+                  SwitchListTile(
+                    title: Text('Toutes les notifications', style: TextStyle(fontSize: 15.sp)),
+                    subtitle: Text('Afficher toutes les notifications', style: TextStyle(fontSize: 13.sp)),
+                    value: showAllNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showAllNotifications = value;
+                        showEventsNotifications = value;
+                        showRemindersNotifications = value;
+                        showStoriesNotifications = value;
+                        showMessagesNotifications = value;
+                      });
+                    },
+                    secondary: const Icon(FontAwesomeIcons.bell),
+                  ),
+
+                  // Divider
+                  const SizedBox(height: 10),
+                  const SizedBox(
+                    width: double.infinity,
+                    child: Divider(
+                      height: 1,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  // Enable or Disable Events notifications
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SwitchListTile(
+                    title: Text('Evènements', style: TextStyle(fontSize: 15.sp)),
+                    subtitle: Text(
+                      'Afficher les notifications sur la création d\'évènements',
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                    value: showEventsNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showEventsNotifications = value;
+                      });
+                      updateShowAllNotifications();
+                    },
+                    secondary: const Icon(FontAwesomeIcons.splotch),
+                  ),
+
+                  // Enable or Disable Reminders notifications
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SwitchListTile(
+                    title: Text('Rappel', style: TextStyle(fontSize: 15.sp)),
+                    subtitle: Text('Afficher les notifications sur vos différents rappels',
+                        style: TextStyle(fontSize: 13.sp)),
+                    value: showRemindersNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showRemindersNotifications = value;
+                      });
+                      updateShowAllNotifications();
+                    },
+                    secondary: const Icon(FontAwesomeIcons.clockRotateLeft),
+                  ),
+
+                  // Enable or Disable Stories notifications
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SwitchListTile(
+                    title: Text('Stories', style: TextStyle(fontSize: 15.sp)),
+                    subtitle: Text('Afficher les notifications sur les stories', style: TextStyle(fontSize: 13.sp)),
+                    value: showStoriesNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showStoriesNotifications = value;
+                      });
+                      updateShowAllNotifications();
+                    },
+                    secondary: const Icon(FontAwesomeIcons.circleNotch),
+                  ),
+
+                  // Divider
+                  const SizedBox(height: 10),
+                  const SizedBox(
+                    width: double.infinity,
+                    child: Divider(
+                      height: 1,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  // Enable or Disable Messages notifications
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SwitchListTile(
+                    title: Text('Messages', style: TextStyle(fontSize: 15.sp)),
+                    subtitle:
+                        Text('Afficher les notifications sur les messages entrants', style: TextStyle(fontSize: 13.sp)),
+                    value: showMessagesNotifications,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showMessagesNotifications = value;
+                      });
+                      updateShowAllNotifications();
+                    },
+                    secondary: const Icon(FontAwesomeIcons.message),
+                  ),
+
+                  const SizedBox(
+                    height: 80,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          floatingActionButton:
+              // [ACTION BUTTON] Add Event Button
+              FloatingActionButton(
+            foregroundColor: Colors.white,
+            backgroundColor: kSecondColor,
+            child: Transform.translate(
+                offset: const Offset(1, -1),
+                child: const Icon(
+                  Icons.done,
+                  color: Colors.white,
+                )),
+            onPressed: () async {
+              // VIBRATE
+              triggerVibration();
+
+              // Update user notifications settings
+              setState(() {
+                isLoading = true;
+              });
+              var isConnected = await InternetConnection().isConnected(context);
+              if (mounted) {
+                setState(() {
+                  isLoading = false;
+                });
+              }
+              if (isConnected) {
+                log("Has connection : $isConnected");
+                // CONTINUE
+                updateProfileWithNotificationsPreferences();
+              } else {
+                log("Has connection : $isConnected");
+                // ignore: use_build_context_synchronously
+                showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
+              }
+            },
           ),
         ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 27,
-              ),
 
-              // Enable or Disable all notifications
-              SwitchListTile(
-                title: const Text('Toutes les notifications'),
-                subtitle: const Text('Afficher toutes les notifications'),
-                value: showAllNotifications,
-                onChanged: (bool value) {
-                  setState(() {
-                    showAllNotifications = value;
-                    showEventsNotifications = value;
-                    showRemindersNotifications = value;
-                    showStoriesNotifications = value;
-                    showMessagesNotifications = value;
-                  });
-                },
-                secondary: const Icon(FontAwesomeIcons.bell),
-              ),
-
-              // Divider
-              const SizedBox(height: 10),
-              const SizedBox(
+        // LOADER
+        isLoading
+            ? Container(
                 width: double.infinity,
-                child: Divider(
-                  height: 1,
-                  color: Colors.grey,
+                height: double.infinity,
+                color: Colors.black.withOpacity(0.4),
+                child: const Center(
+                  child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
                 ),
-              ),
-
-              // Enable or Disable Events notifications
-              const SizedBox(
-                height: 20,
-              ),
-              SwitchListTile(
-                title: const Text('Evènements'),
-                subtitle: const Text(
-                    'Afficher les notifications sur la création d\'évènements'),
-                value: showEventsNotifications,
-                onChanged: (bool value) {
-                  setState(() {
-                    showEventsNotifications = value;
-                  });
-                  updateShowAllNotifications();
-                },
-                secondary: const Icon(FontAwesomeIcons.splotch),
-              ),
-
-              // Enable or Disable Reminders notifications
-              const SizedBox(
-                height: 20,
-              ),
-              SwitchListTile(
-                title: const Text('Rappel'),
-                subtitle: const Text(
-                    'Afficher les notifications sur vos différents rappels'),
-                value: showRemindersNotifications,
-                onChanged: (bool value) {
-                  setState(() {
-                    showRemindersNotifications = value;
-                  });
-                  updateShowAllNotifications();
-                },
-                secondary: const Icon(FontAwesomeIcons.clockRotateLeft),
-              ),
-
-              // Enable or Disable Stories notifications
-              const SizedBox(
-                height: 20,
-              ),
-              SwitchListTile(
-                title: const Text('Stories'),
-                subtitle:
-                    const Text('Afficher les notifications sur les stories'),
-                value: showStoriesNotifications,
-                onChanged: (bool value) {
-                  setState(() {
-                    showStoriesNotifications = value;
-                  });
-                  updateShowAllNotifications();
-                },
-                secondary: const Icon(FontAwesomeIcons.circleNotch),
-              ),
-
-              // Divider
-              const SizedBox(height: 10),
-              const SizedBox(
-                width: double.infinity,
-                child: Divider(
-                  height: 1,
-                  color: Colors.grey,
-                ),
-              ),
-
-              // Enable or Disable Messages notifications
-              const SizedBox(
-                height: 20,
-              ),
-              SwitchListTile(
-                title: const Text('Messages'),
-                subtitle: const Text(
-                    'Afficher les notifications sur les messages entrants'),
-                value: showMessagesNotifications,
-                onChanged: (bool value) {
-                  setState(() {
-                    showMessagesNotifications = value;
-                  });
-                  updateShowAllNotifications();
-                },
-                secondary: const Icon(FontAwesomeIcons.message),
-              ),
-
-              const SizedBox(
-                height: 80,
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton:
-          // [ACTION BUTTON] Add Event Button
-          FloatingActionButton(
-        foregroundColor: Colors.white,
-        backgroundColor: kSecondColor,
-        child: Transform.translate(
-            offset: const Offset(1, -1),
-            child: const Icon(
-              Icons.done,
-              color: Colors.white,
-            )),
-        onPressed: () async {
-          // Update user notifications settings
-          setState(() {
-            isLoading = true;
-          });
-          var isConnected = await InternetConnection().isConnected(context);
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-            });
-          }
-          if (isConnected) {
-            debugPrint("Has connection : $isConnected");
-            // CONTINUE
-            updateProfileWithNotificationsPreferences();
-          } else {
-            debugPrint("Has connection : $isConnected");
-            // ignore: use_build_context_synchronously
-            showSnackbar(
-                context, 'Veuillez vérifier votre connexion internet', null);
-          }
-        },
-      ),
+              )
+            : Container(),
+      ],
     );
   }
 }

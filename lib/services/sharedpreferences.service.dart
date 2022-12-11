@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserSimplePreferences {
   static late SharedPreferences _preferences;
 
+  static const _currentActivePageKey = 'currentActivePage';
   static const _showIntroductionPagesKey = 'showIntroductionPages';
   static const _usernameKey = 'username';
   static const _emailKey = 'email';
@@ -14,22 +15,25 @@ class UserSimplePreferences {
   static const _nameKey = 'name';
   static const _birthday = 'birthday';
   //
-  static const _redirectToAddEmailandPasswordPage =
-      'redirectToAddEmailandPasswordPage';
+  static const _redirectToAddEmailandPasswordPage = 'redirectToAddEmailandPasswordPage';
   static const _redirectToAddEmailPagekey = '_redirectToAddEmailPageValue';
-  static const _redirectToUpdatePasswordPagekey =
-      '_redirectToUpdatePasswordPageValue';
+  static const _redirectToUpdatePasswordPagekey = '_redirectToUpdatePasswordPageValue';
 
-  static Future init() async =>
-      _preferences = await SharedPreferences.getInstance();
+  static Future init() async => _preferences = await SharedPreferences.getInstance();
+
+  // Current Active Page : Handler
+  static Future setCurrentActivePageHandler(String value) async {
+    _preferences.setString(_currentActivePageKey, value);
+  }
+
+  static String? getCurrentActivePageHandler() => _preferences.getString(_currentActivePageKey);
 
   // Introduction Pages : Handler
   static Future setShowIntroductionPagesHandler(bool value) async {
     _preferences.setBool(_showIntroductionPagesKey, value);
   }
 
-  static bool? getShowIntroductionPagesHandler() =>
-      _preferences.getBool(_showIntroductionPagesKey);
+  static bool? getShowIntroductionPagesHandler() => _preferences.getBool(_showIntroductionPagesKey);
 
   // Username
   static Future setUsername(String username) async {
@@ -71,8 +75,7 @@ class UserSimplePreferences {
     _preferences.setString(_phoneCodeVerificationKey, code);
   }
 
-  static String? getPhoneCodeVerification() =>
-      _preferences.getString(_phoneCodeVerificationKey);
+  static String? getPhoneCodeVerification() => _preferences.getString(_phoneCodeVerificationKey);
 
   // Set country
   static Future setCountry(String country) async {
@@ -100,22 +103,19 @@ class UserSimplePreferences {
     _preferences.setBool(_redirectToAddEmailandPasswordPage, value);
   }
 
-  static bool? getRedirectToAddEmailandPasswordPageValue() =>
-      _preferences.getBool(_redirectToAddEmailandPasswordPage);
+  static bool? getRedirectToAddEmailandPasswordPageValue() => _preferences.getBool(_redirectToAddEmailandPasswordPage);
 
   // Redirect To Add Email Page
   static Future setRedirectToAddEmailPageValue(bool value) async {
     _preferences.setBool(_redirectToAddEmailPagekey, value);
   }
 
-  static bool? getRedirectToAddEmailPageValue() =>
-      _preferences.getBool(_redirectToAddEmailPagekey);
+  static bool? getRedirectToAddEmailPageValue() => _preferences.getBool(_redirectToAddEmailPagekey);
 
   // Redirect To Update Password Page
   static Future setRedirectToUpdatePasswordPageValue(bool value) async {
     _preferences.setBool(_redirectToUpdatePasswordPagekey, value);
   }
 
-  static bool? getRedirectToUpdatePasswordPageValue() =>
-      _preferences.getBool(_redirectToUpdatePasswordPagekey);
+  static bool? getRedirectToUpdatePasswordPageValue() => _preferences.getBool(_redirectToUpdatePasswordPagekey);
 }

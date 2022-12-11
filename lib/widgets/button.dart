@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class Button extends StatefulWidget {
   final String text;
@@ -8,6 +9,7 @@ class Button extends StatefulWidget {
   final Color? fontColor;
   final bool? isBordered;
   final Color color;
+  final bool? prefixIsLoading;
   final IconData? prefixIcon;
   final Color? prefixIconColor;
   final double? prefixIconSize;
@@ -32,6 +34,7 @@ class Button extends StatefulWidget {
     this.suffixIconColor,
     this.prefixIconSize,
     this.suffixIconSize,
+    this.prefixIsLoading,
   });
 
   @override
@@ -77,13 +80,12 @@ class _ButtonState extends State<Button> {
           children: [
             Container(
               height: widget.height,
-              // width: width,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                   color: widget.color,
                   borderRadius: BorderRadius.circular(50),
                   border: widget.isBordered != null
-                      ? Border.all(color: Colors.grey.shade200, width: 2)
+                      ? Border.all(color: Colors.grey.shade300, width: 1)
                       : Border.all(color: Colors.white, width: 0)),
               child: Center(
                 child: FittedBox(
@@ -92,43 +94,45 @@ class _ButtonState extends State<Button> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     textBaseline: TextBaseline.ideographic,
                     children: [
-                      widget.prefixIcon != null
-                          ? Icon(
-                              widget.prefixIcon,
-                              size: widget.prefixIconSize != null
-                                  ? widget.prefixIconSize
-                                  : 16,
-                              color: widget.prefixIconColor != null
-                                  ? widget.prefixIconColor
-                                  : Colors.white,
+                      widget.prefixIsLoading != null && widget.prefixIsLoading == true
+                          ? FittedBox(
+                              child: SizedBox(
+                                width: 0.05.sw,
+                                height: 0.05.sw,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: widget.prefixIconColor ?? Colors.white,
+                                ),
+                              ),
                             )
-                          : Container(),
-                      SizedBox(
-                        width: 7,
+                          : widget.prefixIcon != null
+                              ? Icon(
+                                  widget.prefixIcon,
+                                  size: widget.prefixIconSize != null ? widget.prefixIconSize!.sp : 14.sp,
+                                  color: widget.prefixIconColor ?? Colors.white,
+                                )
+                              : Container(),
+                      const SizedBox(
+                        width: 5,
                       ),
                       Text(
                         widget.text,
                         style: TextStyle(
-                            color: widget.fontColor != null
-                                ? widget.fontColor
-                                : Colors.white,
-                            fontSize:
-                                widget.fontsize != null ? widget.fontsize : 16,
+                            color: widget.fontColor ?? Colors.white,
+                            fontSize: widget.fontsize ?? 14.sp,
                             fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(
-                        width: 7,
-                      ),
+                      widget.suffixIcon != null
+                          ? const SizedBox(
+                              width: 5,
+                            )
+                          : Container(),
                       widget.suffixIcon != null
                           ? Icon(
                               widget.suffixIcon,
-                              size: widget.suffixIconSize != null
-                                  ? widget.suffixIconSize
-                                  : 16,
+                              size: widget.suffixIconSize ?? 14.sp,
                               // ignore: prefer_if_null_operators
-                              color: widget.suffixIconColor != null
-                                  ? widget.suffixIconColor
-                                  : Colors.white,
+                              color: widget.suffixIconColor != null ? widget.suffixIconColor : Colors.white,
                             )
                           : Container(),
                     ],

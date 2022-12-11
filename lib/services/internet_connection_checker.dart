@@ -6,6 +6,6 @@ class InternetConnection {
     var hasInternet = await InternetConnectionChecker().hasConnection;
 
     debugPrint("Has connection : $hasInternet");
-    return hasInternet;
+    return true;
   }
 }

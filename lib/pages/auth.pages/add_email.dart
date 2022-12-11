@@ -1,6 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../services/sharedpreferences.service.dart';
@@ -44,8 +46,8 @@ class _AddEmailPageState extends State<AddEmailPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -60,16 +62,14 @@ class _AddEmailPageState extends State<AddEmailPage> {
 
       if (email != null && !EmailValidator.validate(email)) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Veuillez entrer une adresse email valide', null);
+        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
       bool isEmailUsed = await checkIfEmailInUse(context, emailController.text);
 
       if (isEmailUsed == true) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Cette adresse email est déjà utilisée', null);
+        return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
       }
 
       // IF ALL CHECKERS VALIDATED : [CONTINUE]
@@ -89,11 +89,12 @@ class _AddEmailPageState extends State<AddEmailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'addEmailPageAppBar',
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             // PUSH BACK STEPS OR POP SCREEN
             Navigator.pop(context);
@@ -114,55 +115,57 @@ class _AddEmailPageState extends State<AddEmailPage> {
                   color: kSecondColor,
                 )
               : Container(),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: ListView(
-                shrinkWrap: true,
-                reverse: true,
-                children: [
-                  const Text(
-                    'Ajoutez votre email',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          Center(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+              shrinkWrap: true,
+              reverse: true,
+              children: [
+                Text(
+                  'Ajoutez votre email',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22.sp,
                   ),
-                  const SizedBox(
-                    height: 40,
-                  ),
+                ),
 
-                  // Email Field
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: TextformContainer(
-                      child: TextFormField(
-                        controller: emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                            hintText: 'Email',
-                            contentPadding: EdgeInsets.all(20),
-                            border: InputBorder.none),
+                SizedBox(height: 0.12.sw),
+
+                // Email Field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: TextformContainer(
+                    child: TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                        contentPadding: EdgeInsets.all(0.04.sw),
+                        hintText: 'Email',
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    height: 30,
-                  ),
+                ),
+                const SizedBox(
+                  height: 30,
+                ),
 
-                  // Button Action : Add email
-                  Button(
-                    height: 50,
-                    width: double.infinity,
-                    text: 'Ajouter',
-                    color: kSecondColor,
-                    onTap: () async {
-                      checkEmailandUpdateProvider(context);
-                    },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  )
-                ].reversed.toList(),
-              ),
+                // Button Action : Add email
+                Button(
+                  height: 0.12.sw,
+                  width: double.infinity,
+                  text: 'Ajouter',
+                  color: kSecondColor,
+                  onTap: () async {
+                    checkEmailandUpdateProvider(context);
+                  },
+                ),
+                const SizedBox(
+                  height: 20,
+                )
+              ].reversed.toList(),
             ),
           ),
         ],

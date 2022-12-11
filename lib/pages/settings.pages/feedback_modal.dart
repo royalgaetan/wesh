@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/feedback.dart';
@@ -19,8 +20,7 @@ class FeedBackModal extends StatefulWidget {
 }
 
 class _FeedBackModalState extends State<FeedBackModal> {
-  ValueNotifier<UserModel.User?> currentUser =
-      ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
   TextEditingController textController = TextEditingController();
   PageController pageController = PageController();
   bool isLoading = false;
@@ -41,8 +41,8 @@ class _FeedBackModalState extends State<FeedBackModal> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -75,8 +75,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
       bool result = await sendFeedBack();
       if (result && reactionTitle.isNotEmpty && reactionEmoji.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        showSnackbar(
-            context, 'Votre feedback à bien été envoyé !', kSuccessColor);
+        showSnackbar(context, 'Votre feedback à bien été envoyé !', kSuccessColor);
       }
     }
 
@@ -113,19 +112,16 @@ class _FeedBackModalState extends State<FeedBackModal> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const SizedBox(height: 40),
-                            const Text(
+                            Text(
                               'Comment trouvez-vous $appName ?',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 19),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.sp),
                             ),
                             const SizedBox(height: 20),
                             FittedBox(
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: feedbackAvailableTypeList
-                                    .map((feedbackReaction) {
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: feedbackAvailableTypeList.map((feedbackReaction) {
                                   return InkWell(
                                     onTap: () {
                                       // Go to Step 2: Add feedback
@@ -134,9 +130,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
                                         reactionEmoji = feedbackReaction.emoji;
                                       });
                                       pageController.nextPage(
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          curve: Curves.easeIn);
+                                          duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
                                     },
                                     borderRadius: BorderRadius.circular(30),
                                     child: Padding(
@@ -146,18 +140,14 @@ class _FeedBackModalState extends State<FeedBackModal> {
                                           CircleAvatar(
                                             radius: 30,
                                             backgroundColor: kGreyColor,
-                                            child: Text(
-                                              feedbackReaction.emoji,
-                                              style:
-                                                  const TextStyle(fontSize: 38),
-                                            ),
+                                            backgroundImage: AssetImage(
+                                                'assets/images/emoji.reactions/${feedbackReaction.index}.png'),
                                           ),
                                           const SizedBox(height: 5),
                                           FittedBox(
                                             child: Text(
                                               feedbackReaction.title,
-                                              style: const TextStyle(
-                                                  color: Colors.black54),
+                                              style: const TextStyle(color: Colors.black54),
                                             ),
                                           )
                                         ],
@@ -178,14 +168,12 @@ class _FeedBackModalState extends State<FeedBackModal> {
                               padding: const EdgeInsets.only(top: 20),
                               child: buildTextFormField(
                                 controller: textController,
-                                hintText:
-                                    'Quelle fonctionnalité souhaitez-vous voir dans $appName ?',
+                                hintText: 'Quelle fonctionnalité souhaitez-vous voir dans $appName ?',
                                 icon: const Icon(Icons.auto_awesome_rounded),
+                                fontSize: 14.sp,
                                 maxLines: 4,
                                 maxLength: 500,
-                                inputBorder: const UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: kSecondColor)),
+                                inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
                                 validateFn: (text) {
                                   return null;
                                 },
@@ -199,22 +187,18 @@ class _FeedBackModalState extends State<FeedBackModal> {
 
                             FittedBox(
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 10, bottom: 5),
+                                padding: const EdgeInsets.only(top: 10, bottom: 5),
                                 child: Row(
                                   children: [
                                     //
                                     CupertinoButton.filled(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 30, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 3),
                                       borderRadius: BorderRadius.circular(20),
                                       child: Row(
                                         children: const [
                                           Text(
                                             'Envoyer',
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w500),
+                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                                           ),
                                         ],
                                       ),
@@ -226,46 +210,35 @@ class _FeedBackModalState extends State<FeedBackModal> {
                                           context: context,
                                           barrierDismissible: false,
                                           builder: (_) => const Center(
-                                            child: CupertinoActivityIndicator(
-                                                radius: 16,
-                                                color: Colors.white),
+                                            child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
                                           ),
                                         );
-                                        var isConnected =
-                                            await InternetConnection()
-                                                .isConnected(context);
+                                        var isConnected = await InternetConnection().isConnected(context);
                                         //  Dismiss Loader Modal
+                                        // ignore: use_build_context_synchronously
                                         Navigator.pop(context);
 
                                         if (isConnected) {
-                                          debugPrint(
-                                              "Has connection : $isConnected");
+                                          debugPrint("Has connection : $isConnected");
                                           // CONTINUE
                                           if (textController.text.isNotEmpty) {
                                             bool result = await sendFeedBack();
+                                            // ignore: use_build_context_synchronously
                                             Navigator.pop(context);
                                             if (result) {
                                               // ignore: use_build_context_synchronously
                                               showSnackbar(
-                                                  context,
-                                                  'Votre feedback à bien été envoyé !',
-                                                  kSuccessColor);
+                                                  context, 'Votre feedback à bien été envoyé !', kSuccessColor);
                                             }
                                           } else {
                                             // ignore: use_build_context_synchronously
                                             showSnackbar(
-                                                context,
-                                                'Veuillez entrer quelque chose avant de continuer',
-                                                null);
+                                                context, 'Veuillez entrer quelque chose avant de continuer', null);
                                           }
                                         } else {
-                                          debugPrint(
-                                              "Has connection : $isConnected");
+                                          debugPrint("Has connection : $isConnected");
                                           // ignore: use_build_context_synchronously
-                                          showSnackbar(
-                                              context,
-                                              'Veuillez vérifier votre connexion internet',
-                                              null);
+                                          showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
                                         }
                                       },
                                     ),
@@ -303,15 +276,13 @@ class _FeedBackModalState extends State<FeedBackModal> {
               // Handle error
               debugPrint('error: ${snapshot.error}');
               return const Center(
-                child: Text('Une erreur s\'est produite',
-                    style: TextStyle(color: Colors.white)),
+                child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
               );
             }
 
             // Display CircularProgressIndicator
             return const Center(
-              child:
-                  CupertinoActivityIndicator(color: Colors.white60, radius: 15),
+              child: CupertinoActivityIndicator(color: Colors.white60, radius: 15),
             );
           }),
     );

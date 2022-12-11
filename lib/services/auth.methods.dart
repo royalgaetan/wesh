@@ -5,7 +5,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
@@ -40,10 +42,8 @@ class AuthMethods {
     try {
       var finalValue;
       // Fetch all email number in DB
-      final QuerySnapshot result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
+      final QuerySnapshot result =
+          await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
@@ -72,10 +72,8 @@ class AuthMethods {
     try {
       var finalValue;
       // Fetch all phone numbers in DB
-      final QuerySnapshot result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('phone', isEqualTo: phone)
-          .get();
+      final QuerySnapshot result =
+          await FirebaseFirestore.instance.collection('users').where('phone', isEqualTo: phone).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
@@ -104,10 +102,8 @@ class AuthMethods {
     try {
       var finalValue;
       // Fetch all email number in DB
-      final QuerySnapshot result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('googleID', isEqualTo: googleID)
-          .get();
+      final QuerySnapshot result =
+          await FirebaseFirestore.instance.collection('users').where('googleID', isEqualTo: googleID).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
@@ -136,10 +132,8 @@ class AuthMethods {
     try {
       var finalValue;
       // Fetch all email number in DB
-      final QuerySnapshot result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('facebookID', isEqualTo: facebookID)
-          .get();
+      final QuerySnapshot result =
+          await FirebaseFirestore.instance.collection('users').where('facebookID', isEqualTo: facebookID).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
@@ -173,8 +167,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
     try {
@@ -191,7 +185,7 @@ class AuthMethods {
 
       Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => LoginPage(
               redirectToAddEmailandPasswordPage: false,
               redirectToAddEmailPage: false,
@@ -228,8 +222,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -243,8 +237,7 @@ class AuthMethods {
         // LinkEmail case
         case 'emailLink':
           try {
-            await FirebaseAuth.instance.currentUser
-                ?.unlink(EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD);
+            await FirebaseAuth.instance.currentUser?.unlink(EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD);
 
             showSnackbar(context, 'Adresse email détachée', kSecondColor);
             return true;
@@ -258,8 +251,7 @@ class AuthMethods {
         // Password case
         case 'password':
           try {
-            await FirebaseAuth.instance.currentUser
-                ?.unlink(EmailAuthProvider.PROVIDER_ID);
+            await FirebaseAuth.instance.currentUser?.unlink(EmailAuthProvider.PROVIDER_ID);
 
             bool result = false;
 
@@ -269,10 +261,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty Email)');
 
@@ -288,8 +278,7 @@ class AuthMethods {
         // Phone case
         case 'phone':
           try {
-            await FirebaseAuth.instance.currentUser
-                ?.unlink(PhoneAuthProvider.PROVIDER_ID);
+            await FirebaseAuth.instance.currentUser?.unlink(PhoneAuthProvider.PROVIDER_ID);
 
             bool result = false;
             UserSimplePreferences.setPhoneCodeVerification('');
@@ -300,10 +289,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             debugPrint('Profile updated (with Empty Phone Number)');
 
             showSnackbar(context, 'Numéro de téléphone détaché', kSecondColor);
@@ -320,8 +307,7 @@ class AuthMethods {
         // Google case
         case 'google.com':
           try {
-            await FirebaseAuth.instance.currentUser
-                ?.unlink(GoogleAuthProvider.PROVIDER_ID);
+            await FirebaseAuth.instance.currentUser?.unlink(GoogleAuthProvider.PROVIDER_ID);
 
             GoogleSignIn().disconnect();
 
@@ -333,10 +319,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty googleID)');
 
@@ -354,8 +338,7 @@ class AuthMethods {
         // Facebook case
         case 'facebook.com':
           try {
-            await FirebaseAuth.instance.currentUser
-                ?.unlink(FacebookAuthProvider.PROVIDER_ID);
+            await FirebaseAuth.instance.currentUser?.unlink(FacebookAuthProvider.PROVIDER_ID);
 
             bool result = false;
             // Update current user facebookID [Firestore]
@@ -364,10 +347,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty facebookID)');
 
@@ -390,10 +371,7 @@ class AuthMethods {
     }
     //
     else {
-      showSnackbar(
-          context,
-          'Vous devez garder au moins un moyen d\'accéder à votre compte',
-          null);
+      showSnackbar(context, 'Vous devez garder au moins un moyen d\'accéder à votre compte', null);
       Navigator.of(context).pop();
 
       return false;
@@ -416,10 +394,8 @@ class AuthMethods {
     String? facebookID = UserSimplePreferences.getFacebookId();
 
     String? country = UserSimplePreferences.getCountry();
-    DateTime? birthday =
-        DateTime.tryParse(UserSimplePreferences.getBirthday()!);
-    var ref = FirebaseStorage.instance
-        .ref('profilepictures/default_profile_picture.jpg');
+    DateTime? birthday = DateTime.tryParse(UserSimplePreferences.getBirthday()!);
+    var ref = FirebaseStorage.instance.ref('profilepictures/default_profile_picture.jpg');
     String downloadUrl = await ref.getDownloadURL();
 
     // Create a new user
@@ -452,8 +428,7 @@ class AuthMethods {
     debugPrint('NEW USER: $newUser');
 
     //  Update Firestore
-    await FirestoreMethods()
-        .createUser(context, FirebaseAuth.instance.currentUser!.uid, newUser);
+    await FirestoreMethods().createUser(context, FirebaseAuth.instance.currentUser!.uid, newUser);
 
     // ADD DEFAULT EVENT : BIRTHDAY
 
@@ -470,14 +445,15 @@ class AuthMethods {
       link: '',
       createdAt: DateTime.now(),
       modifiedAt: DateTime.now(),
-      startDateTime: birthday,
-      endDateTime: birthday,
+      eventDurationType: '1DayEvent',
+      eventDurations: [
+        {'date': birthday, 'startTime': '00:00', 'endTime': '23:59', 'isAllTheDay': true}
+      ],
       status: '',
     ).toJson();
 
     //  Update Firestore Event Table
-    await FirestoreMethods().createEvent(
-        context, FirebaseAuth.instance.currentUser!.uid, defaultEventBirthday);
+    await FirestoreMethods().createEvent(context, FirebaseAuth.instance.currentUser!.uid, defaultEventBirthday);
     debugPrint('Default event created: birthday');
   }
 
@@ -486,8 +462,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -521,8 +497,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -550,14 +526,13 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
     try {
-      UserCredential credential = await auth.createUserWithEmailAndPassword(
-          email: email, password: psw);
+      UserCredential credential = await auth.createUserWithEmailAndPassword(email: email, password: psw);
 
       modelingNewUser(
         context: context,
@@ -584,9 +559,7 @@ class AuthMethods {
     await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '$phoneNumber',
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance
-              .signInWithCredential(credential)
-              .then((value) async {
+          await FirebaseAuth.instance.signInWithCredential(credential).then((value) async {
             if (value.user != null) {
               debugPrint('Verif code: $verificationCode');
               // return verificationCode;
@@ -613,8 +586,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -622,9 +595,7 @@ class AuthMethods {
     try {
       await FirebaseAuth.instance
           .signInWithCredential(
-        PhoneAuthProvider.credential(
-            verificationId: UserSimplePreferences.getPhoneCodeVerification()!,
-            smsCode: pin),
+        PhoneAuthProvider.credential(verificationId: UserSimplePreferences.getPhoneCodeVerification()!, smsCode: pin),
       )
           .then(
         (value) async {
@@ -635,11 +606,9 @@ class AuthMethods {
               // Login to existing user
               Navigator.of(context).pop();
 
-              bool isUserExisting =
-                  await checkUserWithPhoneExistenceInDb(phoneNumber);
+              bool isUserExisting = await checkUserWithPhoneExistenceInDb(phoneNumber);
               if (isUserExisting == false) {
-                showSnackbar(
-                    context, 'Aucun compte n\'existe avec numéro...', null);
+                showSnackbar(context, 'Aucun compte n\'existe avec numéro...', null);
                 return false;
               }
               return true;
@@ -647,8 +616,7 @@ class AuthMethods {
               // Sign up : create new user
 
               // Check if any user exists with this phone number
-              bool isUserExisting =
-                  await checkUserExistenceInDb(value.user!.uid);
+              bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
 
               if (isUserExisting == false) {
                 AuthMethods().modelingNewUser(
@@ -656,8 +624,7 @@ class AuthMethods {
                 );
 
                 // Set ShowIntroductionPagesHandler to: true
-                await UserSimplePreferences.setShowIntroductionPagesHandler(
-                    true);
+                await UserSimplePreferences.setShowIntroductionPagesHandler(true);
 
                 Navigator.of(context).pop();
                 return true;
@@ -678,8 +645,7 @@ class AuthMethods {
           showSnackbar(context, 'Code de vérification incorrect', null);
           break;
         case 'invalid-verification-id':
-          showSnackbar(context,
-              'Une erreur s\'est produite lors de la vérification', null);
+          showSnackbar(context, 'Une erreur s\'est produite lors de la vérification', null);
           break;
         default:
           showSnackbar(context, 'Une erreur s\'est produite ', null);
@@ -693,8 +659,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -711,8 +677,7 @@ class AuthMethods {
 
       // Check if any user exists with this Google account
       if (authType == 'login') {
-        bool isUserExisting =
-            await checkUserWithGoogleIDExistenceInDb(googleUser.id);
+        bool isUserExisting = await checkUserWithGoogleIDExistenceInDb(googleUser.id);
         debugPrint('isUserExisting with this Google account : $isUserExisting');
 
         if (isUserExisting == false) {
@@ -723,8 +688,7 @@ class AuthMethods {
         }
       } else if (authType == 'signup') {
         // Check if any user exists with this Google account
-        bool isUserExisting =
-            await checkUserWithGoogleIDExistenceInDb(googleUser.id);
+        bool isUserExisting = await checkUserWithGoogleIDExistenceInDb(googleUser.id);
         debugPrint('isUserExisting with this Google account : $isUserExisting');
 
         if (isUserExisting == true) {
@@ -753,18 +717,13 @@ class AuthMethods {
               // Login to existing user
               Navigator.of(context).pop();
 
-              bool isUserExisting =
-                  await checkUserExistenceInDb(value.user!.uid);
+              bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
               if (isUserExisting == false) {
-                return [
-                  false,
-                  'Aucun compte n\'existe avec cette adresse Google...'
-                ];
+                return [false, 'Aucun compte n\'existe avec cette adresse Google...'];
               }
               return [true];
             } else if (authType == 'signup') {
-              bool isUserExisting =
-                  await checkUserExistenceInDb(value.user!.uid);
+              bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
               if (isUserExisting == false) {
                 // Sign up : create new user
 
@@ -777,8 +736,7 @@ class AuthMethods {
                 );
 
                 // Set ShowIntroductionPagesHandler to: true
-                await UserSimplePreferences.setShowIntroductionPagesHandler(
-                    true);
+                await UserSimplePreferences.setShowIntroductionPagesHandler(true);
 
                 Navigator.of(context).pop();
                 return [true];
@@ -802,8 +760,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -820,8 +778,7 @@ class AuthMethods {
         // you are logged
         final AccessToken accessToken = result.accessToken!;
 
-        final facebookAuthCredential =
-            FacebookAuthProvider.credential(accessToken.token);
+        final facebookAuthCredential = FacebookAuthProvider.credential(accessToken.token);
 
         // Check if any user exists with this Facebook account
         if (authType == 'login') {
@@ -829,10 +786,8 @@ class AuthMethods {
             fields: "id",
           );
 
-          bool isUserExisting =
-              await checkUserWithFacebookIDExistenceInDb(userData['id']);
-          debugPrint(
-              'isUserExisting with this Facebook account : $isUserExisting');
+          bool isUserExisting = await checkUserWithFacebookIDExistenceInDb(userData['id']);
+          debugPrint('isUserExisting with this Facebook account : $isUserExisting');
 
           if (isUserExisting == false) {
             Navigator.of(context).pop();
@@ -846,10 +801,8 @@ class AuthMethods {
             fields: "id",
           );
 
-          bool isUserExisting =
-              await checkUserWithFacebookIDExistenceInDb(userData['id']);
-          debugPrint(
-              'isUserExisting with this Facebook account : $isUserExisting');
+          bool isUserExisting = await checkUserWithFacebookIDExistenceInDb(userData['id']);
+          debugPrint('isUserExisting with this Facebook account : $isUserExisting');
 
           if (isUserExisting == true) {
             Navigator.of(context).pop();
@@ -869,21 +822,16 @@ class AuthMethods {
                 // Login to existing user
                 Navigator.of(context).pop();
 
-                bool isUserExisting =
-                    await checkUserExistenceInDb(value.user!.uid);
+                bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
                 if (isUserExisting == false) {
-                  return [
-                    false,
-                    'Aucun compte n\'existe avec cette adresse Facebook...'
-                  ];
+                  return [false, 'Aucun compte n\'existe avec cette adresse Facebook...'];
                 }
                 return [
                   true,
                 ];
               } else if (authType == 'signup') {
                 // Sign up : create new user
-                bool isUserExisting =
-                    await checkUserExistenceInDb(value.user!.uid);
+                bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
                 if (isUserExisting == false) {
                   // Set Facebook ID
                   final userData = await FacebookAuth.i.getUserData(
@@ -897,8 +845,7 @@ class AuthMethods {
                   );
 
                   // Set ShowIntroductionPagesHandler to: true
-                  await UserSimplePreferences.setShowIntroductionPagesHandler(
-                      true);
+                  await UserSimplePreferences.setShowIntroductionPagesHandler(true);
 
                   Navigator.of(context).pop();
                   return [true];
@@ -913,8 +860,7 @@ class AuthMethods {
         );
 
         return [true];
-      } else if (result.status == LoginStatus.cancelled ||
-          result.status == LoginStatus.failed) {
+      } else if (result.status == LoginStatus.cancelled || result.status == LoginStatus.failed) {
         // you cancelled or the operation fails
         Navigator.of(context).pop();
         return [false, 'La connexion avec Facebook a été annulée !'];
@@ -943,8 +889,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -961,23 +907,18 @@ class AuthMethods {
           };
 
           // ignore: use_build_context_synchronously
-          result = await FirestoreMethods().updateUserWithSpecificFields(
-              context,
-              FirebaseAuth.instance.currentUser!.uid,
-              userFieldToUpdate);
+          result = await FirestoreMethods()
+              .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
           if (result) {
             // ignore: use_build_context_synchronously
-            showSnackbar(
-                context, 'Votre email s\'est bien modifié !', kSuccessColor);
+            showSnackbar(context, 'Votre email s\'est bien modifié !', kSuccessColor);
             debugPrint('Profile updated (with new email)');
           }
         },
       );
 
-      List<UserInfo> passwordProvider = FirebaseAuth
-          .instance.currentUser!.providerData
-          .where((element) => element.providerId == 'password')
-          .toList();
+      List<UserInfo> passwordProvider =
+          FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
       if (passwordProvider.length > 0) {
         emailAccountEmail = passwordProvider[0].email!;
       }
@@ -995,8 +936,7 @@ class AuthMethods {
             context: context,
             builder: (context) {
               return Dialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(
@@ -1008,8 +948,7 @@ class AuthMethods {
                       const Text(
                         'Reconnectez-vous',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 19),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -1028,9 +967,7 @@ class AuthMethods {
                             },
                             child: const Text(
                               'Annuler',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black),
+                              style: TextStyle(fontWeight: FontWeight.w400, color: Colors.black),
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -1041,7 +978,7 @@ class AuthMethods {
                               // Redirect to Login Page [with 'redirectToAddEmail' parameter]
                               Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  SwipeablePageRoute(
                                     builder: (context) => LoginPage(
                                       redirectToAddEmailandPasswordPage: false,
                                       redirectToAddEmailPage: true,
@@ -1074,8 +1011,7 @@ class AuthMethods {
           return [false, ''];
         case "credential-already-in-use":
           showSnackbar(context, 'Une erreur s\'est produite', null);
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           return [false, ''];
         default:
@@ -1093,8 +1029,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -1111,16 +1047,13 @@ class AuthMethods {
           //
           result = true;
           // ignore: use_build_context_synchronously
-          showSnackbar(context, 'Votre mot de passe s\'est bien modifié !',
-              kSuccessColor);
+          showSnackbar(context, 'Votre mot de passe s\'est bien modifié !', kSuccessColor);
           debugPrint('Profile updated (with new password)');
         },
       );
 
-      List<UserInfo> passwordProvider = FirebaseAuth
-          .instance.currentUser!.providerData
-          .where((element) => element.providerId == 'password')
-          .toList();
+      List<UserInfo> passwordProvider =
+          FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
       if (passwordProvider.length > 0) {
         emailAccountEmail = passwordProvider[0].email!;
       }
@@ -1138,8 +1071,7 @@ class AuthMethods {
             context: context,
             builder: (context) {
               return Dialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(
@@ -1151,8 +1083,7 @@ class AuthMethods {
                       const Text(
                         'Reconnectez-vous',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 19),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -1171,9 +1102,7 @@ class AuthMethods {
                             },
                             child: const Text(
                               'Annuler',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black),
+                              style: TextStyle(fontWeight: FontWeight.w400, color: Colors.black),
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -1184,7 +1113,7 @@ class AuthMethods {
                               // Redirect to Login Page [with 'redirectToAddEmail' parameter]
                               Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  SwipeablePageRoute(
                                     builder: (context) => LoginPage(
                                       redirectToAddEmailandPasswordPage: false,
                                       redirectToAddEmailPage: false,
@@ -1217,8 +1146,7 @@ class AuthMethods {
           return [false, ''];
         case "credential-already-in-use":
           showSnackbar(context, 'Une erreur s\'est produite', null);
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           return [false, ''];
         default:
@@ -1236,8 +1164,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -1246,18 +1174,14 @@ class AuthMethods {
       String emailAccountEmail = '';
       bool result = false;
 
-      final emailCredential =
-          EmailAuthProvider.credential(email: email, password: psw);
+      final emailCredential = EmailAuthProvider.credential(email: email, password: psw);
 
       try {
-        await FirebaseAuth.instance.currentUser
-            ?.unlink(EmailAuthProvider.PROVIDER_ID);
+        await FirebaseAuth.instance.currentUser?.unlink(EmailAuthProvider.PROVIDER_ID);
         // ignore: empty_catches
       } catch (e) {}
 
-      await FirebaseAuth.instance.currentUser
-          ?.linkWithCredential(emailCredential)
-          .then(
+      await FirebaseAuth.instance.currentUser?.linkWithCredential(emailCredential).then(
         (value) async {
           if (value.user != null) {
             // Update current user email [Firestore]
@@ -1266,24 +1190,19 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             if (result) {
               // ignore: use_build_context_synchronously
-              showSnackbar(
-                  context, 'Votre email s\'est bien ajouté', kSuccessColor);
+              showSnackbar(context, 'Votre email s\'est bien ajouté', kSuccessColor);
               debugPrint('Profile updated (with email)');
             }
           }
         },
       );
 
-      List<UserInfo> passwordProvider = FirebaseAuth
-          .instance.currentUser!.providerData
-          .where((element) => element.providerId == 'password')
-          .toList();
+      List<UserInfo> passwordProvider =
+          FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
       if (passwordProvider.length > 0) {
         emailAccountEmail = passwordProvider[0].email!;
       }
@@ -1301,8 +1220,7 @@ class AuthMethods {
             context: context,
             builder: (context) {
               return Dialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Column(
@@ -1314,8 +1232,7 @@ class AuthMethods {
                       const Text(
                         'Reconnectez-vous',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 19),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -1334,9 +1251,7 @@ class AuthMethods {
                             },
                             child: const Text(
                               'Annuler',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.black),
+                              style: TextStyle(fontWeight: FontWeight.w400, color: Colors.black),
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -1347,7 +1262,7 @@ class AuthMethods {
                               // Redirect to Login Page [with 'redirectToAddEmailandPasswordPage' parameter]
                               Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  SwipeablePageRoute(
                                     builder: (context) => LoginPage(
                                       redirectToAddEmailPage: false,
                                       redirectToAddEmailandPasswordPage: true,
@@ -1380,8 +1295,7 @@ class AuthMethods {
           return [false, ''];
         case "credential-already-in-use":
           showSnackbar(context, 'Une erreur s\'est produite', null);
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           return [false, ''];
         default:
@@ -1393,28 +1307,25 @@ class AuthMethods {
   }
 
   // LINK CREDENTIALS : by phone number
-  Future<bool> linkCredentialsbyPhoneNumber(
-      context, authType, phoneNumber, pin) async
+  Future<bool> linkCredentialsbyPhoneNumber(context, authType, phoneNumber, pin) async
   //
   {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
     // Check code availability and redirect to Settings Page
     try {
       try {
-        await FirebaseAuth.instance.currentUser
-            ?.unlink(PhoneAuthProvider.PROVIDER_ID);
+        await FirebaseAuth.instance.currentUser?.unlink(PhoneAuthProvider.PROVIDER_ID);
       } catch (e) {}
       await FirebaseAuth.instance.currentUser
           ?.linkWithCredential(PhoneAuthProvider.credential(
-              verificationId: UserSimplePreferences.getPhoneCodeVerification()!,
-              smsCode: pin))
+              verificationId: UserSimplePreferences.getPhoneCodeVerification()!, smsCode: pin))
           .then(
         (value) async {
           if (value.user != null) {
@@ -1427,10 +1338,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             debugPrint('Profile updated (with Phone Number)');
             return result;
           }
@@ -1451,8 +1360,7 @@ class AuthMethods {
           showSnackbar(context, 'Une erreur s\'est produite ', null);
           return false;
         case "credential-already-in-use":
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           showSnackbar(context, 'Une erreur s\'est produite ', null);
           return false;
@@ -1471,8 +1379,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -1490,8 +1398,7 @@ class AuthMethods {
       if (googleUser == null) {
         Navigator.of(context).pop();
         showSnackbar(context, 'La connexion avec Google a été annulée !', null);
-        List<UserInfo> googleProvider = FirebaseAuth
-            .instance.currentUser!.providerData
+        List<UserInfo> googleProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'google.com')
             .toList();
         if (googleProvider.length > 0) {
@@ -1502,8 +1409,7 @@ class AuthMethods {
       }
 
       // Check if any user exists with this Google account
-      bool isUserExisting =
-          await checkUserWithGoogleIDExistenceInDb(googleUser.id);
+      bool isUserExisting = await checkUserWithGoogleIDExistenceInDb(googleUser.id);
       debugPrint('isUserExisting with this Google account : $isUserExisting');
 
       if (isUserExisting == true) {
@@ -1511,8 +1417,7 @@ class AuthMethods {
         GoogleSignIn().disconnect();
 
         showSnackbar(context, 'Ce compte Google est déjà pris !', null);
-        List<UserInfo> googleProvider = FirebaseAuth
-            .instance.currentUser!.providerData
+        List<UserInfo> googleProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'google.com')
             .toList();
         if (googleProvider.length > 0) {
@@ -1534,8 +1439,7 @@ class AuthMethods {
           .where((element) => element.providerId == 'google.com')
           .toList();
       if (googleProvider.length > 0) {
-        await FirebaseAuth.instance.currentUser
-            ?.unlink(GoogleAuthProvider.PROVIDER_ID);
+        await FirebaseAuth.instance.currentUser?.unlink(GoogleAuthProvider.PROVIDER_ID);
 
         // Update current user googleID [Firestore]
         Map<String, Object?> userFieldToUpdate = {
@@ -1543,13 +1447,11 @@ class AuthMethods {
         };
 
         // ignore: use_build_context_synchronously
-        result = await FirestoreMethods().updateUserWithSpecificFields(
-            context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+        result = await FirestoreMethods()
+            .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
       }
 
-      await FirebaseAuth.instance.currentUser
-          ?.linkWithCredential(credential)
-          .then(
+      await FirebaseAuth.instance.currentUser?.linkWithCredential(credential).then(
         (value) async {
           if (value.user != null) {
             // Update current user googleID [Firestore]
@@ -1558,14 +1460,11 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods().updateUserWithSpecificFields(
-                context,
-                FirebaseAuth.instance.currentUser!.uid,
-                userFieldToUpdate);
+            result = await FirestoreMethods()
+                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             if (result) {
               // ignore: use_build_context_synchronously
-              showSnackbar(context, 'Votre compte Google s\'est bien ajouté',
-                  kSuccessColor);
+              showSnackbar(context, 'Votre compte Google s\'est bien ajouté', kSuccessColor);
               debugPrint('Profile updated (with googleID)');
             }
           }
@@ -1599,17 +1498,13 @@ class AuthMethods {
           showSnackbar(context, 'Une erreur s\'est produite', null);
           return [false, ''];
         case "credential-already-in-use":
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           showSnackbar(context, 'Une erreur s\'est produite', null);
           return [false, ''];
         case "email-already-in-use":
           debugPrint("Error: $e");
-          showSnackbar(
-              context,
-              'Cette adresse email est déjà utilisée par un autre compte',
-              null);
+          showSnackbar(context, 'Cette adresse email est déjà utilisée par un autre compte', null);
           return [false, ''];
         default:
           showSnackbar(context, 'Une erreur s\'est produite', null);
@@ -1626,8 +1521,8 @@ class AuthMethods {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -1645,16 +1540,13 @@ class AuthMethods {
       );
 
       // handling the exception when cancel sign in
-      if (fbLoginResult.status == LoginStatus.cancelled ||
-          fbLoginResult.status == LoginStatus.failed) {
+      if (fbLoginResult.status == LoginStatus.cancelled || fbLoginResult.status == LoginStatus.failed) {
         Navigator.of(context).pop();
         FacebookAuth.instance.logOut();
 
-        showSnackbar(
-            context, 'La connexion avec Facebook a été annulée !', null);
+        showSnackbar(context, 'La connexion avec Facebook a été annulée !', null);
 
-        List<UserInfo> facebookProvider = FirebaseAuth
-            .instance.currentUser!.providerData
+        List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'facebook.com')
             .toList();
         if (facebookProvider.length > 0) {
@@ -1669,18 +1561,15 @@ class AuthMethods {
         // you are logged
         AccessToken? accessToken = fbLoginResult.accessToken!;
 
-        final facebookAuthCredential =
-            FacebookAuthProvider.credential(accessToken.token);
+        final facebookAuthCredential = FacebookAuthProvider.credential(accessToken.token);
 
         final userData = await FacebookAuth.i.getUserData(
           fields: 'id',
         );
 
         // Check if any user exists with this Facebook account
-        bool isUserExisting =
-            await checkUserWithFacebookIDExistenceInDb(userData['id']);
-        debugPrint(
-            'isUserExisting with this Facebook account : $isUserExisting');
+        bool isUserExisting = await checkUserWithFacebookIDExistenceInDb(userData['id']);
+        debugPrint('isUserExisting with this Facebook account : $isUserExisting');
 
         if (isUserExisting == true) {
           Navigator.of(context).pop();
@@ -1688,8 +1577,7 @@ class AuthMethods {
           accessToken = null;
 
           showSnackbar(context, 'Ce compte Facebook est déjà pris !', null);
-          List<UserInfo> facebookProvider = FirebaseAuth
-              .instance.currentUser!.providerData
+          List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
               .where((element) => element.providerId == 'facebook.com')
               .toList();
           if (facebookProvider.length > 0) {
@@ -1701,13 +1589,10 @@ class AuthMethods {
 
         // CONTINUE
         try {
-          await FirebaseAuth.instance.currentUser
-              ?.unlink(FacebookAuthProvider.PROVIDER_ID);
+          await FirebaseAuth.instance.currentUser?.unlink(FacebookAuthProvider.PROVIDER_ID);
         } catch (e) {}
 
-        await FirebaseAuth.instance.currentUser
-            ?.linkWithCredential(facebookAuthCredential)
-            .then(
+        await FirebaseAuth.instance.currentUser?.linkWithCredential(facebookAuthCredential).then(
           (value) async {
             if (value.user != null) {
               // Update current user facebookID [Firestore]
@@ -1716,22 +1601,18 @@ class AuthMethods {
               };
 
               // ignore: use_build_context_synchronously
-              result = await FirestoreMethods().updateUserWithSpecificFields(
-                  context,
-                  FirebaseAuth.instance.currentUser!.uid,
-                  userFieldToUpdate);
+              result = await FirestoreMethods()
+                  .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
               if (result) {
                 // ignore: use_build_context_synchronously
-                showSnackbar(context,
-                    'Votre compte Facebook s\'est bien ajouté', kSuccessColor);
+                showSnackbar(context, 'Votre compte Facebook s\'est bien ajouté', kSuccessColor);
                 debugPrint('Profile updated (with facebookID)');
               }
             }
           },
         );
 
-        List<UserInfo> facebookProvider = FirebaseAuth
-            .instance.currentUser!.providerData
+        List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'facebook.com')
             .toList();
         if (facebookProvider.length > 0) {
@@ -1758,8 +1639,7 @@ class AuthMethods {
           debugPrint("The provider's credential is not valid.");
           return [false, ''];
         case "credential-already-in-use":
-          debugPrint(
-              "The account corresponding to the credential already exists, "
+          debugPrint("The account corresponding to the credential already exists, "
               "or is already linked to a Firebase User.");
           return [false, ''];
         default:

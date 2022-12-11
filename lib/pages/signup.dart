@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import 'package:wesh/widgets/button.dart';
@@ -25,8 +27,7 @@ class _LoginPageState extends State<SignUpPage> {
   TextEditingController phoneController = TextEditingController();
 
   late TextEditingController passwordController = TextEditingController();
-  late TextEditingController passwordConfirmationController =
-      TextEditingController();
+  late TextEditingController passwordConfirmationController = TextEditingController();
   bool showVisibilityIcon = false;
   bool showPasswordConfirmation_VisibilityIcon = false;
   bool isPswVisible = true;
@@ -39,13 +40,11 @@ class _LoginPageState extends State<SignUpPage> {
   }
 
   void gotoNextStep() {
-    _StepController.nextPage(
-        duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+    _StepController.nextPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
   }
 
   void gotoPreviousStep() {
-    _StepController.previousPage(
-        duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+    _StepController.previousPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
   }
 
   @override
@@ -68,16 +67,11 @@ class _LoginPageState extends State<SignUpPage> {
     if (currentStepIndex == 0) {
       Navigator.pop(context);
       return true;
-    } else if (currentStepIndex == 1 ||
-        currentStepIndex == 2 ||
-        currentStepIndex == 3) {
-      _StepController.previousPage(
-          duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+    } else if (currentStepIndex == 1 || currentStepIndex == 2 || currentStepIndex == 3) {
+      _StepController.previousPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
       return false;
     }
     return true;
-
-    debugPrint('Position is ${_StepController.page}');
   }
 
   @override
@@ -88,11 +82,12 @@ class _LoginPageState extends State<SignUpPage> {
         return willPop;
       },
       child: Scaffold(
-          appBar: AppBar(
+          appBar: MorphingAppBar(
+            heroTag: 'signUpPageAppBar',
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              splashRadius: 25,
+              splashRadius: 0.06.sw,
               onPressed: () {
                 // PUSH BACK STEPS OR POP SCREEN
                 backButtonPressed();
@@ -126,11 +121,9 @@ class _LoginPageState extends State<SignUpPage> {
               ),
               PasswordAndPasswordConfirmation(
                   passwordController: passwordController,
-                  passwordConfirmationController:
-                      passwordConfirmationController,
+                  passwordConfirmationController: passwordConfirmationController,
                   showVisibilityIcon: showVisibilityIcon,
-                  showPasswordConfirmation_VisibilityIcon:
-                      showPasswordConfirmation_VisibilityIcon,
+                  showPasswordConfirmation_VisibilityIcon: showPasswordConfirmation_VisibilityIcon,
                   isPswVisible: isPswVisible,
                   isPswConfirmationVisible: isPswConfirmationVisible)
             ],
@@ -144,11 +137,7 @@ class UsernameChecker extends StatefulWidget {
   TextEditingController usernameController = TextEditingController();
   PageController stepController = PageController();
 
-  UsernameChecker(
-      {Key? key,
-      required this.usernameController,
-      required this.stepController})
-      : super(key: key);
+  UsernameChecker({Key? key, required this.usernameController, required this.stepController}) : super(key: key);
 
   @override
   State<UsernameChecker> createState() => _UsernameCheckerState();
@@ -177,8 +166,7 @@ class _UsernameCheckerState extends State<UsernameChecker> {
               SizedBox(
                 height: 12,
               ),
-              Text('Ex: claude33, emiliana,...',
-                  style: TextStyle(color: Colors.black54)),
+              Text('Ex: claude33, emiliana,...', style: TextStyle(color: Colors.black54)),
             ],
           ),
           const SizedBox(
@@ -193,9 +181,7 @@ class _UsernameCheckerState extends State<UsernameChecker> {
               ],
               controller: widget.usernameController,
               decoration: const InputDecoration(
-                  hintText: 'Nom d\'utilisateur',
-                  contentPadding: EdgeInsets.all(20),
-                  border: InputBorder.none),
+                  hintText: 'Nom d\'utilisateur', contentPadding: EdgeInsets.all(20), border: InputBorder.none),
             ),
           ),
           const SizedBox(
@@ -209,9 +195,7 @@ class _UsernameCheckerState extends State<UsernameChecker> {
             text: 'Suivant',
             color: kSecondColor,
             onTap: () {
-              widget.stepController.nextPage(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeIn);
+              widget.stepController.nextPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
             },
           ),
           const SizedBox(
@@ -230,19 +214,14 @@ class AddEmailOrPhone_GoogleOrFacebook extends StatefulWidget {
   TextEditingController phoneController;
 
   AddEmailOrPhone_GoogleOrFacebook(
-      {Key? key,
-      required this.emailController,
-      required this.phoneController,
-      required this.stepController})
+      {Key? key, required this.emailController, required this.phoneController, required this.stepController})
       : super(key: key);
 
   @override
-  State<AddEmailOrPhone_GoogleOrFacebook> createState() =>
-      _AddEmailOrPhone_GoogleOrFacebookState();
+  State<AddEmailOrPhone_GoogleOrFacebook> createState() => _AddEmailOrPhone_GoogleOrFacebookState();
 }
 
-class _AddEmailOrPhone_GoogleOrFacebookState
-    extends State<AddEmailOrPhone_GoogleOrFacebook>
+class _AddEmailOrPhone_GoogleOrFacebookState extends State<AddEmailOrPhone_GoogleOrFacebook>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
@@ -325,9 +304,7 @@ class _AddEmailOrPhone_GoogleOrFacebookState
                         controller: widget.emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                            hintText: 'Email',
-                            contentPadding: EdgeInsets.all(20),
-                            border: InputBorder.none),
+                            hintText: 'Email', contentPadding: EdgeInsets.all(20), border: InputBorder.none),
                       ),
                     ),
                   ),
@@ -390,9 +367,7 @@ class _AddEmailOrPhone_GoogleOrFacebookState
                     color: kSecondColor,
                     onTap: () {
                       // Check Sign Up Method --> Continue
-                      widget.stepController.nextPage(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeIn);
+                      widget.stepController.nextPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
                     },
                   ),
                 ),
@@ -413,11 +388,7 @@ class CodeConfirmation extends StatefulWidget {
   final String email;
 
   CodeConfirmation(
-      {Key? key,
-      required this.stepController,
-      required this.methodSelected,
-      required this.phone,
-      required this.email})
+      {Key? key, required this.stepController, required this.methodSelected, required this.phone, required this.email})
       : super(key: key);
 
   @override
@@ -468,8 +439,7 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
               ),
               children: <TextSpan>[
                 TextSpan(
-                    text:
-                        ' ${widget.methodSelected == 'phone' ? '${widget.phone}' : '${widget.email}'} ',
+                    text: ' ${widget.methodSelected == 'phone' ? '${widget.phone}' : '${widget.email}'} ',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
@@ -502,9 +472,7 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
               debugPrint("Completed, the final code is: $code");
 
               // Check code availability and redirect to Password Page
-              widget.stepController.nextPage(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeIn);
+              widget.stepController.nextPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
             },
             onChanged: (value) {
               // NONE
@@ -543,12 +511,10 @@ class PasswordAndPasswordConfirmation extends StatefulWidget {
       : super(key: key);
 
   @override
-  State<PasswordAndPasswordConfirmation> createState() =>
-      _PasswordAndPasswordConfirmationState();
+  State<PasswordAndPasswordConfirmation> createState() => _PasswordAndPasswordConfirmationState();
 }
 
-class _PasswordAndPasswordConfirmationState
-    extends State<PasswordAndPasswordConfirmation> {
+class _PasswordAndPasswordConfirmationState extends State<PasswordAndPasswordConfirmation> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -590,15 +556,14 @@ class _PasswordAndPasswordConfirmationState
                   border: InputBorder.none,
                   suffixIcon: widget.showVisibilityIcon
                       ? IconButton(
-                          splashRadius: 22,
+                          splashRadius: 0.06.sw,
                           onPressed: () {
                             setState(() {
                               widget.isPswVisible = !widget.isPswVisible;
                             });
                           },
-                          icon: widget.isPswVisible
-                              ? Icon(Icons.visibility_rounded)
-                              : Icon(Icons.visibility_off_rounded))
+                          icon:
+                              widget.isPswVisible ? Icon(Icons.visibility_rounded) : Icon(Icons.visibility_off_rounded))
                       : Container(
                           width: 2,
                           height: 2,
@@ -620,15 +585,13 @@ class _PasswordAndPasswordConfirmationState
                               if (value != '')
                                 {
                                   setState(() {
-                                    widget.showPasswordConfirmation_VisibilityIcon =
-                                        true;
+                                    widget.showPasswordConfirmation_VisibilityIcon = true;
                                   })
                                 }
                               else
                                 {
                                   setState(() {
-                                    widget.showPasswordConfirmation_VisibilityIcon =
-                                        false;
+                                    widget.showPasswordConfirmation_VisibilityIcon = false;
                                   })
                                 }
                             }),
@@ -639,11 +602,10 @@ class _PasswordAndPasswordConfirmationState
                             border: InputBorder.none,
                             suffixIcon: widget.showVisibilityIcon
                                 ? IconButton(
-                                    splashRadius: 22,
+                                    splashRadius: 0.06.sw,
                                     onPressed: () {
                                       setState(() {
-                                        widget.isPswConfirmationVisible =
-                                            !widget.isPswConfirmationVisible;
+                                        widget.isPswConfirmationVisible = !widget.isPswConfirmationVisible;
                                       });
                                     },
                                     icon: widget.isPswConfirmationVisible
@@ -674,7 +636,7 @@ class _PasswordAndPasswordConfirmationState
                 // Check Sign Up Method --> Continue
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  SwipeablePageRoute(
                     builder: (context) => IntroductionScreensPage(),
                   ),
                 );

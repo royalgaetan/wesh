@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wesh/utils/constants.dart';
 
@@ -17,15 +18,15 @@ class _DeleteDecisionState extends State<DeleteDecision> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: const Text(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Text(
             'Confirmer la suppression',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black,
-              fontSize: 19,
+              fontSize: 17.sp,
             ),
           ),
         ),

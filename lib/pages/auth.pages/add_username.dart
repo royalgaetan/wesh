@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/add_name_and_birthday.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
 import '../../services/internet_connection_checker.dart';
@@ -37,18 +39,22 @@ class _CheckUsernameState extends State<AddUsernamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          splashRadius: 25,
-          onPressed: () {
-            // PUSH BACK STEPS OR POP SCREEN
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: Size(double.infinity, 0.08.sh),
+        child: MorphingAppBar(
+          heroTag: 'addUsernamePageAppBar',
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            splashRadius: 0.06.sw,
+            onPressed: () {
+              // PUSH BACK STEPS OR POP SCREEN
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.black,
+            ),
           ),
         ),
       ),
@@ -62,96 +68,93 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                   color: kSecondColor,
                 )
               : Container(),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: ListView(
-                shrinkWrap: true,
-                reverse: true,
-                children: [
-                  Column(
-                    children: const [
-                      Text(
-                        'Ajouter un nom d\'utilisateur',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 24),
+          Center(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+              shrinkWrap: true,
+              reverse: true,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      'Ajouter un nom d\'utilisateur',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22.sp,
                       ),
-                      SizedBox(
-                        height: 12,
-                      ),
-                      Text('Ex: claude33, emiliana,...',
-                          style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-
-                  // Username Field Input
-                  TextformContainer(
-                    child: TextField(
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp("[a-z]")),
-                      ],
-                      onChanged: (value) async {
-                        bool isUsed =
-                            await checkIfUsernameInUse(context, value);
-                        if (mounted) {
-                          setState(() {
-                            isUsernameUsed = isUsed;
-                          });
-                        }
-                      },
-                      keyboardType: TextInputType.text,
-                      controller: usernameController,
-                      decoration: InputDecoration(
-                          suffixIcon: usernameController.text.isNotEmpty
-                              ? isUsernameUsed
-                                  ? const Icon(Icons.close, color: kSecondColor)
-                                  : const Icon(Icons.done, color: Colors.green)
-                              : const Icon(null),
-                          hintText: 'Nom d\'utilisateur',
-                          contentPadding: EdgeInsets.all(20),
-                          border: InputBorder.none),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 27,
-                  ),
+                    SizedBox(height: 0.04.sw),
+                    Text(
+                      'Ex: claude33, emiliana,...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 0.12.sw),
 
-                  // Button Action : Username checked
-                  Button(
-                    height: 50,
-                    width: double.infinity,
-                    text: 'Suivant',
-                    color: kSecondColor,
-                    onTap: () async {
-                      // Check Username
-                      setState(() {
-                        isPageLoading = true;
-                      });
-                      var isConnected =
-                          await InternetConnection().isConnected(context);
+                // Username Field Input
+                TextformContainer(
+                  child: TextField(
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp("[a-z]")),
+                    ],
+                    onChanged: (value) async {
+                      bool isUsed = await checkIfUsernameInUse(context, value);
                       if (mounted) {
                         setState(() {
-                          isPageLoading = false;
+                          isUsernameUsed = isUsed;
                         });
                       }
-                      if (isConnected) {
-                        debugPrint("Has connection : $isConnected");
-                        checkUsername(context, usernameController.text);
-                      } else {
-                        debugPrint("Has connection : $isConnected");
-                        showSnackbar(context,
-                            'Veuillez vérifier votre connexion internet', null);
-                      }
                     },
+                    keyboardType: TextInputType.text,
+                    controller: usernameController,
+                    decoration: InputDecoration(
+                        suffixIcon: usernameController.text.isNotEmpty
+                            ? isUsernameUsed
+                                ? const Icon(Icons.close, color: kSecondColor)
+                                : const Icon(Icons.done, color: Colors.green)
+                            : const Icon(null),
+                        hintText: 'Nom d\'utilisateur',
+                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                        contentPadding: EdgeInsets.all(0.04.sw),
+                        border: InputBorder.none),
                   ),
-                  const SizedBox(
-                    height: 20,
-                  )
-                ].reversed.toList(),
-              ),
+                ),
+                SizedBox(height: 0.07.sw),
+                // Button Action : Username checked
+                Button(
+                  height: 0.12.sw,
+                  width: double.infinity,
+                  text: 'Suivant',
+                  color: kSecondColor,
+                  onTap: () async {
+                    // Check Username
+                    setState(() {
+                      isPageLoading = true;
+                    });
+                    var isConnected = await InternetConnection().isConnected(context);
+                    if (mounted) {
+                      setState(() {
+                        isPageLoading = false;
+                      });
+                    }
+                    if (isConnected) {
+                      debugPrint("Has connection : $isConnected");
+                      // ignore: use_build_context_synchronously
+                      checkUsername(context, usernameController.text);
+                    } else {
+                      debugPrint("Has connection : $isConnected");
+                      // ignore: use_build_context_synchronously
+                      showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
+                    }
+                  },
+                ),
+              ].reversed.toList(),
             ),
           ),
         ],
@@ -172,13 +175,12 @@ checkUsername(context, String username) async {
       // Go to Sign Up Methods Page
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => AddNameAndBirthdayPage()),
+        SwipeablePageRoute(builder: (_) => AddNameAndBirthdayPage()),
       );
     } else {
       showSnackbar(context, 'Ce nom d\'utilisateur est déjà pris', null);
     }
   } else {
-    showSnackbar(context,
-        'Veuillez entrer un nom d\'utilisateur de plus de 4 caractères', null);
+    showSnackbar(context, 'Veuillez entrer un nom d\'utilisateur de plus de 4 caractères', null);
   }
 }

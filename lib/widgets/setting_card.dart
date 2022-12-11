@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SettingCard extends StatefulWidget {
   final Widget leading;
@@ -28,7 +29,7 @@ class _SettingCardState extends State<SettingCard> {
     return InkWell(
       onTap: widget.onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         child: Column(
           children: [
             Row(
@@ -51,23 +52,24 @@ class _SettingCardState extends State<SettingCard> {
                       Text(
                         widget.settingTitle,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       // SubTitle
                       widget.settingSubTitle.isNotEmpty
                           ? Padding(
-                              padding: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.only(top: 4),
                               child: Text(
                                 widget.settingSubTitle,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                                 style: TextStyle(
                                     overflow: TextOverflow.ellipsis,
-                                    fontSize: 15,
+                                    fontSize: 12.sp,
                                     color: Colors.black.withOpacity(0.7)),
                               ),
                             )

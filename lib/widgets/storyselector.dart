@@ -2,8 +2,10 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/story.dart';
 import 'package:wesh/pages/in.pages/storyviewer_single_story.dart';
 import '../models/user.dart' as UserModel;
@@ -29,12 +31,13 @@ class _StorySelectorState extends State<StorySelector> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'storySelectorPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context, null);
           },
@@ -51,8 +54,7 @@ class _StorySelectorState extends State<StorySelector> {
       body: Padding(
         padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
         child: StreamBuilder(
-          stream: Provider.of<UserProvider>(context)
-              .getUserStories(FirebaseAuth.instance.currentUser!.uid),
+          stream: Provider.of<UserProvider>(context).getUserStories(FirebaseAuth.instance.currentUser!.uid),
           builder: (context, AsyncSnapshot snapshot) {
             if (snapshot.hasData && snapshot.data != null) {
               List<Story> allStories = (snapshot.data as List<Story>);
@@ -112,7 +114,7 @@ class _StorySelectorState extends State<StorySelector> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             IconButton(
-                              splashRadius: 25,
+                              splashRadius: 0.06.sw,
                               onPressed: () {
                                 // Select Story
                                 storySelectedIndex.value = index;
@@ -120,8 +122,7 @@ class _StorySelectorState extends State<StorySelector> {
                                 debugPrint('storySelectedIndex: $index');
                               },
                               icon: Padding(
-                                padding:
-                                    const EdgeInsets.only(right: 8, bottom: 8),
+                                padding: const EdgeInsets.only(right: 8, bottom: 8),
                                 child: CircleAvatar(
                                   radius: 12,
                                   backgroundColor: Colors.black,
@@ -165,15 +166,13 @@ class _StorySelectorState extends State<StorySelector> {
               // Handle error
               debugPrint('error: ${snapshot.error}');
               return const Center(
-                child: Text('Une erreur s\'est produite',
-                    style: TextStyle(color: Colors.white)),
+                child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
               );
             }
 
             // Display CircularProgressIndicator
             return const Center(
-              child:
-                  CupertinoActivityIndicator(color: Colors.black54, radius: 16),
+              child: CupertinoActivityIndicator(color: Colors.black54, radius: 16),
             );
           },
         ),
@@ -195,8 +194,7 @@ class _StorySelectorState extends State<StorySelector> {
             Navigator.pop(context, selectedStory);
           } else {
             // Title error handler
-            showSnackbar(context,
-                'Veuillez selectionner une story avant de continuer', null);
+            showSnackbar(context, 'Veuillez selectionner une story avant de continuer', null);
           }
         },
       ),

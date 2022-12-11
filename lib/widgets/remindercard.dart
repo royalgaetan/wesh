@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wesh/widgets/reminderView.dart';
 import '../models/reminder.dart';
@@ -24,7 +25,7 @@ class _EventCardState extends State<ReminderCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Show EventView Modal
+        // Show ReminderView Modal
         showModalBottomSheet(
           enableDrag: true,
           isScrollControlled: true,
@@ -33,9 +34,6 @@ class _EventCardState extends State<ReminderCard> {
           builder: ((context) => Scaffold(
                 backgroundColor: Colors.transparent,
                 body: Modal(
-                  maxChildSize: .4,
-                  initialChildSize: .4,
-                  minChildSize: .4,
                   child: ReminderView(reminderId: widget.reminder.reminderId),
                 ),
               )),
@@ -52,9 +50,9 @@ class _EventCardState extends State<ReminderCard> {
               children: [
                 // Trailing
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: CircleAvatar(
-                    radius: 30,
+                    radius: 22,
                     child: widget.reminder.eventId.isEmpty
                         ? const Icon(
                             FontAwesomeIcons.calendar,
@@ -77,25 +75,19 @@ class _EventCardState extends State<ReminderCard> {
                       Text(
                         widget.reminder.title,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold),
+                        style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 14.sp),
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(FontAwesomeIcons.stopwatch,
-                              size: 15, color: Colors.black.withOpacity(0.4)),
+                          Icon(FontAwesomeIcons.stopwatch, size: 12.sp, color: Colors.black.withOpacity(0.4)),
                           const SizedBox(width: 6),
                           Text(
                             widget.reminder.reminderDelay,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                fontSize: 15,
-                                color: Colors.black.withOpacity(0.7)),
+                                overflow: TextOverflow.ellipsis, fontSize: 12.sp, color: Colors.black.withOpacity(0.7)),
                           ),
                         ],
                       )

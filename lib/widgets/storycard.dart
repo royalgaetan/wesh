@@ -2,6 +2,7 @@ import 'package:dismissible_page/dismissible_page.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:wesh/pages/in.pages/storyviewer_user_stories.dart';
+import 'package:wesh/utils/functions.dart';
 import '../../models/user.dart' as UserModel;
 import '../utils/constants.dart';
 
@@ -9,8 +10,7 @@ class StoryCard extends StatelessWidget {
   final UserModel.User user;
   final String? type;
 
-  const StoryCard({Key? key, required this.user, required this.type})
-      : super(key: key);
+  const StoryCard({Key? key, required this.user, required this.type}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class StoryCard extends StatelessWidget {
       onTap: () {
         // Navigator.push(
         //   context,
-        //   MaterialPageRoute(
+        //   SwipeablePageRoute(
         //     builder: (context) => const CreateStory(),
         //   ),
         // );
@@ -58,17 +58,9 @@ class StoryCard extends StatelessWidget {
                       ? Padding(
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
-                            (() {
-                              timeago.setLocaleMessages(
-                                  'fr', timeago.FrMessages());
-                              return timeago.format(
-                                  user.lastStoryUpdateDateTime,
-                                  locale: 'fr');
-                            }()),
+                            getTimeAgoLongForm(user.lastStoryUpdateDateTime),
                             style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                fontSize: 16,
-                                color: Colors.black.withOpacity(0.7)),
+                                overflow: TextOverflow.ellipsis, fontSize: 16, color: Colors.black.withOpacity(0.7)),
                           ),
                         )
                       : Container()

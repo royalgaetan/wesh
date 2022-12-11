@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/contact.dart';
 import 'package:wesh/pages/in.pages/create_or_update_contactpage.dart';
 import 'package:wesh/utils/constants.dart';
@@ -47,7 +48,7 @@ class ContactView extends StatelessWidget {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(
+              SwipeablePageRoute(
                 builder: (_) => (CreateOrUpdateContactPage(
                   contact: contact,
                 )),
@@ -62,7 +63,7 @@ class ContactView extends StatelessWidget {
         ListTile(
           leading: const Icon(FontAwesomeIcons.cakeCandles),
           title: Text(
-            DateFormat('d MMM yyyy').format(contact.birthday),
+            DateFormat('dd MMM yyyy').format(contact.birthday),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           subtitle: const Text(

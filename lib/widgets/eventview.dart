@@ -1,32 +1,46 @@
+import 'dart:developer';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lottie/lottie.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wesh/models/event.dart';
+import 'package:wesh/models/reminder.dart';
 import 'package:wesh/pages/in.pages/create_or_update_event.dart';
 import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
+import 'package:wesh/widgets/remindercard.dart';
 import 'package:wesh/widgets/reminderselector.dart';
 import 'package:wesh/widgets/userposterheader.dart';
-
+import '../models/user.dart' as UserModel;
+import '../models/event_duration_type.dart';
+import '../pages/in.pages/create_or_update_reminder.dart';
+import '../pages/profile.dart';
+import '../services/firestore.methods.dart';
 import '../utils/functions.dart';
 import 'buildWidgets.dart';
 
 class EventView extends StatefulWidget {
-  late DateTime? reminderDate = null;
-  final Event event;
+  final String eventId;
 
-  EventView({required this.event});
+  EventView({required this.eventId});
 
   @override
   State<EventView> createState() => _EventViewState();
 }
 
 class _EventViewState extends State<EventView> {
+  PageController pageController = PageController(initialPage: 0);
+
   @override
   void initState() {
     // TODO: implement initState
@@ -36,239 +50,596 @@ class _EventViewState extends State<EventView> {
     // TO DO
   }
 
+  bool handleOnWillPop() {
+    if (pageController.page == 1) {
+      pageController.previousPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return WillPopScope(
+      onWillPop: () async {
+        var willPop = handleOnWillPop();
+        return willPop;
+      },
+      child: ExpandablePageView(
+        controller: pageController,
+        physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Event Trailing
-          widget.event.trailing.isEmpty
-              ? CircleAvatar(
-                  radius: 70,
-                  backgroundColor: kGreyColor,
-                  backgroundImage: AssetImage(
-                      'assets/images/eventtype.icons/${widget.event.type}.png'),
-                )
-              : CircleAvatar(
-                  radius: 70,
-                  backgroundColor: kGreyColor,
-                  backgroundImage: NetworkImage(widget.event.trailing),
-                ),
+          // PAGE 1 : Main Event Contents
+          StreamBuilder<Event>(
+            stream: FirestoreMethods().getEventById(widget.eventId),
+            builder: (context, snapshot) {
+              // Handle error
+              if (snapshot.hasError) {
+                debugPrint('error: ${snapshot.error}');
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 100),
+                  child: Center(
+                    child: buildErrorWidget(onWhiteBackground: true),
+                  ),
+                );
+              }
 
-          // Event Name
-          const SizedBox(height: 20),
-          Text(
-            widget.event.title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+              if (snapshot.hasData && snapshot.data != null) {
+                Event event = snapshot.data!;
 
-          // Event Action Button
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // MESSAGE BUTTON OR EDIT EVENT BUTTON
-              widget.event.uid != FirebaseAuth.instance.currentUser!.uid
-                  ? Button(
-                      text: 'Message',
-                      height: 45,
-                      width: 150,
-                      fontsize: 16,
-                      fontColor: Colors.black,
-                      color: Colors.white,
-                      isBordered: true,
-                      prefixIcon: FontAwesomeIcons.message,
-                      prefixIconColor: Colors.black,
-                      prefixIconSize: 22,
-                      onTap: () {
-                        // Message for the Event
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => (InboxPage(
-                                uid: widget.event.uid,
-                                eventAttached: widget.event)),
-                          ),
-                        );
-                      },
-                    )
-                  : Button(
-                      text: 'Modifier',
-                      height: 45,
-                      width: 150,
-                      fontsize: 16,
-                      fontColor: Colors.black,
-                      color: Colors.white,
-                      isBordered: true,
-                      prefixIcon: Icons.edit,
-                      prefixIconColor: Colors.black,
-                      prefixIconSize: 22,
-                      onTap: () {
-                        // Edit Event here !
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => (CreateOrUpdateEventPage(
-                              event: widget.event,
-                            )),
-                          ),
-                        );
-                        ;
-                      },
-                    ),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Event Trailing
+                      event.trailing.isEmpty
+                          ? CircleAvatar(
+                              radius: 0.16.sw,
+                              backgroundColor: kGreyColor,
+                              backgroundImage: AssetImage('assets/images/eventtype.icons/${event.type}.png'),
+                            )
+                          : CircleAvatar(
+                              radius: 0.16.sw,
+                              backgroundColor: kGreyColor,
+                              backgroundImage: NetworkImage(event.trailing),
+                            ),
 
-              const SizedBox(width: 14),
-
-              // REMINDER BUTTON
-              Button(
-                text: widget.reminderDate == null ? 'Me rappeler' : 'Rappel',
-                height: 45,
-                width: 150,
-                fontsize: 16,
-                fontColor: Colors.white,
-                color: kSecondColor,
-                prefixIcon: widget.reminderDate == null
-                    ? Icons.timer_outlined
-                    : Icons.done,
-                prefixIconColor: Colors.white,
-                prefixIconSize: 22,
-                onTap: () async {
-                  // Set a reminder to an Event
-
-                  Duration? selectedDuration = await showModalBottomSheet(
-                      context: context,
-                      isDismissible: true,
-                      enableDrag: true,
-                      isScrollControlled: true,
-                      builder: (context) => ReminderSelector());
-
-                  // Substract SelectedDuration from Event Time
-                  // TO DO
-
-                  if (selectedDuration != null) {
-                    setState(() {
-                      widget.reminderDate =
-                          DateTime.now().subtract(selectedDuration);
-                      debugPrint(
-                          'Reminder is setted at: ${widget.reminderDate}');
-                    });
-                  }
-                  if (selectedDuration == null) {
-                    setState(() {
-                      widget.reminderDate = null;
-                      debugPrint(
-                          'Reminder is setted at: ${widget.reminderDate}');
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-
-          // Event Info
-          const SizedBox(height: 20),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Event Date
-              EventInfoRow(
-                icon: FontAwesomeIcons.calendar,
-                label: DateFormat('EEE, d MMM yyyy', 'fr_Fr')
-                    .format(widget.event.startDateTime),
-                type: 'date',
-              ),
-
-              // Event Time
-              EventInfoRow(
-                icon: FontAwesomeIcons.clock,
-                label:
-                    '${DateFormat('HH:mm', 'fr_Fr').format(widget.event.startDateTime)} à ${DateFormat('HH:mm', 'fr_Fr').format(widget.event.endDateTime)}',
-                type: 'time',
-              ),
-
-              // Event Location
-              widget.event.location.isNotEmpty
-                  ? EventInfoRow(
-                      icon: FontAwesomeIcons.locationDot,
-                      label: widget.event.location,
-                      type: 'location',
-                    )
-                  : Container(),
-
-              // Event Link
-              widget.event.link.isNotEmpty
-                  ? InkWell(
-                      onTap: () async {
-                        final Uri url = Uri.parse(widget.event.link);
-
-                        Uri urlToLaunch = Uri.parse(widget.event.link);
-
-                        if (!widget.event.link.startsWith("http://") &&
-                            !widget.event.link.startsWith("https://")) {
-                          urlToLaunch =
-                              Uri.parse("http://${widget.event.link}");
-                        }
-
-                        if (!await launchUrl(urlToLaunch)) {
-                          showSnackbar(
-                              context, 'Impossible de lancer cette url', null);
-                          throw 'Could not launch $urlToLaunch';
-                        }
-                      },
-                      child: EventInfoRow(
-                        icon: FontAwesomeIcons.link,
-                        label: widget.event.link,
-                        type: 'link',
+                      // Event Name
+                      const SizedBox(height: 20),
+                      Text(
+                        event.title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold),
                       ),
-                    )
-                  : Container(),
 
-              // Event User Poster
-              Padding(
-                padding: const EdgeInsets.only(top: 15),
-                child: buildAvatarAndUsername(uidPoster: widget.event.uid),
-              ),
+                      // Event Action Button
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // MESSAGE BUTTON OR EDIT EVENT BUTTON
+                          event.uid != FirebaseAuth.instance.currentUser!.uid
+                              ? Button(
+                                  text: 'Message',
+                                  height: 0.122.sw,
+                                  width: 0.3.sw,
+                                  fontsize: 14.sp,
+                                  fontColor: Colors.black,
+                                  color: Colors.white,
+                                  isBordered: true,
+                                  prefixIcon: FontAwesomeIcons.message,
+                                  prefixIconColor: Colors.black54,
+                                  prefixIconSize: 15.sp,
+                                  onTap: () {
+                                    // Redirect to Inbox /+Event Attached
+                                    Navigator.push(
+                                      context,
+                                      SwipeablePageRoute(
+                                        builder: (_) => (InboxPage(
+                                          userReceiverId: event.uid,
+                                          eventAttached: event,
+                                        )),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Button(
+                                  text: 'Modifier',
+                                  height: 0.122.sw,
+                                  width: 0.4.sw,
+                                  fontsize: 14.sp,
+                                  fontColor: Colors.black,
+                                  color: Colors.white,
+                                  isBordered: true,
+                                  prefixIcon: Icons.edit,
+                                  prefixIconColor: Colors.black54,
+                                  prefixIconSize: 15.sp,
+                                  onTap: () async {
+                                    // Get UserPoster
+                                    UserModel.User? userPoster =
+                                        await FirestoreMethods().getUser(FirebaseAuth.instance.currentUser!.uid);
 
-              // Event Descrtiption
-              widget.event.caption.isNotEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 15),
-                      child: Text(
-                        widget.event.caption,
-                        style: const TextStyle(
-                            fontSize: 15, color: Colors.black87),
+                                    // Edit Event here !
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.pop(context);
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.push(
+                                      context,
+                                      SwipeablePageRoute(
+                                        builder: (_) => (CreateOrUpdateEventPage(
+                                          event: event,
+                                          userPoster: userPoster,
+                                        )),
+                                      ),
+                                    );
+                                    ;
+                                  },
+                                ),
+
+                          const SizedBox(width: 14),
+
+                          // REMINDER BUTTON
+                          StreamBuilder<List<Reminder>>(
+                            stream: FirestoreMethods()
+                                .getEventRemindersById(widget.eventId, FirebaseAuth.instance.currentUser!.uid),
+                            builder: (context, snapshot) {
+                              // Handle error
+                              if (snapshot.hasError) {
+                                debugPrint('error: ${snapshot.error}');
+                                return Button(
+                                  text: 'Erreur...',
+                                  height: 0.122.sw,
+                                  width: 0.4.sw,
+                                  fontsize: 14.sp,
+                                  fontColor: Colors.white,
+                                  color: kSecondColor,
+                                  prefixIcon: Icons.running_with_errors_outlined,
+                                  prefixIconColor: Colors.white,
+                                  prefixIconSize: 15.sp,
+                                  onTap: () async {
+                                    // Display All Reminders setted for this event
+                                    pageController.nextPage(
+                                        duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+                                  },
+                                );
+                              }
+
+                              // handle data
+                              if (snapshot.hasData && snapshot.data != null) {
+                                List<Reminder> listReminder = snapshot.data as List<Reminder>;
+                                log('listReminder: $listReminder');
+                                int numberOfReminders = listReminder.length;
+
+                                return Button(
+                                  text: numberOfReminders == 0
+                                      ? 'Me rappeler'
+                                      : '$numberOfReminders Rappel${numberOfReminders > 1 ? 's' : ''}',
+                                  height: 0.122.sw,
+                                  width: 0.4.sw,
+                                  fontsize: 14.sp,
+                                  fontColor: Colors.white,
+                                  color: kSecondColor,
+                                  prefixIcon: Icons.timer_outlined,
+                                  prefixIconColor: Colors.white,
+                                  prefixIconSize: 15.sp,
+                                  onTap: () async {
+                                    // Display All Reminders setted for this event
+                                    pageController.nextPage(
+                                        duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+                                  },
+                                );
+                              }
+
+                              // Diplay Loader
+
+                              return Button(
+                                text: 'Rappels',
+                                height: 0.122.sw,
+                                width: 0.4.sw,
+                                fontsize: 14.sp,
+                                fontColor: Colors.white,
+                                prefixIsLoading: true,
+                                color: kSecondColor,
+                                prefixIcon: Icons.timer_outlined,
+                                prefixIconColor: Colors.white,
+                                prefixIconSize: 15.sp,
+                                onTap: () async {
+                                  // Display All Reminders setted for this event
+                                  pageController.nextPage(
+                                      duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+                                },
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    )
-                  : Container(),
 
-              // Event CreatedAt
-              Padding(
-                padding: const EdgeInsets.only(top: 15),
-                child: Row(
+                      // Event Info
+                      const SizedBox(height: 20),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Event User Poster
+                          Padding(
+                            padding: const EdgeInsets.only(top: 15),
+                            child: GestureDetector(
+                              onTap: () {
+                                // Redirect to Profile Page
+                                Navigator.push(
+                                    context,
+                                    SwipeablePageRoute(
+                                      builder: (context) => ProfilePage(uid: event.uid, showBackButton: true),
+                                    ));
+                              },
+                              child: buildAvatarAndUsername(
+                                uidPoster: event.uid,
+                                radius: 10,
+                              ),
+                            ),
+                          ),
+
+                          // Event Date + Time
+                          ...event.eventDurations.map((eventDuration) {
+                            EventDurationType eventDurationGet =
+                                EventDurationType.fromJson((eventDuration as Map<String, dynamic>));
+
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                EventInfoRow(
+                                  noTextWrappring: true,
+                                  icon: event.type == 'birthday' ? Icons.cake_outlined : Icons.calendar_today,
+                                  label: DateFormat(event.type == 'birthday' ? 'dd MMM' : 'EEE, d MMM yyyy', 'fr_Fr')
+                                      .format(eventDurationGet.date),
+                                  type: 'date',
+                                ),
+
+                                Transform.translate(
+                                  offset: const Offset(0, 5),
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(left: 3, right: 3),
+                                    child: Icon(Icons.navigate_next_rounded, color: kSecondColor),
+                                  ),
+                                ),
+
+                                // // Event Time
+                                Expanded(
+                                  child: EventInfoRow(
+                                    icon: Icons.access_time_outlined,
+                                    label: eventDurationGet.isAllTheDay
+                                        ? 'Toute la journée'
+                                        : '${eventDurationGet.startTime.hour.toString().padLeft(2, "0")}:${eventDurationGet.startTime.minute.toString().padLeft(2, "0")} à ${eventDurationGet.endTime.hour.toString().padLeft(2, "0")}:${eventDurationGet.endTime.minute.toString().padLeft(2, "0")}',
+                                    type: 'time',
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+
+                          // Event Location
+                          event.location.isNotEmpty
+                              ? EventInfoRow(
+                                  icon: FontAwesomeIcons.locationDot,
+                                  label: event.location,
+                                  type: 'location',
+                                )
+                              : Container(),
+
+                          // Event Link
+                          event.link.isNotEmpty
+                              ? InkWell(
+                                  onTap: () async {
+                                    final Uri url = Uri.parse(event.link);
+
+                                    Uri urlToLaunch = Uri.parse(event.link);
+
+                                    if (!event.link.startsWith("http://") && !event.link.startsWith("https://")) {
+                                      urlToLaunch = Uri.parse("http://${event.link}");
+                                    }
+
+                                    if (!await launchUrl(urlToLaunch)) {
+                                      showSnackbar(context, 'Impossible de lancer cette url', null);
+                                      throw 'Could not launch $urlToLaunch';
+                                    }
+                                  },
+                                  child: EventInfoRow(
+                                    icon: FontAwesomeIcons.link,
+                                    label: event.link,
+                                    type: 'link',
+                                  ),
+                                )
+                              : Container(),
+
+                          // Event Descrtiption
+                          event.caption.isNotEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 15),
+                                  child: Text(
+                                    event.caption,
+                                    style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+                                  ),
+                                )
+                              : Container(),
+
+                          // Event CreatedAt
+                          Padding(
+                            padding: const EdgeInsets.only(top: 15),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.done,
+                                  size: 13.sp,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                Text(
+                                  '${event.createdAt.isBefore(event.modifiedAt) ? 'Modifié ' : 'Crée '}${getTimeAgoLongForm(event.createdAt)}',
+                                  style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Diplay Loader
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Column(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // getEventStatus(widget.event.status),
-                    // SizedBox(
-                    //   width: 7,
-                    // ),
-                    Text(
-                      'Crée ${(() {
-                        timeago.setLocaleMessages('fr', timeago.FrMessages());
-                        return timeago.format(widget.event.createdAt,
-                            locale: 'fr');
-                      }())}',
-                      style:
-                          TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 30, top: 20),
+                      child: Shimmer.fromColors(
+                        baseColor: Colors.grey.shade200,
+                        highlightColor: Colors.grey.shade400,
+                        child: CircleAvatar(
+                          radius: 0.1.sw,
+                        ),
+                      ),
+                    ),
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey.shade200,
+                      highlightColor: Colors.grey.shade400,
+                      child: Container(
+                          margin: const EdgeInsets.only(bottom: 2),
+                          width: 200,
+                          height: 19,
+                          color: Colors.grey.shade400),
+                    ),
+                    const SizedBox(
+                      height: 30,
+                    ),
+                    Column(
+                      children: [
+                        Shimmer.fromColors(
+                          baseColor: Colors.grey.shade200,
+                          highlightColor: Colors.grey.shade400,
+                          child: Container(
+                              margin: const EdgeInsets.only(bottom: 2),
+                              width: 250,
+                              height: 12,
+                              color: Colors.grey.shade400),
+                        ),
+                        const SizedBox(
+                          height: 7,
+                        ),
+                        Shimmer.fromColors(
+                          baseColor: Colors.grey.shade200,
+                          highlightColor: Colors.grey.shade400,
+                          child: Container(
+                              margin: const EdgeInsets.only(bottom: 2),
+                              width: 250,
+                              height: 12,
+                              color: Colors.grey.shade400),
+                        ),
+                        const SizedBox(
+                          height: 7,
+                        ),
+                        Shimmer.fromColors(
+                          baseColor: Colors.grey.shade200,
+                          highlightColor: Colors.grey.shade400,
+                          child: Container(
+                              margin: const EdgeInsets.only(bottom: 2),
+                              width: 250,
+                              height: 12,
+                              color: Colors.grey.shade400),
+                        ),
+                      ],
                     ),
                   ],
+                );
+              }
+
+              return Container();
+            },
+          ),
+
+          // PAGE 2 : All Event's Reminders
+          SizedBox(
+            width: double.infinity,
+            child: Column(
+              children: [
+                // HEADER
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Row(
+                    children: [
+                      // Back Button
+                      IconButton(
+                        splashRadius: 0.06.sw,
+                        onPressed: () {
+                          pageController.previousPage(
+                              duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios_rounded,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      // Modal Title
+                      Text(
+                        'Rappels',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontSize: 17.sp,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Add Reminder Button
+                      Button(
+                        text: 'Ajouter',
+                        height: 0.12.sw,
+                        width: double.infinity,
+                        fontsize: 13.sp,
+                        fontColor: Colors.black,
+                        color: Colors.white,
+                        isBordered: true,
+                        prefixIcon: Icons.add,
+                        prefixIconColor: Colors.black,
+                        prefixIconSize: 19,
+                        onTap: () async {
+                          // Edit Event here !
+                          Event? eventGet = await FirestoreMethods().getEventByIdAsFuture(widget.eventId);
+                          // ignore: use_build_context_synchronously
+                          Navigator.push(
+                            context,
+                            SwipeablePageRoute(
+                              builder: (_) => (CreateOrUpdateReminderPage(eventAttached: eventGet)),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                // REMINDERS LIST
+                StreamBuilder<List<Reminder>>(
+                  stream:
+                      FirestoreMethods().getEventRemindersById(widget.eventId, FirebaseAuth.instance.currentUser!.uid),
+                  builder: (context, snapshot) {
+                    // Handle error
+                    if (snapshot.hasError) {
+                      debugPrint('error: ${snapshot.error}');
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 100),
+                        child: Column(
+                          children: const [
+                            Center(
+                              child: buildErrorWidget(onWhiteBackground: true),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // handle data
+                    if (snapshot.hasData && snapshot.data != null) {
+                      List<Reminder> listReminder = snapshot.data as List<Reminder>;
+                      log('listReminder: $listReminder');
+                      listReminder.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+                      if (listReminder.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(30),
+                          height: 300,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Lottie.asset(
+                                height: 150,
+                                'assets/animations/112136-empty-red.json',
+                                width: double.infinity,
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                'Aucun rappel trouvé !',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.black45,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView(
+                        shrinkWrap: true,
+                        children: listReminder.map((reminder) {
+                          return ReminderCard(reminder: reminder);
+                        }).toList(),
+                      );
+                    }
+
+                    // Diplay Loader
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Column(
+                        children: [
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade400,
+                            child: Container(
+                                margin: const EdgeInsets.only(bottom: 2),
+                                width: 200,
+                                height: 20,
+                                color: Colors.grey.shade400),
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade400,
+                            child: Container(
+                                margin: const EdgeInsets.only(bottom: 2),
+                                width: 200,
+                                height: 20,
+                                color: Colors.grey.shade400),
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade400,
+                            child: Container(
+                                margin: const EdgeInsets.only(bottom: 2),
+                                width: 200,
+                                height: 20,
+                                color: Colors.grey.shade400),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Container();
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -281,35 +652,40 @@ class EventInfoRow extends StatelessWidget {
   final IconData icon;
   final dynamic label;
   final String type;
+  final bool? noTextWrappring;
 
-  getLabelData(_type) {
+  Widget getLabelData(_type) {
     if (_type == 'date') {
       return Text(
         label,
-        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
     } else if (_type == 'time') {
       return Text(
         label,
-        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
     } else if (_type == 'location') {
       return Text(
         label,
-        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
     } else if (_type == 'link') {
       return Text(
         label,
-        style: TextStyle(fontSize: 16, color: Colors.lightBlue.shade600),
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13.sp, color: Colors.lightBlue.shade600),
       );
     }
 
     return const Text('');
   }
 
-  const EventInfoRow(
-      {required this.icon, required this.label, required this.type});
+  const EventInfoRow({Key? key, required this.icon, required this.label, required this.type, this.noTextWrappring})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -319,13 +695,21 @@ class EventInfoRow extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 18,
+            size: 15.sp,
             color: Colors.grey.shade600,
           ),
           const SizedBox(
-            width: 15,
+            width: 7,
           ),
-          getLabelData(type)
+          noTextWrappring == true
+              ? getLabelData(type)
+              : Expanded(
+                  child: Wrap(
+                    children: [
+                      getLabelData(type),
+                    ],
+                  ),
+                )
         ],
       ),
     );

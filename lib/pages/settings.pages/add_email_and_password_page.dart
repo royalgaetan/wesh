@@ -2,6 +2,8 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/settings.pages/account_security_settings.dart';
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
@@ -15,16 +17,14 @@ class AddEmailandPasswordPage extends StatefulWidget {
   const AddEmailandPasswordPage({super.key});
 
   @override
-  State<AddEmailandPasswordPage> createState() =>
-      _AddEmailandPasswordPageState();
+  State<AddEmailandPasswordPage> createState() => _AddEmailandPasswordPageState();
 }
 
 class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
   User? user;
   late TextEditingController emailController = TextEditingController();
   late TextEditingController passwordController = TextEditingController();
-  late TextEditingController passwordConfirmationController =
-      TextEditingController();
+  late TextEditingController passwordConfirmationController = TextEditingController();
   bool showVisibilityIcon = false;
   bool showPasswordConfirmation_VisibilityIcon = false;
   bool isPswVisible = true;
@@ -43,8 +43,7 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
   }
 
   Future toogleRedirectToAddEmailandPasswordPage() async {
-    await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(
-        false);
+    await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(false);
     debugPrint(
         "New value Redirect to Setting Page [AddEmailandPswPage]: ${UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue()} ");
   }
@@ -62,8 +61,8 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -80,16 +79,14 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
 
       if (email != null && !EmailValidator.validate(email)) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Veuillez entrer une adresse email valide', null);
+        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
       bool isEmailUsed = await checkIfEmailInUse(context, emailController.text);
 
       if (isEmailUsed == true) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Cette adresse email est déjà utilisée', null);
+        return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
       }
 
       // Checkers : password
@@ -98,22 +95,18 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
         return showSnackbar(context, 'Veuillez entrer un mot de passe', null);
       } else if (psw.length < 6) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(context,
-            'Votre mot de passe doit contenir plus de 6 caractères', null);
+        return showSnackbar(context, 'Votre mot de passe doit contenir plus de 6 caractères', null);
       } else if (confirmPsw.isEmpty) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Veuillez confirmer votre mot de passe', null);
+        return showSnackbar(context, 'Veuillez confirmer votre mot de passe', null);
       } else if (confirmPsw != psw) {
         // ignore: use_build_context_synchronously
-        return showSnackbar(
-            context, 'Vos mots de passe ne correspondent pas', null);
+        return showSnackbar(context, 'Vos mots de passe ne correspondent pas', null);
       }
 
       // IF ALL CHECKERS VALIDATED : [CONTINUE]
       // Link Password Provider
-      List result = await AuthMethods()
-          .linkCredentialsbyEmailAccount(context, email, psw);
+      List result = await AuthMethods().linkCredentialsbyEmailAccount(context, email, psw);
       if (result[0]) {
         // Redirect to Settings Security Page
         Navigator.of(context).pop();
@@ -129,12 +122,13 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'addEmailAndPasswordPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -172,9 +166,7 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                   keyboardType: TextInputType.emailAddress,
                   controller: emailController,
                   decoration: const InputDecoration(
-                      hintText: 'Email',
-                      contentPadding: EdgeInsets.all(20),
-                      border: InputBorder.none),
+                      hintText: 'Email', contentPadding: EdgeInsets.all(20), border: InputBorder.none),
                 ),
               ),
               const SizedBox(
@@ -236,15 +228,13 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                                   if (value != '')
                                     {
                                       setState(() {
-                                        showPasswordConfirmation_VisibilityIcon =
-                                            true;
+                                        showPasswordConfirmation_VisibilityIcon = true;
                                       })
                                     }
                                   else
                                     {
                                       setState(() {
-                                        showPasswordConfirmation_VisibilityIcon =
-                                            false;
+                                        showPasswordConfirmation_VisibilityIcon = false;
                                       })
                                     }
                                 }),
@@ -258,15 +248,12 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                                         splashRadius: 22,
                                         onPressed: () {
                                           setState(() {
-                                            isPswConfirmationVisible =
-                                                !isPswConfirmationVisible;
+                                            isPswConfirmationVisible = !isPswConfirmationVisible;
                                           });
                                         },
                                         icon: isPswConfirmationVisible
-                                            ? const Icon(
-                                                Icons.visibility_rounded)
-                                            : const Icon(
-                                                Icons.visibility_off_rounded))
+                                            ? const Icon(Icons.visibility_rounded)
+                                            : const Icon(Icons.visibility_off_rounded))
                                     : const SizedBox(
                                         width: 2,
                                         height: 2,

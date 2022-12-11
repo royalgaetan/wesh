@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth_controller_page.dart';
 import 'package:wesh/pages/in.pages/create_or_update_contactpage.dart';
 import 'package:wesh/pages/startPage.dart';
@@ -22,18 +24,17 @@ class _AddFriendsState extends State<AddFriends> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 40, bottom: 0, left: 15, right: 15),
+          padding: const EdgeInsets.only(top: 40, bottom: 0, left: 15, right: 15),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
-                children: const [
+                children: [
                   Text(
                     'Suivez une personne qui vous interesse',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.sp),
                   ),
                 ],
               ),
@@ -84,7 +85,7 @@ class _AddFriendsState extends State<AddFriends> {
         color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         child: Button(
-          height: 50,
+          height: 0.12.sw,
           width: double.infinity,
           text: 'Commencer',
           color: kSecondColor,
@@ -92,8 +93,8 @@ class _AddFriendsState extends State<AddFriends> {
             // Redirect to Start Page
             Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => StartPage(),
+                SwipeablePageRoute(
+                  builder: (context) => StartPage(context: context),
                 ),
                 (route) => false);
           },

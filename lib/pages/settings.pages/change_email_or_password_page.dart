@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/add_email.dart';
 import 'package:wesh/pages/auth.pages/createpassword_and_confirm.dart';
 
@@ -13,8 +15,7 @@ class ChangeEmailOrPasswordPage extends StatefulWidget {
   const ChangeEmailOrPasswordPage({super.key});
 
   @override
-  State<ChangeEmailOrPasswordPage> createState() =>
-      _ChangeEmailOrPasswordPageState();
+  State<ChangeEmailOrPasswordPage> createState() => _ChangeEmailOrPasswordPageState();
 }
 
 class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
@@ -33,15 +34,13 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
   }
 
   Future redirectToChangeEmailPage() async {
-    var valueToRedirect =
-        UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
-    debugPrint(
-        "Redirect to Change Email Page [CHANGE EMAIL or PASSWORD PAGE]: $valueToRedirect ");
+    var valueToRedirect = UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
+    debugPrint("Redirect to Change Email Page [CHANGE EMAIL or PASSWORD PAGE]: $valueToRedirect ");
     if (valueToRedirect) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const AddEmailPage(),
           ),
         );
@@ -50,15 +49,13 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
   }
 
   Future redirectToChangePasswordPage() async {
-    var valueToRedirect =
-        UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
-    debugPrint(
-        "Redirect to Update Email Page [CHANGE EMAIL or PASSWORD PAGE]: $valueToRedirect ");
+    var valueToRedirect = UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
+    debugPrint("Redirect to Update Email Page [CHANGE EMAIL or PASSWORD PAGE]: $valueToRedirect ");
     if (valueToRedirect) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const CreatePassword(isUpdatingEmail: true),
           ),
         );
@@ -70,12 +67,13 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'changeEmailOrPasswordPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -93,7 +91,7 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
         padding: const EdgeInsets.all(0),
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -103,18 +101,18 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
                     // Redirect to Add Email Page
                     Navigator.push(
                         context,
-                        MaterialPageRoute(
+                        SwipeablePageRoute(
                           builder: (context) => const AddEmailPage(),
                         ));
                   },
                   trailing: Container(),
                   leading: CircleAvatar(
-                    radius: 30,
+                    radius: 0.08.sw,
                     backgroundColor: kGreyColor,
                     child: Icon(
                       FontAwesomeIcons.envelopeCircleCheck,
                       color: Colors.black87.withOpacity(.7),
-                      size: 24,
+                      size: 20.sp,
                     ),
                   ),
                   settingTitle: 'Changer votre email actuel',
@@ -127,19 +125,18 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
                     // Redirect to Create Password Page
                     Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const CreatePassword(isUpdatingEmail: true),
+                        SwipeablePageRoute(
+                          builder: (context) => const CreatePassword(isUpdatingEmail: true),
                         ));
                   },
                   trailing: Container(),
                   leading: CircleAvatar(
-                    radius: 30,
+                    radius: 0.08.sw,
                     backgroundColor: kGreyColor,
                     child: Icon(
                       FontAwesomeIcons.key,
                       color: Colors.black87.withOpacity(.7),
-                      size: 24,
+                      size: 20.sp,
                     ),
                   ),
                   settingTitle: 'Changer votre mot de passe actuel',

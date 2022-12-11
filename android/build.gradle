@@ -16,6 +16,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { 
+            url "http://maven.usehover.com/releases"
+            allowInsecureProtocol = true 
+        }
     }
 }
 
@@ -24,7 +28,18 @@ subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
 subprojects {
+      afterEvaluate {project ->
+        if (project.hasProperty("android") && project.property("android").compileSdkVersion.equals("android-S_V2")) {
+            android {
+                compileSdkVersion 32
+            }
+        }
+    }
+}
+subprojects {
     project.evaluationDependsOn(':app')
+
+  
 }
 
 task clean(type: Delete) {

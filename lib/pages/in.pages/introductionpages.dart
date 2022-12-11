@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:introduction_screen/introduction_screen.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth_controller_page.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/services/auth.methods.dart';
@@ -23,7 +24,7 @@ nextPage(context) {
   SchedulerBinding.instance.addPostFrameCallback((_) {
     Navigator.push(
       context,
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => AddProfilePicture(),
       ),
     );
@@ -53,19 +54,16 @@ class _LoginPageState extends State<IntroductionScreensPage> {
             },
             showBackButton: false,
             showSkipButton: true,
-            skip: const Text('Ignorer tout',
-                style: TextStyle(color: Colors.black54)),
+            skip: const Text('Ignorer tout', style: TextStyle(color: Colors.black54)),
             next: const Text('Suivant'),
-            done: const Text("Commencer",
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            done: const Text("Commencer", style: TextStyle(fontWeight: FontWeight.w600)),
             dotsDecorator: DotsDecorator(
                 size: const Size.square(10.0),
                 activeSize: const Size(20.0, 10.0),
                 activeColor: kSecondColor,
                 color: Colors.black26,
                 spacing: const EdgeInsets.symmetric(horizontal: 3.0),
-                activeShape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25.0))),
+                activeShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0))),
           ),
         ),
       ),

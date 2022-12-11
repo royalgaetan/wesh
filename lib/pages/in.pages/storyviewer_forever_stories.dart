@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../utils/constants.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:dismissible_page/dismissible_page.dart';
@@ -19,13 +20,11 @@ class ForeverStoriesPageViewer extends StatefulWidget {
   final List<Forever> foreversList;
   final int initialForeverIndex;
 
-  const ForeverStoriesPageViewer(
-      {Key? key, required this.foreversList, required this.initialForeverIndex})
+  const ForeverStoriesPageViewer({Key? key, required this.foreversList, required this.initialForeverIndex})
       : super(key: key);
 
   @override
-  State<ForeverStoriesPageViewer> createState() =>
-      _ForeverStoriesPageViewerState();
+  State<ForeverStoriesPageViewer> createState() => _ForeverStoriesPageViewerState();
 }
 
 class _ForeverStoriesPageViewerState extends State<ForeverStoriesPageViewer> {
@@ -111,17 +110,14 @@ class ForeversForeverStoriesPageViewerView extends StatefulWidget {
   final PageController pageController;
 
   @override
-  State<ForeversForeverStoriesPageViewerView> createState() =>
-      _ForeversForeverStoriesPageViewerViewState();
+  State<ForeversForeverStoriesPageViewerView> createState() => _ForeversForeverStoriesPageViewerViewState();
 }
 
-class _ForeversForeverStoriesPageViewerViewState
-    extends State<ForeversForeverStoriesPageViewerView>
+class _ForeversForeverStoriesPageViewerViewState extends State<ForeversForeverStoriesPageViewerView>
     with WidgetsBindingObserver {
   ValueNotifier<int> currentStoryDisplayed = ValueNotifier<int>(0);
   late ValueNotifier<bool> isAllowedToJump;
-  ValueNotifier<List<StoryItem?>> storiesItemList =
-      ValueNotifier<List<StoryItem?>>([]);
+  ValueNotifier<List<StoryItem?>> storiesItemList = ValueNotifier<List<StoryItem?>>([]);
 
   ScreenshotController storySreenshotController = ScreenshotController();
   ValueNotifier<bool> isStoryHeaderAndFooterVisible = ValueNotifier<bool>(true);
@@ -129,7 +125,7 @@ class _ForeversForeverStoriesPageViewerViewState
   gotToProfilePage({required BuildContext context, required String uid}) {
     Navigator.push(
         context,
-        MaterialPageRoute(
+        SwipeablePageRoute(
           builder: (context) => ProfilePage(uid: uid, showBackButton: true),
         ));
   }
@@ -178,40 +174,32 @@ class _ForeversForeverStoriesPageViewerViewState
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future:
-          Provider.of<UserProvider>(context).getFovererStories(widget.forever),
+      future: Provider.of<UserProvider>(context).getFovererStories(widget.forever),
       builder: (context, AsyncSnapshot snapshot) {
         if (snapshot.hasData && snapshot.data != null) {
           List<Story> allStories = [];
 
           // Display All Stories
           for (Story storySelected in (snapshot.data as List<Story>)) {
-            StoryItem storyWidgetToAdd =
-                getStoryItemByType(storySelected, widget.storyController);
+            StoryItem storyWidgetToAdd = getStoryItemByType(storySelected, widget.storyController);
 
             allStories.add(storySelected);
           }
 
           // Sort Stories
           allStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          storiesItemList.value = allStories
-              .map((story) => getStoryItemByType(story, widget.storyController))
-              .toList();
+          storiesItemList.value = allStories.map((story) => getStoryItemByType(story, widget.storyController)).toList();
 
           // Display All StoryItems
 
           // Get the First Story seen by currentUser
-          List<Story> storiesListSeenByCurrentUser = allStories
-              .where((story) => story.viewers
-                  .contains(FirebaseAuth.instance.currentUser!.uid))
-              .toList();
+          List<Story> storiesListSeenByCurrentUser =
+              allStories.where((story) => story.viewers.contains(FirebaseAuth.instance.currentUser!.uid)).toList();
 
           //
-          storiesListSeenByCurrentUser
-              .sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          storiesListSeenByCurrentUser.sort((a, b) => a.createdAt.compareTo(b.createdAt));
           debugPrint('allStories: ${allStories.map((e) => e.storyId)}');
-          debugPrint(
-              'storiesListSeenByCurrentUser: ${storiesListSeenByCurrentUser.map((e) => e.storyId)}');
+          debugPrint('storiesListSeenByCurrentUser: ${storiesListSeenByCurrentUser.map((e) => e.storyId)}');
 
           //
           return Screenshot(
@@ -242,52 +230,37 @@ class _ForeversForeverStoriesPageViewerViewState
                           // },
                           onComplete: () {
                             // Jump to next Forever
-                            widget.pageController.nextPage(
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeIn);
+                            widget.pageController
+                                .nextPage(duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
                           },
                           onStoryShow: (StoryItem) {
                             //
-                            currentStoryDisplayed.value =
-                                storiesItemList.value.indexOf(StoryItem);
+                            currentStoryDisplayed.value = storiesItemList.value.indexOf(StoryItem);
                             // UPDATE : Add currentUserId to Story Viewers
-                            FirestoreMethods().updateStoryViewersList(
-                                context,
-                                FirebaseAuth.instance.currentUser!.uid,
-                                allStories[currentStoryDisplayed.value]
-                                    .storyId);
+                            FirestoreMethods().updateStoryViewersList(context, FirebaseAuth.instance.currentUser!.uid,
+                                allStories[currentStoryDisplayed.value].storyId);
 
-                            debugPrint(
-                                'INITIAL VALUE of Skip story : ${isAllowedToJump.value}');
+                            debugPrint('INITIAL VALUE of Skip story : ${isAllowedToJump.value}');
                             // Jump to Next /if the currentUser has already seen this story
                             List storiesListSeenByCurrentUserWithOnlyStoriesId =
-                                storiesListSeenByCurrentUser
-                                    .map((e) => e.storyId)
-                                    .toList();
-                            String storyIdToCheck =
-                                allStories[currentStoryDisplayed.value].storyId;
+                                storiesListSeenByCurrentUser.map((e) => e.storyId).toList();
+                            String storyIdToCheck = allStories[currentStoryDisplayed.value].storyId;
 
                             // Conditions to Skip story
                             if (isAllowedToJump.value &&
                                 //
-                                storiesListSeenByCurrentUserWithOnlyStoriesId
-                                        .indexOf(storyIdToCheck) <
-                                    storiesListSeenByCurrentUserWithOnlyStoriesId
-                                            .length -
-                                        1 &&
+                                storiesListSeenByCurrentUserWithOnlyStoriesId.indexOf(storyIdToCheck) <
+                                    storiesListSeenByCurrentUserWithOnlyStoriesId.length - 1 &&
                                 //
-                                storiesListSeenByCurrentUser.contains(
-                                    allStories[currentStoryDisplayed.value])) {
+                                storiesListSeenByCurrentUser.contains(allStories[currentStoryDisplayed.value])) {
                               widget.storyController.next();
-                              debugPrint(
-                                  'Skip story : ${isAllowedToJump.value}');
+                              debugPrint('Skip story : ${isAllowedToJump.value}');
                             }
 
                             // Else :
                             else {
                               isAllowedToJump.value = false;
-                              debugPrint(
-                                  'Don\'t skip story : ${isAllowedToJump.value}');
+                              debugPrint('Don\'t skip story : ${isAllowedToJump.value}');
                             }
                           },
 
@@ -319,8 +292,7 @@ class _ForeversForeverStoriesPageViewerViewState
                               isAllowedToJump: isAllowedToJump,
                               storiesItemList: storiesItemList,
                               storyController: widget.storyController,
-                              storySreenshotController:
-                                  storySreenshotController,
+                              storySreenshotController: storySreenshotController,
                             )
                           : Container(),
                     );
@@ -335,8 +307,7 @@ class _ForeversForeverStoriesPageViewerViewState
           // Handle error
           debugPrint('error: ${snapshot.error}');
           return const Center(
-            child: Text('Une erreur s\'est produite',
-                style: TextStyle(color: Colors.white)),
+            child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
           );
         }
 
@@ -374,9 +345,7 @@ class _ForeversForeverStoriesPageViewerViewState
 
                 // Loader: Body
                 Container(
-                    height: MediaQuery.of(context).size.height / 2,
-                    width: double.infinity,
-                    color: Colors.white60),
+                    height: MediaQuery.of(context).size.height / 2, width: double.infinity, color: Colors.white60),
 
                 // Loader: Footer
                 Container(

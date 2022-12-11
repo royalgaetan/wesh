@@ -34,7 +34,6 @@ class BugReport {
   });
 
   // ToJson
-
   Map<String, Object?> toJson() => {
         'bugReportId': bugReportId,
         'uid': uid,

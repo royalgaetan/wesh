@@ -48,15 +48,13 @@ class ContactCard extends StatelessWidget {
                 // Contact Birthday
                 Row(
                   children: [
-                    Icon(FontAwesomeIcons.cakeCandles,
-                        size: 12, color: Colors.grey.shade500),
-                    SizedBox(
+                    Icon(FontAwesomeIcons.cakeCandles, size: 12, color: Colors.grey.shade500),
+                    const SizedBox(
                       width: 3,
                     ),
                     Text(
-                      '${DateFormat('d MMM yyyy').format(birthday)}',
-                      style:
-                          TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                      DateFormat('d MMM yyyy').format(birthday),
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                     ),
                   ],
                 ),

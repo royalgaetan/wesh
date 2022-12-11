@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:timeago/timeago.dart';
+import 'package:wesh/services/notifications_api.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 
 import '../models/eventtype.dart';
@@ -11,14 +14,51 @@ const String appName = 'Wesh';
 const String appVersion = '0.1';
 const String appEmail = 'app.wesh@gmail.com';
 const String downloadAppUrl = 'https://wesh.grwebsite.com/';
-const String privacyPolicyUrl =
-    'https://wesh.grwebsite.com/politique-de-confidentialite-en';
+const String privacyPolicyUrl = 'https://wesh.grwebsite.com/politique-de-confidentialite-en';
+
+// ENV && App var
+// fileLimitSize : 15MB
+const int fileLimitSize = 15000000;
+
+// Notifications Channels
+
+List<NotificationChannel> notificationsChannelList = [
+  NotificationChannel(
+      channelId: '0',
+      channelName: 'Messages',
+      channelDescription: 'Recevez les notifications sur les messages qui vous sont destinés',
+      channelImportance: Importance.max,
+      channelPriority: Priority.defaultPriority),
+  NotificationChannel(
+      channelId: '1',
+      channelName: 'Evenements',
+      channelDescription: 'Recevez les notifications sur les évenements qui vous concernent',
+      channelImportance: Importance.max,
+      channelPriority: Priority.high),
+  NotificationChannel(
+      channelId: '2',
+      channelName: 'Rappels',
+      channelDescription: 'Recevez les notifications sur les rappels que vous mettez en place',
+      channelImportance: Importance.max,
+      channelPriority: Priority.max),
+  NotificationChannel(
+      channelId: '3',
+      channelName: 'Stories',
+      channelDescription: 'Recevez les notifications sur les nouvelles stories',
+      channelImportance: Importance.max,
+      channelPriority: Priority.defaultPriority),
+];
 
 // Colors
 const kPrimaryColor = Color(0xFF68002C);
 const kSecondColor = Color(0xFFE02F66);
 final kSuccessColor = Colors.green.shade400;
 const kGreyColor = Color(0xFFF0F0F0);
+
+// Constants
+// Constants : Payment Method
+const mtnMobileMoneyLabel = 'Mobile Money';
+const airtelMoneyLabel = 'Airtel Money';
 
 // Assets
 const String weshLogoBlack = 'assets/images/wesh_logo_black.svg';
@@ -28,6 +68,25 @@ const String phoneLogo = 'assets/images/phone_logo.svg';
 const String facebookLogo = 'assets/images/facebook_logo.svg';
 const String weshLogoPic = 'assets/images/wesh_logo.png';
 const String weshFaviconPic = 'assets/images/wesh_favicon.png';
+const String darkBackground = 'assets/images/dark_background.png';
+const String soundWaves = 'assets/images/sound_waves.png';
+const String mtnMobileMoneyLogo = 'assets/images/mtn_mobile_money_logo.png';
+const String airtelMoneyLogo = 'assets/images/airtel_money_logo.png';
+
+const List<String> monthsList = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre'
+];
 
 // Time ago messages
 class FrMessagesShortsform implements LookupMessages {
@@ -66,26 +125,41 @@ class FrMessagesShortsform implements LookupMessages {
 }
 
 // Reminders
-const remindersList = [
+final remindersList = [
   Text(
     'dès qu\'il commence',
-    style: TextStyle(color: Colors.black),
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
+  ),
+  Text(
+    '10min avant',
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
   ),
   Text(
     '1h avant',
-    style: TextStyle(color: Colors.black),
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
   ),
   Text(
     '1 jour avant',
-    style: TextStyle(color: Colors.black),
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
+  ),
+  Text(
+    '3 jours avant',
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
   ),
   Text(
     '1 semaine avant',
-    style: TextStyle(color: Colors.black),
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
   ),
   Text(
     '1 mois avant',
-    style: TextStyle(color: Colors.black),
+    textAlign: TextAlign.center,
+    style: TextStyle(fontSize: 16.sp, color: Colors.black),
   ),
 ];
 
@@ -114,11 +188,11 @@ const recurrencesList = [
 
 // FeedBack Available Type
 List<FeedBackType> feedbackAvailableTypeList = [
-  FeedBackType(emoji: '😞', title: 'Déçu'),
-  FeedBackType(emoji: '😒', title: 'Pas cool'),
-  FeedBackType(emoji: '🙄', title: 'Je sais pas'),
-  FeedBackType(emoji: '😊', title: 'J\'aime bien'),
-  FeedBackType(emoji: '🥰', title: 'Excellent'),
+  FeedBackType(index: 1, emoji: '😞', title: 'Déçu'),
+  FeedBackType(index: 2, emoji: '😒', title: 'Pas cool'),
+  FeedBackType(index: 3, emoji: '🙄', title: 'Je sais pas'),
+  FeedBackType(index: 4, emoji: '😊', title: 'J\'aime bien'),
+  FeedBackType(index: 5, emoji: '🥰', title: 'Excellent'),
 ];
 
 // Event Available Type
@@ -133,7 +207,7 @@ List<EventType> eventAvailableTypeList = [
   EventType(
     key: 'baptismbirthday',
     name: 'Anniversaire de baptème',
-    recurrence: true,
+    recurrence: false,
     iconPath: '',
     description: '',
   ),
@@ -161,6 +235,13 @@ List<EventType> eventAvailableTypeList = [
   EventType(
     key: 'conference',
     name: 'Conference',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'courses',
+    name: 'Cours',
     recurrence: false,
     iconPath: '',
     description: '',
@@ -194,9 +275,51 @@ List<EventType> eventAvailableTypeList = [
     description: '',
   ),
   EventType(
+    key: 'festival',
+    name: 'Festival',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'party',
+    name: 'Fête',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
     key: 'inauguration',
     name: 'Inauguration',
     recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'religiousday',
+    name: 'Jour religieux',
+    recurrence: true,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'specialday',
+    name: 'Jour spécial',
+    recurrence: true,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'internationalday',
+    name: 'Journée internationale',
+    recurrence: true,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'nationalday',
+    name: 'Journée nationale',
+    recurrence: true,
     iconPath: '',
     description: '',
   ),
@@ -229,6 +352,13 @@ List<EventType> eventAvailableTypeList = [
     description: '',
   ),
   EventType(
+    key: 'meeting',
+    name: 'Reunion',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
     key: 'tradeshow',
     name: 'Salon professionnel',
     recurrence: false,
@@ -238,6 +368,13 @@ List<EventType> eventAvailableTypeList = [
   EventType(
     key: 'seminar',
     name: 'Seminaire',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'show',
+    name: 'Show',
     recurrence: false,
     iconPath: '',
     description: '',
@@ -257,8 +394,22 @@ List<EventType> eventAvailableTypeList = [
     description: '',
   ),
   EventType(
+    key: 'poll',
+    name: 'Sondages',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
     key: 'teambuilding',
     name: 'Team Building',
+    recurrence: false,
+    iconPath: '',
+    description: '',
+  ),
+  EventType(
+    key: 'visioconference',
+    name: 'Visioconférence',
     recurrence: false,
     iconPath: '',
     description: '',
@@ -287,7 +438,7 @@ List<EventType> eventAvailableTypeList = [
   EventType(
     key: 'other',
     name: 'Autre',
-    recurrence: false,
+    recurrence: true,
     iconPath: '',
     description: '',
   ),
@@ -341,8 +492,7 @@ List<PageViewModel> listPagesViewModel = [
     bodyWidget: const buildIntroductionPageContent(
       animationPath: 'assets/animations/44822-selfie.json',
       title: 'Partagez les moments les plus forts dans votre Story',
-      description:
-          'Montrez en direct à vos amis comment se déroule votre évenement 🔥',
+      description: 'Montrez en direct à vos amis comment se déroule votre évenement 🔥',
     ),
   ),
   PageViewModel(

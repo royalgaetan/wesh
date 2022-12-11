@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/models/forever.dart';
@@ -27,22 +29,26 @@ class ProfilePage extends StatefulWidget {
   final String uid;
   final bool? showBackButton;
 
-  const ProfilePage({Key? key, required this.uid, this.showBackButton})
-      : super(key: key);
+  const ProfilePage({Key? key, required this.uid, this.showBackButton}) : super(key: key);
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    //Notice the super-call here.
+    super.build(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: StreamBuilder(
@@ -56,10 +62,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: NestedScrollView(
                   headerSliverBuilder: (context, innerBoxIsScrolled) => [
                     // APP BAR
-                    SliverAppBar(
+                    MorphingSliverAppBar(
+                      heroTag: 'profilePageAppBar',
                       backgroundColor: Colors.white,
                       elevation: 0,
-                      expandedHeight: 85,
+                      expandedHeight: 70,
                       pinned: true,
                       floating: true,
                       snap: true,
@@ -67,16 +74,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       flexibleSpace: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: <Widget>[
-                          const SizedBox(
+                          SizedBox(
                             width: 200,
                             child: FlexibleSpaceBar(
                               centerTitle: false,
-                              titlePadding:
-                                  EdgeInsets.only(bottom: 10, left: 15),
+                              titlePadding: const EdgeInsets.only(bottom: 10, left: 15),
                               title: Text(
                                 'Profil',
-                                style: TextStyle(
-                                    color: Colors.black, fontSize: 21),
+                                style: TextStyle(color: Colors.black, fontSize: 17.sp),
                               ),
                             ),
                           ),
@@ -85,7 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   widget.showBackButton != null &&
                                   widget.showBackButton == true
                               ? IconButton(
-                                  splashRadius: 25,
+                                  splashRadius: 0.06.sw,
                                   onPressed: () {
                                     // Redirect to Settings Page
                                     Navigator.pop(context);
@@ -116,10 +121,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 // Profile Picture
                                 CircleAvatar(
-                                  radius: 40,
+                                  radius: 0.12.sw,
                                   backgroundColor: kGreyColor,
-                                  backgroundImage:
-                                      NetworkImage(currentUser.profilePicture),
+                                  backgroundImage: NetworkImage(currentUser.profilePicture),
                                 ),
                                 const SizedBox(
                                   width: 20,
@@ -128,16 +132,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                 // User Info
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       // Name
-                                      Text(
-                                        currentUser.name,
-                                        style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black),
+                                      Wrap(
+                                        children: [
+                                          Text(
+                                            currentUser.name,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 17.sp, fontWeight: FontWeight.bold, color: Colors.black87),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(
                                         height: 8,
@@ -147,9 +153,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                       Row(
                                         children: [
                                           Icon(
-                                            FontAwesomeIcons.at,
-                                            color: Colors.grey.shade500,
-                                            size: 11,
+                                            Icons.alternate_email_rounded,
+                                            color: Colors.black54,
+                                            size: 13.sp,
                                           ),
                                           const SizedBox(
                                             width: 5,
@@ -157,9 +163,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                           Text(
                                             currentUser.username,
                                             style: TextStyle(
-                                                color: Colors.grey.shade500,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w400),
+                                                color: Colors.black54, fontSize: 12.sp, fontWeight: FontWeight.w400),
                                           ),
                                         ],
                                       ),
@@ -172,20 +176,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                       Row(
                                         children: [
                                           Icon(
-                                            FontAwesomeIcons.cakeCandles,
-                                            color: Colors.grey.shade500,
-                                            size: 11,
+                                            Icons.cake_rounded,
+                                            color: Colors.black54,
+                                            size: 13.sp,
                                           ),
                                           const SizedBox(
                                             width: 5,
                                           ),
                                           Text(
-                                            DateFormat('d MMM yyyy')
-                                                .format(currentUser.birthday),
+                                            DateFormat('dd MMMM', 'fr_Fr').format(currentUser.birthday),
                                             style: TextStyle(
-                                                color: Colors.grey.shade500,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w400),
+                                                color: Colors.black54, fontSize: 12.sp, fontWeight: FontWeight.w400),
                                           ),
                                         ],
                                       ),
@@ -193,14 +194,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                       // Bio
                                       currentUser.bio.isNotEmpty
                                           ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 13),
+                                              padding: const EdgeInsets.only(top: 13),
                                               child: Text(
                                                 currentUser.bio,
                                                 style: TextStyle(
-                                                  fontSize: 15,
-                                                  color: Colors.black
-                                                      .withOpacity(0.8),
+                                                  fontSize: 13.sp,
+                                                  color: Colors.black.withOpacity(0.8),
                                                 ),
                                               ),
                                             )
@@ -210,38 +209,26 @@ class _ProfilePageState extends State<ProfilePage> {
 
                                       currentUser.linkinbio.isNotEmpty
                                           ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 10),
+                                              padding: const EdgeInsets.only(top: 10),
                                               child: GestureDetector(
                                                 onTap: () async {
-                                                  Uri urlToLaunch = Uri.parse(
-                                                      currentUser.linkinbio);
+                                                  Uri urlToLaunch = Uri.parse(currentUser.linkinbio);
 
-                                                  if (!currentUser.linkinbio
-                                                          .startsWith(
-                                                              "http://") &&
-                                                      !currentUser.linkinbio
-                                                          .startsWith(
-                                                              "https://")) {
-                                                    urlToLaunch = Uri.parse(
-                                                        "http://${currentUser.linkinbio}");
+                                                  if (!currentUser.linkinbio.startsWith("http://") &&
+                                                      !currentUser.linkinbio.startsWith("https://")) {
+                                                    urlToLaunch = Uri.parse("http://${currentUser.linkinbio}");
                                                   }
 
-                                                  if (!await launchUrl(
-                                                      urlToLaunch)) {
-                                                    showSnackbar(
-                                                        context,
-                                                        'Impossible de lancer cette url',
-                                                        null);
+                                                  if (!await launchUrl(urlToLaunch)) {
+                                                    showSnackbar(context, 'Impossible de lancer cette url', null);
                                                     throw 'Could not launch $urlToLaunch';
                                                   }
                                                 },
                                                 child: Text(
                                                   currentUser.linkinbio,
                                                   style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: Colors
-                                                        .lightBlue.shade600,
+                                                    fontSize: 13.sp,
+                                                    color: Colors.lightBlue.shade600,
                                                   ),
                                                 ),
                                               ),
@@ -251,19 +238,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                       // PROFILE BUTTONS
                                       FittedBox(
                                         child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 20, bottom: 30),
+                                          padding: const EdgeInsets.only(top: 20, bottom: 30),
                                           child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
+                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                             children: [
                                               CupertinoButton.filled(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 3),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                borderRadius: BorderRadius.circular(10),
                                                 child: Row(
                                                   children: const [
                                                     Icon(Icons.settings),
@@ -272,10 +253,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                     ),
                                                     Text(
                                                       'Paramètres',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.w500),
+                                                      style:
+                                                          TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                                                     ),
                                                   ],
                                                 ),
@@ -283,11 +262,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                   // Redirect to Settings
                                                   Navigator.push(
                                                       context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            SettingsPage(
-                                                                user:
-                                                                    currentUser),
+                                                      SwipeablePageRoute(
+                                                        builder: (context) => SettingsPage(user: currentUser),
                                                       ));
                                                 },
                                               ),
@@ -296,17 +272,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ),
                                               CupertinoButton(
                                                 color: const Color(0xFFF0F0F0),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 3),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                borderRadius: BorderRadius.circular(10),
                                                 child: Row(
                                                   children: const [
                                                     Icon(
-                                                      Icons
-                                                          .auto_awesome_rounded,
+                                                      Icons.auto_awesome_rounded,
                                                       color: Colors.black,
                                                     ),
                                                     SizedBox(
@@ -327,12 +298,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                     builder: (context) {
                                                       return Dialog(
                                                         shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10)),
-                                                        child:
-                                                            const FeedBackModal(),
+                                                            borderRadius: BorderRadius.circular(10)),
+                                                        child: const FeedBackModal(),
                                                       );
                                                     },
                                                   );
@@ -351,16 +318,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
                           // PROFILE STATS
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                             child: FittedBox(
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
                                   profileStat(
-                                    icon: const Icon(FontAwesomeIcons.splotch,
-                                        color: Colors.black54),
+                                    icon: const Icon(FontAwesomeIcons.splotch, color: Colors.black54),
                                     nb: currentUser.events!.length,
                                     label: 'Evénements',
                                     onTap: () {
@@ -368,14 +332,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                     },
                                   ),
                                   profileStat(
-                                    icon: const Icon(FontAwesomeIcons.userCheck,
-                                        color: Colors.black54),
+                                    icon: const Icon(FontAwesomeIcons.userCheck, color: Colors.black54),
                                     nb: currentUser.followers!.length,
                                     label: 'Abonnés',
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
+                                        SwipeablePageRoute(
                                             builder: (_) => PeoplePage(
                                                   tabIndex: 1,
                                                 )),
@@ -383,14 +346,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                     },
                                   ),
                                   profileStat(
-                                    icon: const Icon(FontAwesomeIcons.userGroup,
-                                        color: Colors.black54),
+                                    icon: const Icon(FontAwesomeIcons.userGroup, color: Colors.black54),
                                     nb: currentUser.following!.length,
                                     label: 'Abonnements',
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
+                                        SwipeablePageRoute(
                                             builder: (_) => PeoplePage(
                                                   tabIndex: 2,
                                                 )),
@@ -422,21 +384,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         labelColor: kSecondColor,
                         unselectedLabelColor: Colors.grey.shade600,
                         indicatorColor: kSecondColor,
-                        tabs: const <Widget>[
+                        tabs: <Widget>[
                           Tab(
-                            icon: Icon(FontAwesomeIcons.splotch),
+                            icon: Icon(FontAwesomeIcons.splotch, size: 16.sp),
                             // text: "Vos Evénements",
                           ),
                           Tab(
-                            icon: Icon(
-                              FontAwesomeIcons.clockRotateLeft,
-                            ),
+                            icon: Icon(FontAwesomeIcons.clockRotateLeft, size: 16.sp),
                             // text: "Vos Rappels",
                           ),
                           Tab(
-                            icon: Icon(
-                              FontAwesomeIcons.circleNotch,
-                            ),
+                            icon: Icon(FontAwesomeIcons.circleNotch, size: 16.sp),
                             // text: "Vos Rappels",
                           ),
                         ],
@@ -448,25 +406,20 @@ class _ProfilePageState extends State<ProfilePage> {
                           children: [
                             // TabBarSection 1 : Events
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 15),
+                              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                               child: StreamBuilder<List<Event>>(
-                                stream: Provider.of<UserProvider>(context)
-                                    .getCurrentUserEvents(),
+                                stream: Provider.of<UserProvider>(context).getCurrentUserEvents(),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
                                     List<Event>? eventsList = snapshot.data;
-                                    eventsList!.sort((a, b) =>
-                                        b.createdAt.compareTo(a.createdAt));
+                                    eventsList!.sort((a, b) => b.createdAt.compareTo(a.createdAt));
                                     if (eventsList.isEmpty) {
                                       return Container(
                                         padding: const EdgeInsets.all(30),
                                         height: 300,
                                         child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
                                             Lottie.asset(
                                               height: 150,
@@ -477,9 +430,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               height: 10,
                                             ),
                                             Text(
-                                              widget.uid ==
-                                                      FirebaseAuth.instance
-                                                          .currentUser!.uid
+                                              widget.uid == FirebaseAuth.instance.currentUser!.uid
                                                   ? 'Vous n\'avez aucun évenement'
                                                   : 'Aucun évenement trouvé !',
                                               style: const TextStyle(
@@ -488,21 +439,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ),
                                             ),
                                             const SizedBox(height: 16),
-                                            widget.uid ==
-                                                    FirebaseAuth.instance
-                                                        .currentUser!.uid
+                                            widget.uid == FirebaseAuth.instance.currentUser!.uid
                                                 ? TextButton(
                                                     onPressed: () {
                                                       // Redirect to Create an event Page
                                                       Navigator.push(
                                                           context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                CreateOrUpdateEventPage(),
+                                                          SwipeablePageRoute(
+                                                            builder: (context) => CreateOrUpdateEventPage(),
                                                           ));
                                                     },
-                                                    child: const Text(
-                                                        '+ Créer un évenement'),
+                                                    child: const Text('+ Créer un évenement'),
                                                   )
                                                 : Container()
                                           ],
@@ -511,7 +458,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                     }
 
                                     return ListView(
-                                      padding: const EdgeInsets.all(0),
                                       children: eventsList.map((event) {
                                         return EventCard(event: event);
                                       }).toList(),
@@ -527,28 +473,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
                             // TabBarSection 2 : Reminders
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
                               child: StreamBuilder<List<Reminder>>(
-                                stream: Provider.of<UserProvider>(context)
-                                    .getCurrentUserReminders(),
+                                stream: Provider.of<UserProvider>(context).getCurrentUserReminders(),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
-                                    List<Reminder> listReminder =
-                                        snapshot.data as List<Reminder>;
+                                    List<Reminder> listReminder = snapshot.data as List<Reminder>;
 
-                                    listReminder.sort((a, b) =>
-                                        b.createdAt.compareTo(a.createdAt));
+                                    listReminder.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                                     if (listReminder.length == 0) {
                                       return Container(
                                         padding: const EdgeInsets.all(30),
                                         height: 300,
                                         child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
                                             Lottie.asset(
                                               height: 150,
@@ -559,9 +499,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               height: 10,
                                             ),
                                             Text(
-                                              widget.uid ==
-                                                      FirebaseAuth.instance
-                                                          .currentUser!.uid
+                                              widget.uid == FirebaseAuth.instance.currentUser!.uid
                                                   ? 'Vous n\'avez aucun rappel'
                                                   : 'Aucun rappel trouvé !',
                                               style: const TextStyle(
@@ -570,21 +508,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ),
                                             ),
                                             const SizedBox(height: 16),
-                                            widget.uid ==
-                                                    FirebaseAuth.instance
-                                                        .currentUser!.uid
+                                            widget.uid == FirebaseAuth.instance.currentUser!.uid
                                                 ? TextButton(
                                                     onPressed: () {
                                                       // Redirect to Create a Reminder Page
                                                       Navigator.push(
                                                           context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                CreateOrUpdateReminderPage(),
+                                                          SwipeablePageRoute(
+                                                            builder: (context) => CreateOrUpdateReminderPage(),
                                                           ));
                                                     },
-                                                    child: const Text(
-                                                        '+ Créer un rappel'),
+                                                    child: const Text('+ Créer un rappel'),
                                                   )
                                                 : Container()
                                           ],
@@ -608,18 +542,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
                             //  TabBarSection 3 : Forever
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 15),
+                              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                               child: StreamBuilder<List<Forever>>(
-                                stream: Provider.of<UserProvider>(context)
-                                    .getCurrentUserForevers(),
+                                stream: Provider.of<UserProvider>(context).getCurrentUserForevers(),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
                                     List<Forever> foreversList = snapshot.data!;
 
                                     // Sort forevers List
-                                    foreversList.sort((a, b) =>
-                                        b.modifiedAt.compareTo(a.modifiedAt));
+                                    foreversList.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
 
                                     // No forever found
                                     if (foreversList.isEmpty) {
@@ -627,10 +558,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                         padding: const EdgeInsets.all(30),
                                         height: 300,
                                         child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
                                             Lottie.asset(
                                               height: 150,
@@ -648,21 +577,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ),
                                             ),
                                             const SizedBox(height: 16),
-                                            widget.uid ==
-                                                    FirebaseAuth.instance
-                                                        .currentUser!.uid
+                                            widget.uid == FirebaseAuth.instance.currentUser!.uid
                                                 ? TextButton(
                                                     onPressed: () {
                                                       // Redirect to Create an event Page
                                                       Navigator.push(
                                                           context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                const CreateOrUpdateForeverPage(),
+                                                          SwipeablePageRoute(
+                                                            builder: (context) => const CreateOrUpdateForeverPage(),
                                                           ));
                                                     },
-                                                    child: const Text(
-                                                        '+ Créer un forever'),
+                                                    child: const Text('+ Créer un forever'),
                                                   )
                                                 : Container()
                                           ],
@@ -675,56 +600,43 @@ class _ProfilePageState extends State<ProfilePage> {
                                       padding: const EdgeInsets.all(0),
                                       children: [
                                         // Create a new forever
-                                        widget.uid ==
-                                                FirebaseAuth
-                                                    .instance.currentUser!.uid
+                                        widget.uid == FirebaseAuth.instance.currentUser!.uid
                                             ? InkWell(
                                                 onTap: () {
                                                   //
                                                   Navigator.push(
                                                     context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const CreateOrUpdateForeverPage(),
+                                                    SwipeablePageRoute(
+                                                      builder: (context) => const CreateOrUpdateForeverPage(),
                                                     ),
                                                   );
                                                 },
                                                 child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(15),
+                                                  padding: const EdgeInsets.all(15),
                                                   child: Row(
-                                                    children: const [
+                                                    children: [
                                                       // Trailing Avatar
-                                                      CircleAvatar(
+                                                      const CircleAvatar(
                                                         radius: 22,
-                                                        backgroundColor:
-                                                            kSecondColor,
-                                                        child: Icon(
-                                                            FontAwesomeIcons
-                                                                .circleNotch,
-                                                            color:
-                                                                Colors.white),
+                                                        backgroundColor: kSecondColor,
+                                                        child: Icon(FontAwesomeIcons.circleNotch, color: Colors.white),
                                                       ),
 
                                                       //
-                                                      SizedBox(
+                                                      const SizedBox(
                                                         width: 15,
                                                       ),
-                                                      Expanded(
+                                                      const Expanded(
                                                         child: Text(
                                                           'Créer un forever',
-                                                          style: TextStyle(
-                                                              fontSize: 17,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
+                                                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                                                         ),
                                                       ),
                                                       // Edit Forever
-                                                      Spacer(),
+                                                      const Spacer(),
 
                                                       IconButton(
-                                                        splashRadius: 25,
+                                                        splashRadius: 0.06.sw,
                                                         onPressed: null,
                                                         icon: Icon(
                                                           Icons.add,
@@ -740,8 +652,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       ]..addAll(foreversList.map((forever) {
                                           return ForeverCard(
                                             foreversList: foreversList,
-                                            initialForeverIndex:
-                                                foreversList.indexOf(forever),
+                                            initialForeverIndex: foreversList.indexOf(forever),
                                           );
                                         }).toList()),
                                     );
@@ -792,10 +703,7 @@ class profileStat extends StatelessWidget {
           // Label
           Text(
             label,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey.shade700),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.grey.shade700),
           ),
           const SizedBox(
             height: 5,
@@ -824,8 +732,7 @@ class profileStat extends StatelessWidget {
                   // Number
                   Text(
                     '$nb',
-                    style: const TextStyle(
-                        color: Colors.black54, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

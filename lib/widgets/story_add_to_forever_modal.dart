@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/forever.dart';
 import 'package:wesh/pages/in.pages/create_or_update_forever.dart';
 import 'package:wesh/utils/constants.dart';
@@ -27,8 +28,7 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
     return (() {
       // No one has seen your story yet
       return StreamBuilder(
-        stream:
-            Provider.of<UserProvider>(context).getForevers(widget.story.uid),
+        stream: Provider.of<UserProvider>(context).getForevers(widget.story.uid),
         builder: (context, snapshot) {
           // on Error
           if (snapshot.hasError) {
@@ -83,7 +83,7 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
                         // Edit or create forever !
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
+                          SwipeablePageRoute(
                             builder: (_) => (const CreateOrUpdateForeverPage()),
                           ),
                         );
@@ -130,9 +130,8 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
                             // Edit or create forever !
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    (const CreateOrUpdateForeverPage()),
+                              SwipeablePageRoute(
+                                builder: (_) => (const CreateOrUpdateForeverPage()),
                               ),
                             );
                           },
@@ -146,26 +145,20 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
                     ),
                   ]..addAll(forevers
                       .map((forever) {
-                        ValueNotifier<bool> isLoading =
-                            ValueNotifier<bool>(false);
+                        ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: InkWell(
                             onTap: !isLoading.value
                                 ? () async {
                                     isLoading.value = true;
-                                    debugPrint(
-                                        'Is loading : ${isLoading.value}');
+                                    debugPrint('Is loading : ${isLoading.value}');
 
                                     // Add/Delete Story in Forever
-                                    await FirestoreMethods()
-                                        .AddOrDeleteStoryInsideForever(
-                                            context,
-                                            widget.story.storyId,
-                                            forever.foreverId);
+                                    await FirestoreMethods().AddOrDeleteStoryInsideForever(
+                                        context, widget.story.storyId, forever.foreverId);
                                     isLoading.value = false;
-                                    debugPrint(
-                                        'Is loading : ${isLoading.value}');
+                                    debugPrint('Is loading : ${isLoading.value}');
                                   }
                                 : null,
                             child: Row(
@@ -178,23 +171,19 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
                                 // Forever Title
                                 Expanded(
                                   child: Container(
-                                    padding: const EdgeInsets.only(
-                                        right: 10, left: 10),
+                                    padding: const EdgeInsets.only(right: 10, left: 10),
                                     child: Text(
                                       forever.title,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
-                                          overflow: TextOverflow.ellipsis,
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 17),
+                                          overflow: TextOverflow.ellipsis, fontWeight: FontWeight.w400, fontSize: 17),
                                     ),
                                   ),
                                 ),
 
                                 // Forever : IsChecked(),
                                 Padding(
-                                  padding: const EdgeInsets.only(
-                                      right: 16, left: 10),
+                                  padding: const EdgeInsets.only(right: 16, left: 10),
                                   child: ValueListenableBuilder(
                                     valueListenable: isLoading,
                                     builder: (context, value, child) {
@@ -202,10 +191,8 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
                                           ? const CupertinoActivityIndicator(
                                               color: Colors.black54,
                                             )
-                                          : forever.stories.contains(
-                                                  widget.story.storyId)
-                                              ? const Icon(Icons.done,
-                                                  color: kSecondColor)
+                                          : forever.stories.contains(widget.story.storyId)
+                                              ? const Icon(Icons.done, color: kSecondColor)
                                               : Container();
                                     },
                                   ),

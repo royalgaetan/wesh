@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/providers/user.provider.dart';
 import '../services/auth.methods.dart';
 import '../widgets/button.dart';
@@ -25,9 +27,7 @@ class _AuthPageControllerState extends State<AuthPageController> {
   initState() {
     super.initState();
 
-    subscription = Connectivity()
-        .onConnectivityChanged
-        .listen((ConnectivityResult result) {
+    subscription = Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       // Got a new connectivity status!
 
       if (result != ConnectivityResult.none) {
@@ -43,7 +43,7 @@ class _AuthPageControllerState extends State<AuthPageController> {
         // if (!isVerified && hasEmail.isNotEmpty) {
         //   Navigator.pushAndRemoveUntil(
         //       context,
-        //       MaterialPageRoute(
+        //       SwipeablePageRoute(
         //         builder: (context) => VerifyEmailPage(),
         //       ),
         //       (route) => false);
@@ -52,8 +52,8 @@ class _AuthPageControllerState extends State<AuthPageController> {
         // check if the user has a name and birthday
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       } else {
@@ -89,17 +89,15 @@ class _AuthPageControllerState extends State<AuthPageController> {
                   children: [
                     hasConnection
                         ? Column(
-                            children: const [
-                              CupertinoActivityIndicator(
-                                  radius: 16, color: Colors.grey),
-                              SizedBox(
+                            children: [
+                              CupertinoActivityIndicator(radius: 12.sp, color: Colors.grey),
+                              const SizedBox(
                                 height: 25,
                               ),
-                              Text('Veuillez patienter...')
+                              const Text('Veuillez patienter...')
                             ],
                           )
-                        : const Text(
-                            'Veuillez vérifier votre connexion internet pour continuer'),
+                        : const Text('Veuillez vérifier votre connexion internet pour continuer'),
                   ],
                 ),
               ),

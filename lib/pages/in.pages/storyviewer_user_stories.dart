@@ -88,8 +88,7 @@ class _StoryPageState extends State<StoryPage> {
             controller: controller,
             itemBuilder: (context, position) {
               return Transform(
-                transform: Matrix4.identity()
-                  ..rotateX(currentPageValue - position),
+                transform: Matrix4.identity()..rotateX(currentPageValue - position),
                 child: pageViewItem[position],
               );
             },
@@ -115,12 +114,10 @@ class StoryPageView extends StatefulWidget {
   State<StoryPageView> createState() => _StoryPageViewState();
 }
 
-class _StoryPageViewState extends State<StoryPageView>
-    with WidgetsBindingObserver {
+class _StoryPageViewState extends State<StoryPageView> with WidgetsBindingObserver {
   ValueNotifier<int> currentStoryDisplayed = ValueNotifier<int>(0);
   late ValueNotifier<bool> isAllowedToJump;
-  ValueNotifier<List<StoryItem?>> storiesItemList =
-      ValueNotifier<List<StoryItem?>>([]);
+  ValueNotifier<List<StoryItem?>> storiesItemList = ValueNotifier<List<StoryItem?>>([]);
 
   ScreenshotController storySreenshotController = ScreenshotController();
   ValueNotifier<bool> isStoryHeaderAndFooterVisible = ValueNotifier<bool>(true);
@@ -178,8 +175,7 @@ class _StoryPageViewState extends State<StoryPageView>
           for (Story storySelected in (snapshot.data as List<Story>)) {
             // Check Story validity : isStoryExpired
             if (storySelected.endAt.isAfter(DateTime.now())) {
-              StoryItem storyWidgetToAdd =
-                  getStoryItemByType(storySelected, widget.storyController);
+              StoryItem storyWidgetToAdd = getStoryItemByType(storySelected, widget.storyController);
 
               allStories.add(storySelected);
             }
@@ -187,24 +183,18 @@ class _StoryPageViewState extends State<StoryPageView>
 
           // Sort Stories
           allStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          storiesItemList.value = allStories
-              .map((story) => getStoryItemByType(story, widget.storyController))
-              .toList();
+          storiesItemList.value = allStories.map((story) => getStoryItemByType(story, widget.storyController)).toList();
 
           // Display All StoryItems
 
           // Get the First Story seen by currentUser
-          List<Story> storiesListSeenByCurrentUser = allStories
-              .where((story) => story.viewers
-                  .contains(FirebaseAuth.instance.currentUser!.uid))
-              .toList();
+          List<Story> storiesListSeenByCurrentUser =
+              allStories.where((story) => story.viewers.contains(FirebaseAuth.instance.currentUser!.uid)).toList();
 
           //
-          storiesListSeenByCurrentUser
-              .sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          storiesListSeenByCurrentUser.sort((a, b) => a.createdAt.compareTo(b.createdAt));
           debugPrint('allStories: ${allStories.map((e) => e.storyId)}');
-          debugPrint(
-              'storiesListSeenByCurrentUser: ${storiesListSeenByCurrentUser.map((e) => e.storyId)}');
+          debugPrint('storiesListSeenByCurrentUser: ${storiesListSeenByCurrentUser.map((e) => e.storyId)}');
 
           //
           return Screenshot(
@@ -235,46 +225,32 @@ class _StoryPageViewState extends State<StoryPageView>
                           // },
                           onStoryShow: (StoryItem) {
                             //
-                            currentStoryDisplayed.value =
-                                storiesItemList.value.indexOf(StoryItem);
+                            currentStoryDisplayed.value = storiesItemList.value.indexOf(StoryItem);
                             // UPDATE : Add currentUserId to Story Viewers
-                            FirestoreMethods().updateStoryViewersList(
-                                context,
-                                FirebaseAuth.instance.currentUser!.uid,
-                                allStories[currentStoryDisplayed.value]
-                                    .storyId);
+                            FirestoreMethods().updateStoryViewersList(context, FirebaseAuth.instance.currentUser!.uid,
+                                allStories[currentStoryDisplayed.value].storyId);
 
-                            debugPrint(
-                                'INITIAL VALUE of Skip story : ${isAllowedToJump.value}');
+                            debugPrint('INITIAL VALUE of Skip story : ${isAllowedToJump.value}');
                             // Jump to Next /if the currentUser has already seen this story
                             List storiesListSeenByCurrentUserWithOnlyStoriesId =
-                                storiesListSeenByCurrentUser
-                                    .map((e) => e.storyId)
-                                    .toList();
-                            String storyIdToCheck =
-                                allStories[currentStoryDisplayed.value].storyId;
+                                storiesListSeenByCurrentUser.map((e) => e.storyId).toList();
+                            String storyIdToCheck = allStories[currentStoryDisplayed.value].storyId;
 
                             // Conditions to Skip story
                             if (isAllowedToJump.value &&
                                 //
-                                storiesListSeenByCurrentUserWithOnlyStoriesId
-                                        .indexOf(storyIdToCheck) <
-                                    storiesListSeenByCurrentUserWithOnlyStoriesId
-                                            .length -
-                                        1 &&
+                                storiesListSeenByCurrentUserWithOnlyStoriesId.indexOf(storyIdToCheck) <
+                                    storiesListSeenByCurrentUserWithOnlyStoriesId.length - 1 &&
                                 //
-                                storiesListSeenByCurrentUser.contains(
-                                    allStories[currentStoryDisplayed.value])) {
+                                storiesListSeenByCurrentUser.contains(allStories[currentStoryDisplayed.value])) {
                               widget.storyController.next();
-                              debugPrint(
-                                  'Skip story : ${isAllowedToJump.value}');
+                              debugPrint('Skip story : ${isAllowedToJump.value}');
                             }
 
                             // Else :
                             else {
                               isAllowedToJump.value = false;
-                              debugPrint(
-                                  'Don\'t skip story : ${isAllowedToJump.value}');
+                              debugPrint('Don\'t skip story : ${isAllowedToJump.value}');
                             }
                           },
 
@@ -306,8 +282,7 @@ class _StoryPageViewState extends State<StoryPageView>
                               isAllowedToJump: isAllowedToJump,
                               storiesItemList: storiesItemList,
                               storyController: widget.storyController,
-                              storySreenshotController:
-                                  storySreenshotController,
+                              storySreenshotController: storySreenshotController,
                             )
                           : Container(),
                     );
@@ -322,8 +297,7 @@ class _StoryPageViewState extends State<StoryPageView>
           // Handle error
           debugPrint('error: ${snapshot.error}');
           return const Center(
-            child: Text('Une erreur s\'est produite',
-                style: TextStyle(color: Colors.white)),
+            child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
           );
         }
 

@@ -1,14 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.wesh.android">
+   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-   <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
-   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
    <uses-permission android:name="android.permission.INTERNET"/>
    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+   <uses-permission android:name="android.permission.CALL_PHONE" />
+   <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+   <uses-permission android:name="android.permission.SEND_SMS"/>
+   <uses-permission android:name="android.permission.READ_SMS"/>
+   <uses-permission android:name="android.permission.RECORD_AUDIO" />
+   <uses-permission android:name="android.permission.VIBRATE" />
    <application
+        android:largeHeap="true"
         android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"
+          android:requestLegacyExternalStorage="true"
         android:label="wesh"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -17,7 +24,7 @@
            <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -30,6 +37,61 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+
+             <intent-filter>
+               <action android:name="android.intent.action.VIEW" />
+               <category android:name="android.intent.category.DEFAULT" />
+               <category android:name="android.intent.category.BROWSABLE" />
+               <!--TODO:  Add this filter, if you want support opening urls into your app-->
+               <data
+                   android:scheme="https"
+                   android:host="example.com"
+                   android:pathPrefix="/invite"/>
+            </intent-filter>
+
+            <intent-filter>
+               <action android:name="android.intent.action.SEND" />
+               <category android:name="android.intent.category.DEFAULT" />
+               <data android:mimeType="text/*" />
+            </intent-filter>
+
+             <!--TODO: Add this filter, if you want to support sharing images into your app-->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+             <!--TODO: Add this filter, if you want to support sharing videos into your app-->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <!--TODO: Add this filter, if you want to support sharing audio into your app-->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -49,6 +111,7 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
+        <meta-data  android:name="com.hover.ApiKey" android:value="e445f8b42951ce277b15115c7080c331"/>
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -66,7 +129,35 @@
             android:name="com.facebook.FacebookContentProvider"
             android:authorities="com.facebook.app.FacebookContentProvider[facebook_app_id]"
             android:exported="false" />
-    
+
+        <provider
+            android:name="vn.hunghd.flutterdownloader.DownloadedFileProvider"
+            android:authorities="${applicationId}.flutter_downloader.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+         <service
+            android:name="com.phan_tech.ussd_advanced.USSDServiceKT"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/ussd_service" />
+        </service>
+
+        <receiver android:name="com.shounakmulay.telephony.sms.IncomingSmsReceiver"
+            android:permission="android.permission.BROADCAST_SMS" android:exported="true">
+            <intent-filter>
+            <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
+        
     </application>
 
     <!-- Provide required visibility configuration for API level 30 and above -->

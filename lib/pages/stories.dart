@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/widgets/storycard.dart';
 import '../models/user.dart' as UserModel;
 import '../utils/functions.dart';
@@ -13,7 +15,10 @@ class StoriesPage extends StatefulWidget {
   State<StoriesPage> createState() => _StoriesPageState();
 }
 
-class _StoriesPageState extends State<StoriesPage> {
+class _StoriesPageState extends State<StoriesPage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -58,38 +63,42 @@ class _StoriesPageState extends State<StoriesPage> {
 
   @override
   Widget build(BuildContext context) {
+    //Notice the super-call here.
+    super.build(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar(
+          MorphingSliverAppBar(
+            heroTag: 'storiesPageAppBar',
             backgroundColor: Colors.white,
             elevation: 0,
-            expandedHeight: 85,
+            expandedHeight: 70,
             // pinned: true,
             floating: true,
             snap: true,
             flexibleSpace: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                Container(
+                SizedBox(
                   width: 200,
-                  child: const FlexibleSpaceBar(
-                    titlePadding: EdgeInsets.only(left: 15, bottom: 10),
+                  child: FlexibleSpaceBar(
+                    titlePadding: const EdgeInsets.only(left: 15, bottom: 10),
                     title: Text(
                       'Stories',
-                      style: TextStyle(color: Colors.black, fontSize: 21),
+                      style: TextStyle(color: Colors.black, fontSize: 17.sp),
                     ),
                   ),
                 ),
                 const Spacer(),
                 IconButton(
-                  splashRadius: 25,
+                  splashRadius: 0.06.sw,
                   onPressed: () {
                     // Create story
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      SwipeablePageRoute(
                         builder: (context) => const CreateStory(),
                       ),
                     );
@@ -110,8 +119,7 @@ class _StoriesPageState extends State<StoriesPage> {
             // Add To My Stories Header
             Padding(
               padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Ajouter à votre story',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              child: Text('Ajouter à ma story', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             ),
 
             Column(
@@ -144,8 +152,7 @@ class _StoriesPageState extends State<StoriesPage> {
             // Recent Stories : Header
             Padding(
               padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Stories récentes',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              child: Text('Stories récentes', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             ),
             Column(
                 // children: getStories(),
@@ -154,8 +161,7 @@ class _StoriesPageState extends State<StoriesPage> {
             // Stories Seen  : Header
             Padding(
               padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Stories déjà vues',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              child: Text('Stories déjà vues', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             ),
             Column(
                 // children: getStoriesSeen(),

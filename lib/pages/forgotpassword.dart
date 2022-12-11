@@ -1,5 +1,7 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/button.dart';
@@ -39,8 +41,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
       // Validate Form & Login
       var email = emailController.text.trim();
       if (email != null && !EmailValidator.validate(email)) {
-        return showSnackbar(
-            context, 'Veuillez entrer une adresse email valide', null);
+        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
       var result = await AuthMethods().resetPassword(
@@ -64,23 +65,27 @@ class _LoginPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          titleSpacing: 0,
-          elevation: 0,
-          leading: IconButton(
-            splashRadius: 25,
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_rounded,
-              color: Colors.black,
+        appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 0.08.sh),
+          child: MorphingAppBar(
+            heroTag: 'forgotPasswordPageAppBar',
+            backgroundColor: Colors.white,
+            titleSpacing: 0,
+            elevation: 0,
+            leading: IconButton(
+              splashRadius: 0.06.sw,
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(
+                Icons.arrow_back_ios_rounded,
+                color: Colors.black,
+              ),
             ),
-          ),
-          title: const Text(
-            'Récupérer le mot de passe',
-            style: TextStyle(color: Colors.black),
+            title: const Text(
+              'Récupérer le mot de passe',
+              style: TextStyle(color: Colors.black),
+            ),
           ),
         ),
         body: Stack(
@@ -92,64 +97,68 @@ class _LoginPageState extends State<ForgotPasswordPage> {
                     color: kSecondColor,
                   )
                 : Container(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    children: const [
-                      Text(
-                        'Entrez votre adresse email',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 24),
-                      ),
-                      SizedBox(
-                        height: 12,
-                      ),
-                      Text(
+            SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.4.sw),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          'Entrez votre adresse email',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 0.04.sw),
+                        Text(
                           'Pour recevoir un email de récupération de votre mot de passe',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-
-                  // Username Field Input
-                  TextformContainer(
-                    child: TextField(
-                      // inputFormatters: [
-                      //   FilteringTextInputFormatter.allow(RegExp("[a-z]")),
-                      // ],
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                          hintText: 'Email',
-                          contentPadding: EdgeInsets.all(20),
-                          border: InputBorder.none),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(
-                    height: 27,
-                  ),
+                    SizedBox(height: 0.12.sw),
 
-                  // Button Action : Reset Password
-                  Button(
-                    height: 50,
-                    width: double.infinity,
-                    text: 'Récupérer le mot de passe',
-                    color: kSecondColor,
-                    onTap: () {
-                      // Sent Reset_Password_Email
-                      sendPasswordResetEmail(context);
-                    },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                ],
+                    // Username Field Input
+                    TextformContainer(
+                      child: TextField(
+                        // inputFormatters: [
+                        //   FilteringTextInputFormatter.allow(RegExp("[a-z]")),
+                        // ],
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                          hintText: 'Email',
+                          contentPadding: EdgeInsets.all(0.04.sw),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 0.07.sw),
+
+                    // Button Action : Reset Password
+                    Button(
+                      height: 0.12.sw,
+                      width: double.infinity,
+                      text: 'Récupérer le mot de passe',
+                      color: kSecondColor,
+                      onTap: () {
+                        // Sent Reset_Password_Email
+                        sendPasswordResetEmail(context);
+                      },
+                    ),
+                    SizedBox(height: 0.07.sw),
+                  ],
+                ),
               ),
             ),
           ],

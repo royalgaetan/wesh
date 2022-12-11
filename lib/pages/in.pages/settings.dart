@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/settings.pages/about_the_app.dart';
 import 'package:wesh/pages/settings.pages/account_security_settings.dart';
 import 'package:wesh/pages/settings.pages/help_page.dart';
@@ -37,16 +39,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future redirectToAccountSecuritySettingsPage() async {
-    var valueToRedirect =
-        UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ??
-            false;
-    debugPrint(
-        "Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect ");
+    var valueToRedirect = UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ?? false;
+    debugPrint("Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect ");
     if (valueToRedirect) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const AccountSecuritySettingsPage(),
           ),
         );
@@ -54,15 +53,13 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     //
-    var valueToRedirect2 =
-        UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
-    debugPrint(
-        "Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect2");
+    var valueToRedirect2 = UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
+    debugPrint("Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect2");
     if (valueToRedirect2) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const AccountSecuritySettingsPage(),
           ),
         );
@@ -70,15 +67,13 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     //
-    var valueToRedirect3 =
-        UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
-    debugPrint(
-        "Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect3");
+    var valueToRedirect3 = UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
+    debugPrint("Redirect to Account Security Settings Page [SETTINGS PAGE]: $valueToRedirect3");
     if (valueToRedirect3) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const AccountSecuritySettingsPage(),
           ),
         );
@@ -90,12 +85,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'settingsPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -112,10 +108,10 @@ class _SettingsPageState extends State<SettingsPage> {
           Tooltip(
             message: 'Se déconnecter',
             child: IconButton(
-              splashRadius: 25,
+              splashRadius: 0.06.sw,
               onPressed: () async {
                 // Show Delete Decision Modal
-                bool? deleteDecision = await showModalDecision(
+                List deleteDecision = await showModalDecision(
                   context: context,
                   header: 'Déconnexion',
                   content: 'Voulez-vous réellement vous déconnecter ?',
@@ -123,7 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   secondButton: 'Déconnexion',
                 );
 
-                if (deleteDecision == true) {
+                if (deleteDecision[0] == true) {
                   // Sign out
                   // ignore: use_build_context_synchronously
                   AuthMethods().signout(context);
@@ -143,17 +139,14 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              const SizedBox(height: 20),
               // Profile setting : Personal info /Name /Birthday /ProfilePicture /Bio /LinkinBio
               SettingCard(
                 onTap: () async {
                   // Redirect to Edit_Personal_Informations
                   UserModel.User? result = await Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CreateOrUpdatePersonalInformations(
-                                user: updatedUser!),
+                      SwipeablePageRoute(
+                        builder: (context) => CreateOrUpdatePersonalInformations(user: updatedUser!),
                       ));
                   if (result != null) {
                     setState(() {
@@ -163,10 +156,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
                 trailing: Container(),
                 leading: Hero(
-                  tag:
-                      'setting_profile_picture_tag_${FirebaseAuth.instance.currentUser!.uid}',
+                  tag: 'setting_profile_picture_tag_${FirebaseAuth.instance.currentUser!.uid}',
                   child: CircleAvatar(
-                    radius: 30,
+                    radius: 0.08.sw,
                     backgroundColor: kGreyColor,
                     backgroundImage: NetworkImage(updatedUser!.profilePicture),
                   ),
@@ -181,9 +173,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Redirect to NotificationsSettingsPage
                   UserModel.User? result = await Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            NotificationsSettingsPage(user: updatedUser!),
+                      SwipeablePageRoute(
+                        builder: (context) => NotificationsSettingsPage(user: updatedUser!),
                       ));
                   if (result != null) {
                     setState(() {
@@ -192,18 +183,17 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
                 trailing: Container(),
-                leading: const CircleAvatar(
-                  radius: 30,
+                leading: CircleAvatar(
+                  radius: 0.08.sw,
                   backgroundColor: kSecondColor,
                   child: Icon(
                     Icons.notifications_rounded,
                     color: Colors.white,
-                    size: 30,
+                    size: 23.sp,
                   ),
                 ),
                 settingTitle: 'Notifications',
-                settingSubTitle:
-                    'Être informer sur les messages, les évènements, etc.',
+                settingSubTitle: 'Être informer sur les messages, les évènements, etc.',
               ),
 
               // Security setting : /Signup Methods /Phone /Email /Password
@@ -212,19 +202,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Redirect to AccountSecuritySettingsPage
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const AccountSecuritySettingsPage(),
+                      SwipeablePageRoute(
+                        builder: (context) => const AccountSecuritySettingsPage(),
                       ));
                 },
                 trailing: Container(),
-                leading: const CircleAvatar(
-                  radius: 30,
+                leading: CircleAvatar(
+                  radius: 0.08.sw,
                   backgroundColor: kSecondColor,
                   child: Icon(
                     Icons.security_rounded,
                     color: Colors.white,
-                    size: 30,
+                    size: 23.sp,
                   ),
                 ),
                 settingTitle: 'Sécurité',
@@ -237,18 +226,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Redirect to HelpPage
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      SwipeablePageRoute(
                         builder: (context) => HelpPage(user: updatedUser!),
                       ));
                 },
                 trailing: Container(),
-                leading: const CircleAvatar(
-                  radius: 30,
+                leading: CircleAvatar(
+                  radius: 0.08.sw,
                   backgroundColor: kSecondColor,
                   child: Icon(
                     Icons.live_help_outlined,
                     color: Colors.white,
-                    size: 30,
+                    size: 23.sp,
                   ),
                 ),
                 settingTitle: 'Aide',
@@ -261,18 +250,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Redirect to About the App Page
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      SwipeablePageRoute(
                         builder: (context) => const AboutTheAppPage(),
                       ));
                 },
                 trailing: Container(),
-                leading: const CircleAvatar(
-                  radius: 30,
+                leading: CircleAvatar(
+                  radius: 0.08.sw,
                   backgroundColor: kSecondColor,
                   child: Icon(
                     Icons.info_outline_rounded,
                     color: Colors.white,
-                    size: 30,
+                    size: 23.sp,
                   ),
                 ),
                 settingTitle: 'À propos de l\'application',
@@ -285,18 +274,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   // Redirect to InviteSomeone_Page
                   Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      SwipeablePageRoute(
                         builder: (context) => const InviteSomeonePage(),
                       ));
                 },
                 trailing: Container(),
-                leading: const CircleAvatar(
-                  radius: 30,
+                leading: CircleAvatar(
+                  radius: 0.08.sw,
                   backgroundColor: kSecondColor,
                   child: Icon(
                     Icons.person_add_alt_1_rounded,
                     color: Colors.white,
-                    size: 30,
+                    size: 23.sp,
                   ),
                 ),
                 settingTitle: 'Inviter un.e ami.e',

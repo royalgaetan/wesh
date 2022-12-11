@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/pages/settings.pages/add_email_and_password_page.dart';
 import 'package:wesh/pages/settings.pages/change_email_or_password_page.dart';
@@ -26,18 +28,15 @@ class AccountSecuritySettingsPage extends StatefulWidget {
   const AccountSecuritySettingsPage({super.key});
 
   @override
-  State<AccountSecuritySettingsPage> createState() =>
-      _AccountSecuritySettingsPageState();
+  State<AccountSecuritySettingsPage> createState() => _AccountSecuritySettingsPageState();
 }
 
-class _AccountSecuritySettingsPageState
-    extends State<AccountSecuritySettingsPage> {
+class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPage> {
   bool hasPasswordProvider = false;
   String? passwordProviderEmail;
   String? googleAccountEmail;
   String? facebookAccountName;
-  ValueNotifier<UserModel.User?> currentUser =
-      ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
   @override
   void initState() {
     // TODO: implement initState
@@ -61,10 +60,8 @@ class _AccountSecuritySettingsPageState
   }
 
   fetchPasswordProviderInfo() {
-    List<UserInfo> passwordProvider = FirebaseAuth
-        .instance.currentUser!.providerData
-        .where((element) => element.providerId == 'password')
-        .toList();
+    List<UserInfo> passwordProvider =
+        FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
     if (passwordProvider.length > 0) {
       setState(() {
         hasPasswordProvider = true;
@@ -79,10 +76,8 @@ class _AccountSecuritySettingsPageState
   }
 
   fetchGoogleAccountEmail() {
-    List<UserInfo> googleProvider = FirebaseAuth
-        .instance.currentUser!.providerData
-        .where((element) => element.providerId == 'google.com')
-        .toList();
+    List<UserInfo> googleProvider =
+        FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'google.com').toList();
     if (googleProvider.length > 0) {
       setState(() {
         googleAccountEmail = googleProvider[0].email;
@@ -91,8 +86,7 @@ class _AccountSecuritySettingsPageState
   }
 
   fetchFacebookAccountEmail() {
-    List<UserInfo> facebookProvider = FirebaseAuth
-        .instance.currentUser!.providerData
+    List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
         .where((element) => element.providerId == 'facebook.com')
         .toList();
     if (facebookProvider.length > 0) {
@@ -103,16 +97,13 @@ class _AccountSecuritySettingsPageState
   }
 
   Future redirectToAddEmailandPasswordPage() async {
-    var valueToRedirect =
-        UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ??
-            false;
-    debugPrint(
-        "Redirect to Add Email and Password Page [ACCOUNT SECURITY PAGE]: $valueToRedirect ");
+    var valueToRedirect = UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ?? false;
+    debugPrint("Redirect to Add Email and Password Page [ACCOUNT SECURITY PAGE]: $valueToRedirect ");
     if (valueToRedirect) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const AddEmailandPasswordPage(),
           ),
         );
@@ -121,15 +112,13 @@ class _AccountSecuritySettingsPageState
   }
 
   Future redirectToChangeEmailandPasswordPage() async {
-    var valueToRedirect1 =
-        UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
-    debugPrint(
-        "Redirect to Add Email Page [ACCOUNT SECURITY PAGE]: $valueToRedirect1");
+    var valueToRedirect1 = UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
+    debugPrint("Redirect to Add Email Page [ACCOUNT SECURITY PAGE]: $valueToRedirect1");
     if (valueToRedirect1) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const ChangeEmailOrPasswordPage(),
           ),
         );
@@ -137,15 +126,13 @@ class _AccountSecuritySettingsPageState
     }
 
     //
-    var valueToRedirect2 =
-        UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
-    debugPrint(
-        "Redirect to Update Password Page [ACCOUNT SECURITY PAGE]: $valueToRedirect2");
+    var valueToRedirect2 = UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
+    debugPrint("Redirect to Update Password Page [ACCOUNT SECURITY PAGE]: $valueToRedirect2");
     if (valueToRedirect2) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          SwipeablePageRoute(
             builder: (context) => const ChangeEmailOrPasswordPage(),
           ),
         );
@@ -155,8 +142,7 @@ class _AccountSecuritySettingsPageState
 
   Future getDd() async {
     User user = FirebaseAuth.instance.currentUser!;
-    List userSignInMethods =
-        await FirebaseAuth.instance.fetchSignInMethodsForEmail(user.email!);
+    List userSignInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(user.email!);
 
     debugPrint('User SignInMthods are: $userSignInMethods');
   }
@@ -165,12 +151,13 @@ class _AccountSecuritySettingsPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'accountSecuritySettingsPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -205,24 +192,23 @@ class _AccountSecuritySettingsPageState
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       // Login Activity
-                      const SizedBox(height: 20),
                       SettingCard(
                         onTap: () {
                           // Redirect to Login Activity Page
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              SwipeablePageRoute(
                                 builder: (context) => const LoginActivityPage(),
                               ));
                         },
                         trailing: Container(),
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.locationDot,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Votre activité (Connexion)',
@@ -235,19 +221,18 @@ class _AccountSecuritySettingsPageState
                           // Redirect to Payment Activity Page
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PaymentActivityPage(),
+                              SwipeablePageRoute(
+                                builder: (context) => const PaymentActivityPage(),
                               ));
                         },
                         trailing: Container(),
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.moneyBill1Wave,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Vos paiements (et receptions)',
@@ -264,27 +249,25 @@ class _AccountSecuritySettingsPageState
                             //  Redirect to : Change Email/Password
                             Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ChangeEmailOrPasswordPage(),
+                                SwipeablePageRoute(
+                                  builder: (context) => const ChangeEmailOrPasswordPage(),
                                 ));
                           } else {
                             // OR Redirect to : Add Email and Password
                             Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AddEmailandPasswordPage(),
+                                SwipeablePageRoute(
+                                  builder: (context) => const AddEmailandPasswordPage(),
                                 ));
                           }
                         },
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.key,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Email et mot de passe',
@@ -296,23 +279,21 @@ class _AccountSecuritySettingsPageState
                                 textAlign: TextAlign.left,
                                 text: TextSpan(
                                   text: 'Votre email actuel : ',
-                                  style: const TextStyle(
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
                                     color: Colors.black54,
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
                                         text: passwordProviderEmail ?? "",
-                                        style: const TextStyle(
-                                            color: kSecondColor,
-                                            fontWeight: FontWeight.bold)),
+                                        style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               )
                             : Container(),
                         trailing: hasPasswordProvider
                             ? CupertinoButton.filled(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
                                 borderRadius: BorderRadius.circular(10),
                                 child: const Icon(
                                   FontAwesomeIcons.linkSlash,
@@ -320,11 +301,13 @@ class _AccountSecuritySettingsPageState
                                   size: 13,
                                 ),
                                 onPressed: () async {
+                                  // VIBRATE
+                                  triggerVibration();
+
                                   // Unlink Password Provider
 
                                   // Show Modal Decision
-                                  bool? deleteDecision =
-                                      await showModalDecision(
+                                  List deleteDecision = await showModalDecision(
                                     context: context,
                                     header: 'Détacher votre email',
                                     content:
@@ -333,12 +316,10 @@ class _AccountSecuritySettingsPageState
                                     secondButton: 'Détacher',
                                   );
 
-                                  if (deleteDecision == true) {
+                                  if (deleteDecision[0] == true) {
                                     // Detach Google account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods()
-                                        .unlinkSpecificProvider(
-                                            context, 'password');
+                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'password');
 
                                     fetchPasswordProviderInfo();
                                   }
@@ -353,19 +334,19 @@ class _AccountSecuritySettingsPageState
                           //  Phone Update
                           Navigator.push(
                               context,
-                              MaterialPageRoute(
+                              SwipeablePageRoute(
                                 builder: (context) => const AddPhonePage(
                                   isUpdatingPhoneNumber: true,
                                 ),
                               ));
                         },
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.phone,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Numéro de téléphone',
@@ -377,23 +358,21 @@ class _AccountSecuritySettingsPageState
                                 textAlign: TextAlign.left,
                                 text: TextSpan(
                                   text: 'Votre numéro actuel : ',
-                                  style: const TextStyle(
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
                                     color: Colors.black54,
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
                                         text: currentUser.value!.phone,
-                                        style: const TextStyle(
-                                            color: kSecondColor,
-                                            fontWeight: FontWeight.bold)),
+                                        style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               )
                             : Container(),
                         trailing: currentUser.value!.phone.isNotEmpty
                             ? CupertinoButton.filled(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
                                 borderRadius: BorderRadius.circular(10),
                                 child: const Icon(
                                   FontAwesomeIcons.linkSlash,
@@ -401,26 +380,25 @@ class _AccountSecuritySettingsPageState
                                   size: 13,
                                 ),
                                 onPressed: () async {
+                                  // VIBRATE
+                                  triggerVibration();
+
                                   // Unlink Phone Provider
 
                                   // Show Modal Decision
-                                  bool? deleteDecision =
-                                      await showModalDecision(
+                                  List deleteDecision = await showModalDecision(
                                     context: context,
-                                    header:
-                                        'Détacher votre numéro de téléphone',
+                                    header: 'Détacher votre numéro de téléphone',
                                     content:
                                         'Vous ne pourrez plus vous connecter à votre compte à partir de votre numéro de téléphone si vous le détachez. Êtes-vous sûr de vouloir continuer ?',
                                     firstButton: 'Annuler',
                                     secondButton: 'Détacher',
                                   );
 
-                                  if (deleteDecision == true) {
+                                  if (deleteDecision[0] == true) {
                                     // Detach Phone number
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods()
-                                        .unlinkSpecificProvider(
-                                            context, 'phone');
+                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'phone');
                                   }
                                 },
                               )
@@ -434,41 +412,35 @@ class _AccountSecuritySettingsPageState
                           showDialog(
                             context: context,
                             barrierDismissible: false,
-                            builder: (_) => const Center(
-                              child: CupertinoActivityIndicator(
-                                  radius: 16, color: Colors.white),
+                            builder: (_) => Center(
+                              child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
                             ),
                           );
 
-                          var isConnected =
-                              await InternetConnection().isConnected(context);
+                          var isConnected = await InternetConnection().isConnected(context);
+                          // ignore: use_build_context_synchronously
                           Navigator.of(context).pop();
                           if (isConnected) {
                             // ignore: use_build_context_synchronously
-                            List result = await AuthMethods()
-                                .linkCredentialsbyGoogleAccount(context);
+                            List result = await AuthMethods().linkCredentialsbyGoogleAccount(context);
                             setState(() {
                               googleAccountEmail = result[1];
                             });
-                            debugPrint(
-                                "Update googleID [isAllowedToContinue]: ${result[0]}");
+                            debugPrint("Update googleID [isAllowedToContinue]: ${result[0]}");
                             debugPrint("Has connection : $isConnected");
                           } else {
                             debugPrint("Has connection : $isConnected");
                             // ignore: use_build_context_synchronously
-                            showSnackbar(
-                                context,
-                                'Veuillez vérifier votre connexion internet',
-                                null);
+                            showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
                           }
                         },
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.google,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Compte Google associé',
@@ -480,23 +452,21 @@ class _AccountSecuritySettingsPageState
                                 textAlign: TextAlign.left,
                                 text: TextSpan(
                                   text: 'Votre compte Google : ',
-                                  style: const TextStyle(
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
                                     color: Colors.black54,
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
                                         text: googleAccountEmail ?? "",
-                                        style: const TextStyle(
-                                            color: kSecondColor,
-                                            fontWeight: FontWeight.bold)),
+                                        style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               )
                             : Container(),
                         trailing: currentUser.value!.googleID.isNotEmpty
                             ? CupertinoButton.filled(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
                                 borderRadius: BorderRadius.circular(10),
                                 child: const Icon(
                                   FontAwesomeIcons.linkSlash,
@@ -504,11 +474,13 @@ class _AccountSecuritySettingsPageState
                                   size: 13,
                                 ),
                                 onPressed: () async {
+                                  // VIBRATE
+                                  triggerVibration();
+
                                   // Unlink Google Provider
 
                                   // Show Modal Decision
-                                  bool? deleteDecision =
-                                      await showModalDecision(
+                                  List deleteDecision = await showModalDecision(
                                     context: context,
                                     header: 'Détacher votre compte Google',
                                     content:
@@ -517,12 +489,10 @@ class _AccountSecuritySettingsPageState
                                     secondButton: 'Détacher',
                                   );
 
-                                  if (deleteDecision == true) {
+                                  if (deleteDecision[0] == true) {
                                     // Detach Google account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods()
-                                        .unlinkSpecificProvider(
-                                            context, 'google.com');
+                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'google.com');
                                   }
                                 },
                               )
@@ -533,51 +503,45 @@ class _AccountSecuritySettingsPageState
                       SettingCard(
                         onTap: () async {
                           // Redirect to
-                          List result = await AuthMethods()
-                              .linkCredentialsbyFacebookAccount(context);
+                          List result = await AuthMethods().linkCredentialsbyFacebookAccount(context);
                           setState(() {
                             facebookAccountName = result[1];
                           });
-                          debugPrint(
-                              "Update facebookID [isAllowedToContinue]: ${result[0]}");
+                          debugPrint("Update facebookID [isAllowedToContinue]: ${result[0]}");
                         },
                         leading: CircleAvatar(
-                          radius: 30,
+                          radius: 0.08.sw,
                           backgroundColor: kGreyColor,
                           child: Icon(
                             FontAwesomeIcons.facebook,
                             color: Colors.black87.withOpacity(.7),
-                            size: 24,
+                            size: 20.sp,
                           ),
                         ),
                         settingTitle: 'Compte Facebook associé',
-                        settingSubTitle:
-                            currentUser.value!.facebookID.isNotEmpty
-                                ? 'Appuyer pour détacher votre compte Facebook'
-                                : 'Appuyer pour attacher votre compte Facebook',
-                        settingSubTitle2:
-                            currentUser.value!.facebookID.isNotEmpty
-                                ? RichText(
-                                    textAlign: TextAlign.left,
-                                    text: TextSpan(
-                                      text: 'Votre compte Facebook : ',
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                      ),
-                                      children: <TextSpan>[
-                                        TextSpan(
-                                            text: facebookAccountName ?? "",
-                                            style: const TextStyle(
-                                                color: kSecondColor,
-                                                fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  )
-                                : Container(),
+                        settingSubTitle: currentUser.value!.facebookID.isNotEmpty
+                            ? 'Appuyer pour détacher votre compte Facebook'
+                            : 'Appuyer pour attacher votre compte Facebook',
+                        settingSubTitle2: currentUser.value!.facebookID.isNotEmpty
+                            ? RichText(
+                                textAlign: TextAlign.left,
+                                text: TextSpan(
+                                  text: 'Votre compte Facebook : ',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.black54,
+                                  ),
+                                  children: <TextSpan>[
+                                    TextSpan(
+                                        text: facebookAccountName ?? "",
+                                        style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              )
+                            : Container(),
                         trailing: currentUser.value!.facebookID.isNotEmpty
                             ? CupertinoButton.filled(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
                                 borderRadius: BorderRadius.circular(10),
                                 child: const Icon(
                                   FontAwesomeIcons.linkSlash,
@@ -585,11 +549,13 @@ class _AccountSecuritySettingsPageState
                                   size: 13,
                                 ),
                                 onPressed: () async {
+                                  // VIBRATE
+                                  triggerVibration();
+
                                   // Unlink Facebook Provider
 
                                   // Show Modal Decision
-                                  bool? deleteDecision =
-                                      await showModalDecision(
+                                  List deleteDecision = await showModalDecision(
                                     context: context,
                                     header: 'Détacher votre compte Facebook',
                                     content:
@@ -598,12 +564,10 @@ class _AccountSecuritySettingsPageState
                                     secondButton: 'Détacher',
                                   );
 
-                                  if (deleteDecision == true) {
+                                  if (deleteDecision[0] == true) {
                                     // Detach Facebook account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods()
-                                        .unlinkSpecificProvider(
-                                            context, 'facebook.com');
+                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'facebook.com');
                                   }
                                 },
                               )
@@ -619,8 +583,7 @@ class _AccountSecuritySettingsPageState
                   return const Padding(
                     padding: EdgeInsets.only(top: 100),
                     child: Center(
-                      child: Text('Une erreur s\'est produite',
-                          style: TextStyle(color: Colors.black)),
+                      child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.black)),
                     ),
                   );
                 }
@@ -628,9 +591,7 @@ class _AccountSecuritySettingsPageState
                 // Display CircularProgressIndicator
                 return const Padding(
                   padding: EdgeInsets.only(top: 100),
-                  child: Center(
-                      child: CupertinoActivityIndicator(
-                          color: Colors.black, radius: 15)),
+                  child: Center(child: CupertinoActivityIndicator(color: Colors.black, radius: 15)),
                 );
               }),
         ),

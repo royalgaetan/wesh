@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:validators/validators.dart';
 
@@ -58,14 +59,13 @@ class _AddTextModalState extends State<AddTextModal> {
       children: [
         // Modal Title
         Padding(
-          padding:
-              const EdgeInsets.only(left: 15, right: 10, top: 13, bottom: 20),
+          padding: const EdgeInsets.only(left: 15, right: 10, top: 7, bottom: 10),
           child: Text(
             widget.modalTitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.black,
-              fontSize: 19,
+              fontSize: 17.sp,
             ),
           ),
         ),
@@ -78,25 +78,23 @@ class _AddTextModalState extends State<AddTextModal> {
               Expanded(
                 flex: 5,
                 child: buildTextFormField(
-                  inputFormatters: widget.checkUsername != null &&
-                          widget.checkUsername!
+                  inputFormatters: widget.checkUsername != null && widget.checkUsername!
                       ? [
                           FilteringTextInputFormatter.allow(RegExp("[a-z]")),
                         ]
                       : [],
                   controller: textController,
                   hintText: widget.hintText,
-                  icon: const Icon(Icons.edit),
+                  fontSize: 16.sp,
+                  icon: Icon(Icons.arrow_forward_ios_rounded, size: 17.sp),
                   maxLines: widget.textfieldMaxLines ?? 3,
                   maxLength: widget.textfieldMaxLength ?? 120,
-                  inputBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: kSecondColor)),
+                  inputBorder: InputBorder.none,
                   validateFn: (text) {
                     return null;
                   },
                   onChanged: (text) async {
-                    bool isUsed = await checkIfUsernameInUse(
-                        context, textController.text);
+                    bool isUsed = await checkIfUsernameInUse(context, textController.text);
                     if (mounted) {
                       setState(() {
                         isUsernameUsed = isUsed;
@@ -106,9 +104,7 @@ class _AddTextModalState extends State<AddTextModal> {
                 ),
               ),
               const SizedBox(width: 10),
-              widget.checkUsername != null &&
-                      widget.checkUsername! &&
-                      textController.text.isNotEmpty
+              widget.checkUsername != null && widget.checkUsername! && textController.text.isNotEmpty
                   ? Expanded(
                       flex: 1,
                       child: isUsernameUsed
@@ -119,7 +115,7 @@ class _AddTextModalState extends State<AddTextModal> {
             ],
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 7),
 
         // Modal ACTION BUTTON
         Flexible(
@@ -128,9 +124,9 @@ class _AddTextModalState extends State<AddTextModal> {
             children: [
               Button(
                 text: 'Confirmer',
-                height: 45,
-                width: 150,
-                fontsize: 16,
+                height: 0.12.sw,
+                width: double.infinity,
+                fontsize: 13.sp,
                 fontColor: Colors.white,
                 color: kSecondColor,
                 prefixIcon: Icons.done,
@@ -138,11 +134,8 @@ class _AddTextModalState extends State<AddTextModal> {
                 prefixIconSize: 22,
                 onTap: () async {
                   // Check username : handle error
-                  if (widget.checkUsername != null &&
-                      widget.checkUsername! &&
-                      isUsernameUsed) {
-                    showSnackbar(
-                        context, 'Ce nom d\'utilisateur est déjà pris', null);
+                  if (widget.checkUsername != null && widget.checkUsername! && isUsernameUsed) {
+                    showSnackbar(context, 'Ce nom d\'utilisateur est déjà pris', null);
 
                     return;
                   }
@@ -152,8 +145,7 @@ class _AddTextModalState extends State<AddTextModal> {
                       widget.checkLink! &&
                       textController.text.isNotEmpty &&
                       !isURL(textController.text)) {
-                    showSnackbar(
-                        context, 'Veuillez entrer un lien correct', null);
+                    showSnackbar(context, 'Veuillez entrer un lien correct', null);
 
                     return;
                   }

@@ -49,9 +49,7 @@ class _SingleStoryPageViewerState extends State<SingleStoryPageViewer> {
               alignment: Alignment.topLeft,
               children: [
                 StoryView(
-                  storyItems: [
-                    getStoryItemByType(widget.storyTodiplay!, storyController)
-                  ],
+                  storyItems: [getStoryItemByType(widget.storyTodiplay!, storyController)],
                   controller: storyController, // pass controller here too
                   repeat: false, // should the stories be slid forever
                   onStoryShow: (s) {},
@@ -73,14 +71,7 @@ class _SingleStoryPageViewerState extends State<SingleStoryPageViewer> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  timeago.format(
-                                      widget.storyTodiplay!.createdAt,
-                                      locale: 'fr'),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(.6),
-                                  ),
+                                  getTimeAgoLongForm(widget.storyTodiplay!.createdAt),
                                 ),
                                 //
                                 // ADD EVENT SELECTED : if available

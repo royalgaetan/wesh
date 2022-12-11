@@ -2,9 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:device_information/device_information.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/user.dart' as UserModel;
 import '../../models/bugreport.dart';
+import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -12,8 +16,7 @@ import '../../utils/functions.dart';
 import '../../widgets/textformfield.dart';
 
 class BugReportPage extends StatefulWidget {
-  final UserModel.User user;
-  const BugReportPage({super.key, required this.user});
+  const BugReportPage({super.key});
 
   @override
   State<BugReportPage> createState() => _BugReportPageState();
@@ -23,6 +26,7 @@ class _BugReportPageState extends State<BugReportPage> {
   TextEditingController textController = TextEditingController();
   bool includeDeviceInformations = true;
   bool isLoading = false;
+  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
 
   dynamic platformVersion = '';
   dynamic imeiNo = '';
@@ -53,8 +57,8 @@ class _BugReportPageState extends State<BugReportPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -64,8 +68,8 @@ class _BugReportPageState extends State<BugReportPage> {
     // Modeling an bugReportModel
     Map<String, Object?> bugReportToSend = BugReport(
       bugReportId: '',
-      uid: widget.user.id,
-      name: widget.user.name,
+      uid: currentUser.value!.id,
+      name: currentUser.value!.name,
       content: textController.text,
       createdAt: DateTime.now(),
       downloadUrl: '',
@@ -121,12 +125,13 @@ class _BugReportPageState extends State<BugReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'bugReportPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -149,47 +154,77 @@ class _BugReportPageState extends State<BugReportPage> {
                   color: kSecondColor,
                 )
               : Container(),
-          Column(
-            children: [
-              // Bug report add content field
-              Padding(
-                padding: const EdgeInsets.all(15),
-                child: buildTextFormField(
-                  controller: textController,
-                  hintText:
-                      'Dites nous qu\'est-ce qui s\'est produit ou qu\'est-ce qui ne fonctionne pas correctement (en moins de 500 caractères)',
-                  icon: const Icon(Icons.edit_note_rounded),
-                  maxLines: 10,
-                  maxLength: 500,
-                  inputBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: kSecondColor)),
-                  validateFn: (text) {
-                    return null;
-                  },
-                  onChanged: (text) async {
-                    return;
-                  },
-                ),
-              ),
+          StreamBuilder<UserModel.User?>(
+              stream: Provider.of<UserProvider>(context).getCurrentUser(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  // Update current user
+                  currentUser.value = snapshot.data;
 
-              // Include Device informations : user consentment
-              const SizedBox(
-                height: 20,
-              ),
-              SwitchListTile(
-                title: const Text('Inclure les informations sur l\'appareil'),
-                subtitle: const Text(
-                    'Les informations sur votre appareil seront inclus dans votre rapport pour nous aider à mieux comprendre et resoudre votre problème'),
-                value: includeDeviceInformations,
-                onChanged: (bool value) {
-                  setState(() {
-                    includeDeviceInformations = value;
-                  });
-                },
-                secondary: const Icon(Icons.perm_device_information_rounded),
-              ),
-            ],
-          ),
+                  return Column(
+                    children: [
+                      // Bug report add content field
+                      Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: buildTextFormField(
+                          controller: textController,
+                          hintText:
+                              'Dites nous qu\'est-ce qui s\'est produit ou qu\'est-ce qui ne fonctionne pas correctement (en moins de 500 caractères)',
+                          icon: const Icon(Icons.edit_note_rounded),
+                          maxLines: 10,
+                          maxLength: 500,
+                          inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
+                          validateFn: (text) {
+                            return null;
+                          },
+                          onChanged: (text) async {
+                            return;
+                          },
+                        ),
+                      ),
+
+                      // Include Device informations : user consentment
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      SwitchListTile(
+                        title: Text(
+                          'Inclure les informations sur l\'appareil',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Les informations sur votre appareil seront inclus dans votre rapport pour nous aider à mieux comprendre et resoudre votre problème',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                        value: includeDeviceInformations,
+                        onChanged: (bool value) {
+                          setState(() {
+                            includeDeviceInformations = value;
+                          });
+                        },
+                        secondary: const Icon(Icons.perm_device_information_rounded),
+                      ),
+                    ],
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  // Handle error
+                  debugPrint('error: ${snapshot.error}');
+                  return const Center(
+                    child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
+                  );
+                }
+
+                // Display CircularProgressIndicator
+                return const Center(
+                  child: CupertinoActivityIndicator(color: Colors.white60, radius: 15),
+                );
+              }),
         ],
       ),
       floatingActionButton:
@@ -202,6 +237,9 @@ class _BugReportPageState extends State<BugReportPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         onPressed: () async {
+          // VIBRATE
+          triggerVibration();
+
           // Send a bug report
 
           setState(() {
@@ -220,14 +258,12 @@ class _BugReportPageState extends State<BugReportPage> {
               sendBugReport();
             } else {
               // ignore: use_build_context_synchronously
-              showSnackbar(context,
-                  'Veuillez entrer une description de votre problème', null);
+              showSnackbar(context, 'Veuillez entrer une description de votre problème', null);
             }
           } else {
             debugPrint("Has connection : $isConnected");
             // ignore: use_build_context_synchronously
-            showSnackbar(
-                context, 'Veuillez vérifier votre connexion internet', null);
+            showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
           }
         },
       ),

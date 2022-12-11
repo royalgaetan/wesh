@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/constants.dart';
@@ -19,15 +20,15 @@ class _ImagePickerModalState extends State<ImagePickerModal> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 13, bottom: 20),
+        Padding(
+          padding: const EdgeInsets.only(top: 13, bottom: 20),
           child: Text(
             'Choisir une image',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.black,
-              fontSize: 19,
+              color: Colors.black87,
+              fontSize: 15.sp,
             ),
           ),
         ),
@@ -37,22 +38,25 @@ class _ImagePickerModalState extends State<ImagePickerModal> {
           children: [
             // Camera Picker
             buttonPicker(
-              icon: const Icon(FontAwesomeIcons.camera,
-                  color: Colors.white, size: 22),
+              icon: Icon(
+                FontAwesomeIcons.camera,
+                color: Colors.white,
+                size: 20.sp,
+              ),
               label: 'Camera',
               widgetColor: kSecondColor,
               function: () async {
                 // Take Picture From Camera
                 file = await _picker.pickImage(source: ImageSource.camera);
 
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context, file);
               },
             ),
 
             // Image Picker
             buttonPicker(
-              icon: const Icon(FontAwesomeIcons.image,
-                  color: Colors.white, size: 22),
+              icon: Icon(FontAwesomeIcons.image, color: Colors.white, size: 20.sp),
               label: 'Galerie',
               widgetColor: Colors.green,
               function: () async {
@@ -60,14 +64,14 @@ class _ImagePickerModalState extends State<ImagePickerModal> {
 
                 file = await _picker.pickImage(source: ImageSource.gallery);
 
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context, file);
               },
             ),
 
             // Remove Image
             buttonPicker(
-              icon: const Icon(FontAwesomeIcons.trash,
-                  color: Colors.white, size: 21),
+              icon: Icon(FontAwesomeIcons.trash, color: Colors.white, size: 20.sp),
               label: 'Retirer',
               widgetColor: Colors.grey,
               function: () {

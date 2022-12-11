@@ -1,20 +1,39 @@
-import 'package:wesh/models/messagetype.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Discussion {
-  final String profilPicture;
-  final String username;
-  final String lastMessage;
-  final MessageType lastMessageType;
-  final bool isTyping;
-  final DateTime lastMessageDate;
-  final int nbMessagesUnread;
+  final List participants;
+  final String discussionId;
+  final String discussionType;
+  final List<dynamic> isTypingList;
+  final List<dynamic> isRecordingVoiceNoteList;
+  final List messages;
 
-  Discussion(
-      {required this.profilPicture,
-      required this.username,
-      required this.lastMessage,
-      required this.isTyping,
-      required this.lastMessageType,
-      required this.lastMessageDate,
-      required this.nbMessagesUnread});
+  Discussion({
+    required this.participants,
+    required this.discussionId,
+    required this.discussionType,
+    required this.isTypingList,
+    required this.isRecordingVoiceNoteList,
+    required this.messages,
+  });
+
+  // ToJson
+  Map<String, Object> toJson() => {
+        'participants': participants,
+        'discussionId': discussionId,
+        'discussionType': discussionType,
+        'isTypingList': isTypingList,
+        'isRecordingVoiceNoteList': isRecordingVoiceNoteList,
+        'messages': messages,
+      };
+
+  // From Json
+  static Discussion fromJson(Map<String, dynamic> json) => Discussion(
+        participants: json['participants'] ?? [],
+        discussionId: json['discussionId'] ?? '',
+        discussionType: json['discussionType'] ?? '',
+        messages: json['messages'] ?? [],
+        isTypingList: json['isTypingList'] ?? [],
+        isRecordingVoiceNoteList: json['isRecordingVoiceNoteList'] ?? [],
+      );
 }

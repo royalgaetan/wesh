@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/settings.pages/ask_us_question.dart';
 import 'package:wesh/utils/constants.dart';
 
@@ -29,12 +31,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       ),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              '😏 Vous pouvez ainsi envoyer un message ou une story associé à votre évenement')),
+          child: Text('😏 Vous pouvez ainsi envoyer un message ou une story associé à votre évenement')),
       p3: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              'Les événements grisés sont des événements qui se sont déjà déroulés')),
+          child: Text('Les événements grisés sont des événements qui se sont déjà déroulés')),
     ),
 
     // Help about reminders
@@ -51,12 +51,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
               'Les rappels sont là pour vous simplifier la vie, ils vous permettent de vous rappeler un évenement 1 heure, 1 jour ou 1 mois avant que l\'évenement ne commence')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              'Vous pouvez aussi automatiser vos rappels pour chaque jour, chaque année, etc. 😎')),
+          child: Text('Vous pouvez aussi automatiser vos rappels pour chaque jour, chaque année, etc. 😎')),
       p3: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              'Le cas classique est le rappel de l\'anniversaire de l\'un de vos proches 🎉')),
+          child: Text('Le cas classique est le rappel de l\'anniversaire de l\'un de vos proches 🎉')),
     ),
 
     // Help about stories
@@ -73,12 +71,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
               'Les stories sont des videos, images ou tout simplement du texte que vous partagez avec vos amis et abonnés pour leur montrer comment se déroule votre évenement, votre journée ou les coulisses de votre business')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              '😌 Malheureusement les stories ne durent que 24 heures ⌚, puis elles disparaissent')),
+          child: Text('😌 Malheureusement les stories ne durent que 24 heures ⌚, puis elles disparaissent')),
       p3: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              'Pour les conserver plus longtemps, vous pouvez créer des forevers, 🤤 cool non ?')),
+          child: Text('Pour les conserver plus longtemps, vous pouvez créer des forevers, 🤩 cool non ?')),
     ),
 
     // Help about messages
@@ -113,12 +109,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
               'Vous pouvez suivre une personne ou un compte qui vous interesse pour ne jamais manquer ses évenements ou ses stories ❤')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child:
-              Text('Les autres comptes peuvent à leur tour vous suivre aussi')),
+          child: Text('Les autres comptes peuvent à leur tour vous suivre aussi')),
       p3: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text(
-              'Astuce : inviter vos amis pour augmenter votre nombre d\'abonnés 😁')),
+          child: Text('Astuce : inviter vos amis pour augmenter votre nombre d\'abonnés 😁')),
       buttonText: 'Inviter un ami ici',
       redirectTo: const InviteSomeonePage(),
     ),
@@ -146,12 +140,13 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'helpCenterPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -167,8 +162,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 40),
+          padding: const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 40),
           child: ExpansionPanelList(
             expansionCallback: (int index, bool isExpanded) {
               setState(() {
@@ -199,7 +193,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                                   // Redirect to AskQuestionPage
                                   Navigator.push(
                                       context,
-                                      MaterialPageRoute(
+                                      SwipeablePageRoute(
                                         builder: (context) => item.redirectTo!,
                                       ));
                                 })

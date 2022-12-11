@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 import '../utils/functions.dart';
@@ -7,6 +8,10 @@ class DateTimeButton extends StatelessWidget {
   final DateTime? date;
   final TimeOfDay? timeOfDay;
   final String type;
+  final bool? hasBorder;
+  final Color? borderColor;
+  final Color? fontColor;
+  final double? fontSize;
   final VoidCallback onTap;
 
   const DateTimeButton({
@@ -14,6 +19,10 @@ class DateTimeButton extends StatelessWidget {
     this.timeOfDay,
     required this.type,
     required this.onTap,
+    this.borderColor,
+    this.fontColor,
+    this.fontSize,
+    this.hasBorder,
   });
 
   @override
@@ -22,9 +31,9 @@ class DateTimeButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(50),
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade600),
+          border: hasBorder == false ? null : Border.all(color: borderColor ?? Colors.grey.shade600),
           borderRadius: BorderRadius.circular(50),
         ),
         child: Text(
@@ -35,7 +44,8 @@ class DateTimeButton extends StatelessWidget {
                   ),
                 )
               : DateFormat('EEE, d MMM yyyy', 'fr_FR').format(date!),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style:
+              TextStyle(fontSize: fontSize ?? 13.sp, color: fontColor ?? Colors.black87, fontWeight: FontWeight.w500),
         ),
       ),
     );

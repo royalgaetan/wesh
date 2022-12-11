@@ -18,6 +18,7 @@ class User {
   final List<dynamic>? following;
   final List<dynamic>? reminders;
   final List<dynamic>? forevers;
+  final List<dynamic>? discussions;
   final bool settingShowEventsNotifications;
   final bool settingShowRemindersNotifications;
   final bool settingShowStoriesNotifications;
@@ -43,6 +44,7 @@ class User {
     this.following,
     this.reminders,
     this.forevers,
+    this.discussions,
     required this.settingShowEventsNotifications,
     required this.settingShowRemindersNotifications,
     required this.settingShowStoriesNotifications,
@@ -71,6 +73,7 @@ class User {
         'following': following,
         'reminders': reminders,
         'forevers': forevers,
+        'discussions': discussions,
         'settingShowEventsNotifications': settingShowEventsNotifications,
         'settingShowRemindersNotifications': settingShowRemindersNotifications,
         'settingShowStoriesNotifications': settingShowStoriesNotifications,
@@ -91,13 +94,12 @@ class User {
         profilePicture: json['profilePicture'] ?? '',
         linkinbio: json['linkinbio'] ?? '',
         //
-        birthday: json['birthday'] != null
-            ? DateTime.parse(json['birthday'])
-            : DateTime.now(),
+        birthday: json['birthday'] != null ? DateTime.parse(json['birthday']) : DateTime.now(),
         //
-        lastStoryUpdateDateTime: json['lastStoryUpdateDateTime'] != DateTime(0)
-            ? DateTime.parse(json['lastStoryUpdateDateTime'])
-            : DateTime(0),
+        lastStoryUpdateDateTime:
+            json['lastStoryUpdateDateTime'] != DateTime(0) && json['lastStoryUpdateDateTime'] != null
+                ? DateTime.parse(json['lastStoryUpdateDateTime'])
+                : DateTime(0),
         //
         events: json['events'] ?? [],
         stories: json['stories'] ?? [],
@@ -105,14 +107,11 @@ class User {
         following: json['following'] ?? [],
         reminders: json['reminders'] ?? [],
         forevers: json['forevers'] ?? [],
+        discussions: json['discussions'] ?? [],
         //
-        settingShowEventsNotifications:
-            json['settingShowEventsNotifications'] ?? true,
-        settingShowRemindersNotifications:
-            json['settingShowRemindersNotifications'] ?? true,
-        settingShowStoriesNotifications:
-            json['settingShowStoriesNotifications'] ?? true,
-        settingShowMessagesNotifications:
-            json['settingShowMessagesNotifications'] ?? true,
+        settingShowEventsNotifications: json['settingShowEventsNotifications'] ?? true,
+        settingShowRemindersNotifications: json['settingShowRemindersNotifications'] ?? true,
+        settingShowStoriesNotifications: json['settingShowStoriesNotifications'] ?? true,
+        settingShowMessagesNotifications: json['settingShowMessagesNotifications'] ?? true,
       );
 }

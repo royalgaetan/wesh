@@ -1,15 +1,20 @@
+import 'dart:developer';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/pages/in.pages/searchpage.dart';
 import 'package:wesh/utils/constants.dart';
-import 'package:wesh/utils/db.dart';
-import 'package:wesh/widgets/eventview.dart';
-import 'package:wesh/widgets/modal.dart';
 import 'package:wesh/widgets/userposterheader.dart';
+
+import '../services/notifications_api.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -18,11 +23,14 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin {
   List<Event> _events = [];
   DateTime dateSelected = DateTime.now();
   late CalendarController calendarController;
   bool isLoading = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   initState() {
@@ -57,41 +65,52 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          elevation: 1,
-          backgroundColor: Colors.white,
-          title: GestureDetector(
-            onTap: () {
-              // Set selected date to Now()
+    //Notice the super-call here.
+    super.build(context);
 
-              setState(() {
-                calendarController.displayDate = DateTime.now();
-              });
-            },
-            child: SvgPicture.asset(
-              weshLogoColored,
-              height: 40,
-              color: kSecondColor,
-            ),
-          ),
-          actions: [
-            IconButton(
-              splashRadius: 22,
-              onPressed: () {
-                // Open Search Page
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SearchPage(),
-                    ));
+    return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(double.infinity, 0.08.sh),
+          child: MorphingAppBar(
+            heroTag: 'homePageAppBar',
+            elevation: 1,
+            backgroundColor: Colors.white,
+            title: GestureDetector(
+              onTap: () {
+                // Set selected date to Now()
+
+                setState(() {
+                  calendarController.displayDate = DateTime.now();
+                });
               },
-              icon: const Icon(Icons.search, size: 30, color: Colors.black),
+              child: SvgPicture.asset(
+                weshLogoColored,
+                height: 0.09.sw,
+                color: kSecondColor,
+              ),
             ),
-          ],
+            actions: [
+              IconButton(
+                splashRadius: 0.06.sw,
+                onPressed: () {
+                  // Open Search Page
+                  Navigator.push(
+                      context,
+                      SwipeablePageRoute(
+                        builder: (context) => SearchPage(),
+                      ));
+                },
+                icon: const Icon(Icons.search, size: 30, color: Colors.black),
+              ),
+            ],
+          ),
         ),
         body: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.all(40),
+              child: TextButton(onPressed: () async {}, child: const Text('Show notification !')),
+            ),
             Container(
               child: isLoading
                   ? LinearProgressIndicator(
@@ -102,21 +121,22 @@ class _HomePageState extends State<HomePage> {
             ),
             Expanded(
               child: SfCalendar(
-                scheduleViewMonthHeaderBuilder: (BuildContext buildContext,
-                    ScheduleViewMonthHeaderDetails details) {
+                firstDayOfWeek: DateTime.monday,
+                scheduleViewMonthHeaderBuilder: (BuildContext buildContext, ScheduleViewMonthHeaderDetails details) {
                   return buildCalendarScheduleHeader(
                     details: details,
                   );
                 },
-                todayTextStyle: const TextStyle(color: Colors.white),
+                todayTextStyle: TextStyle(color: Colors.white, fontSize: 14.sp),
                 view: CalendarView.schedule,
                 showCurrentTimeIndicator: true,
                 allowAppointmentResize: true,
-                scheduleViewSettings:
-                    const ScheduleViewSettings(appointmentItemHeight: 83),
+                scheduleViewSettings: ScheduleViewSettings(
+                  appointmentItemHeight: 0.2.sw,
+                  appointmentTextStyle: TextStyle(color: Colors.white, fontSize: 10.sp),
+                ),
                 appointmentBuilder: ((context, calendarAppointmentDetails) {
-                  final Event appointment =
-                      calendarAppointmentDetails.appointments.first;
+                  final Event appointment = calendarAppointmentDetails.appointments.first;
 
                   return buildEventContainer(appointment: appointment);
                 }),
@@ -158,7 +178,7 @@ class buildEventContainer extends StatelessWidget {
         // );
       },
       child: Container(
-        padding: EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: eventAvailableColorsList[appointment.color],
           borderRadius: BorderRadius.circular(12),
@@ -168,10 +188,9 @@ class buildEventContainer extends StatelessWidget {
           children: [
             Text(
               appointment.title,
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Row(
@@ -189,17 +208,17 @@ class buildEventContainer extends StatelessWidget {
                 // Event Time
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       FontAwesomeIcons.clock,
                       size: 16,
                       color: Colors.white,
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 7,
                     ),
                     Text(
-                      '${DateFormat('hh:mm', 'fr_Fr').format(appointment.startDateTime)} à ${DateFormat('hh:mm', 'fr_Fr').format(appointment.endDateTime)}',
-                      style: TextStyle(color: Colors.white),
+                      '${DateFormat('hh:mm', 'fr_Fr').format(appointment.eventDurations[0].startTime)} à ${DateFormat('hh:mm', 'fr_Fr').format(appointment.eventDurations[0].startTime)}',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ],
                 ),
@@ -222,11 +241,9 @@ class buildCalendarScheduleHeader extends StatelessWidget {
     return Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-              image: AssetImage(
-                  'assets/images/months.calendarscreens/${details.date.month}.jpg'),
+              image: AssetImage('assets/images/months.calendarscreens/${details.date.month}.jpg'),
               fit: BoxFit.cover,
-              colorFilter:
-                  ColorFilter.mode(Colors.grey.shade200, BlendMode.darken)),
+              colorFilter: ColorFilter.mode(Colors.grey.shade200, BlendMode.darken)),
           color: kPrimaryColor.withOpacity(0.5),
         ),
         child: Container(
@@ -238,11 +255,8 @@ class buildCalendarScheduleHeader extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
-              '${DateFormat('MMMM yyyy').format(details.date)}',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500),
+              DateFormat('MMMM yyyy').format(details.date),
+              style: TextStyle(color: Colors.white, fontSize: 20.sp, fontWeight: FontWeight.w500),
             ),
           ),
         ));

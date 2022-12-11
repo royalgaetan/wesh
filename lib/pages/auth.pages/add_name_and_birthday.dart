@@ -1,6 +1,8 @@
 import 'package:age_calculator/age_calculator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/signupmethodspage.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
@@ -37,6 +39,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
     nameController.dispose();
   }
 
+  // ignore: non_constant_identifier_names
   updateName_Birthday() async {
     setState(() {
       isPageLoading = true;
@@ -54,9 +57,10 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
         setState(() {
           isPageLoading = false;
         });
+        // ignore: use_build_context_synchronously
         Navigator.push(
             context,
-            MaterialPageRoute(
+            SwipeablePageRoute(
               builder: (context) => SignUpMethodPage(),
             ));
         // }
@@ -71,8 +75,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
         setState(() {
           isPageLoading = false;
         });
-        return showSnackbar(
-            context, 'Veuillez entrer votre vraie date d\'anniversaire', null);
+        return showSnackbar(context, 'Veuillez entrer votre vraie date d\'anniversaire', null);
       }
     } else {
       setState(() {
@@ -85,18 +88,22 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          splashRadius: 25,
-          onPressed: () {
-            // PUSH BACK STEPS OR POP SCREEN
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: Size(double.infinity, 0.08.sh),
+        child: MorphingAppBar(
+          heroTag: 'addNameAndBirthdayPageAppBar',
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            splashRadius: 0.06.sw,
+            onPressed: () {
+              // PUSH BACK STEPS OR POP SCREEN
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.black,
+            ),
           ),
         ),
       ),
@@ -110,116 +117,111 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
                   color: kSecondColor,
                 )
               : Container(),
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    children: [
-                      Container(
-                        height: 100,
-                        width: 100,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('assets/images/gift.png'),
-                          ),
+          Center(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+              shrinkWrap: true,
+              reverse: true,
+              children: [
+                Column(
+                  children: [
+                    Container(
+                      height: 0.14.sh,
+                      width: 0.14.sh,
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/gift.png'),
                         ),
                       ),
-                      const SizedBox(
-                        height: 40,
+                    ),
+                    SizedBox(height: 0.07.sw),
+                    Text(
+                      'Ajoutez votre nom et votre date d\'anniversaire',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22.sp,
                       ),
-                      const Text(
-                        'Ajoutez votre nom et votre date d\'anniversaire',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 24),
+                    ),
+                    SizedBox(height: 0.04.sw),
+                    Text(
+                      'avant de continuer',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14.sp,
                       ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      const Text('avant de continuer',
-                          style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-
-                  // Name Field Input
-                  TextformContainer(
-                    child: TextField(
-                      // inputFormatters: [
-                      //   FilteringTextInputFormatter.allow(RegExp("[a-z]")),
-                      // ],
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                          hintText: 'Nom',
-                          contentPadding: EdgeInsets.all(20),
-                          border: InputBorder.none),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 0.12.sw),
+                // Name Field Input
+                TextformContainer(
+                  child: TextField(
+                    // inputFormatters: [
+                    //   FilteringTextInputFormatter.allow(RegExp("[a-z]")),
+                    // ],
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                      contentPadding: EdgeInsets.all(0.04.sw),
+                      hintText: 'Nom',
+                      border: InputBorder.none,
                     ),
                   ),
-                  const SizedBox(
-                    height: 27,
-                  ),
+                ),
+                SizedBox(height: 0.07.sw),
 
-                  // Birthday Field Input
-                  TextformContainer(
-                    child: TextField(
-                      readOnly: true,
-                      decoration: InputDecoration(
-                          suffixIcon: IconButton(
-                            splashRadius: 22,
-                            onPressed: () async {
-                              // Pick Date
-                              DateTime? pickedDate = await pickDate(
-                                context: context,
-                                initialDate: DateTime(2000),
-                                firstDate: DateTime(1900),
-                                lastDate: DateTime.now(),
-                              );
+                // Birthday Field Input
+                TextformContainer(
+                  child: TextField(
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      suffixIcon: IconButton(
+                        splashRadius: 0.06.sw,
+                        onPressed: () async {
+                          // Pick Date
+                          DateTime? pickedDate = await pickDate(
+                            context: context,
+                            initialDate: DateTime(2000),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
 
-                              if (pickedDate == null) {
-                                setState(() {
-                                  birthday = DateTime(0);
-                                });
-                              } else {
-                                setState(() {
-                                  birthday = pickedDate;
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.calendar_month_rounded),
-                          ),
-                          hintText: birthday != DateTime(0)
-                              ? DateFormat('d MMMM yyyy').format(birthday)
-                              : 'Ajouter une date d\'anniversaire',
-                          contentPadding: const EdgeInsets.all(20),
-                          border: InputBorder.none),
+                          if (pickedDate == null) {
+                            setState(() {
+                              birthday = DateTime(0);
+                            });
+                          } else {
+                            setState(() {
+                              birthday = pickedDate;
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.calendar_month_rounded),
+                      ),
+                      hintText: birthday != DateTime(0)
+                          ? DateFormat('dd MMMM yyyy').format(birthday)
+                          : 'Ajouter une date d\'anniversaire',
+                      hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                      contentPadding: EdgeInsets.all(0.04.sw),
+                      border: InputBorder.none,
                     ),
                   ),
-                  const SizedBox(
-                    height: 27,
-                  ),
-
-                  // Button Action : Update Name and Birthday
-                  Button(
-                    height: 50,
-                    width: double.infinity,
-                    text: 'Suivant',
-                    color: kSecondColor,
-                    onTap: () {
-                      // Update data & Redirect to Add_Profile_Picture_Page
-                      updateName_Birthday();
-                    },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                ],
-              ),
+                ),
+                SizedBox(height: 0.07.sw),
+                // Button Action : Update Name and Birthday
+                Button(
+                  height: 0.12.sw,
+                  width: double.infinity,
+                  text: 'Suivant',
+                  color: kSecondColor,
+                  onTap: () {
+                    // Update data & Redirect to Add_Profile_Picture_Page
+                    updateName_Birthday();
+                  },
+                ),
+                SizedBox(height: 0.07.sw),
+              ].reversed.toList(),
             ),
           ),
         ],

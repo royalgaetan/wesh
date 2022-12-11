@@ -5,10 +5,12 @@ import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wesh/widgets/addtextmodal.dart';
 import '../../models/event.dart';
@@ -29,8 +31,7 @@ class CreateStory extends StatefulWidget {
   State<CreateStory> createState() => _CreateStoryState();
 }
 
-class _CreateStoryState extends State<CreateStory>
-    with SingleTickerProviderStateMixin {
+class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStateMixin {
   //
   TextEditingController storyTextController = TextEditingController();
   Event? eventAttached;
@@ -44,8 +45,7 @@ class _CreateStoryState extends State<CreateStory>
 
   bool isDefaultColorActivated = false;
   int storyFontIndex = Random().nextInt(storiesAvailableFontsList.length - 1);
-  int storyBgColorIndex =
-      Random().nextInt(storiesAvailableColorsList.length - 1);
+  int storyBgColorIndex = Random().nextInt(storiesAvailableColorsList.length - 1);
 
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
@@ -53,8 +53,7 @@ class _CreateStoryState extends State<CreateStory>
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(vsync: this, length: 3, animationDuration: Duration.zero);
+    _tabController = TabController(vsync: this, length: 3, animationDuration: Duration.zero);
     _tabController.addListener(_handleTabSelection);
   }
 
@@ -85,7 +84,8 @@ class _CreateStoryState extends State<CreateStory>
       context: context,
       backgroundColor: Colors.transparent,
       builder: ((context) => Modal(
-            minChildSize: .4,
+            minHeightSize: MediaQuery.of(context).size.height / 1.4,
+            maxHeightSize: MediaQuery.of(context).size.height,
             child: const EventSelector(),
           )),
     );
@@ -159,8 +159,8 @@ class _CreateStoryState extends State<CreateStory>
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+        builder: (_) => Center(
+          child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
         ),
       );
 
@@ -186,24 +186,20 @@ class _CreateStoryState extends State<CreateStory>
           debugPrint('Story created : $newTextStory');
 
           //  Update Firestore Stories Table
-          result = await FirestoreMethods().createStory(
-              context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
+          result = await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
         } else {
           // Content Attached error handler
           result = false;
-          showSnackbar(context,
-              'Veuillez écrire quelque chose avant de continuer !', null);
+          showSnackbar(context, 'Veuillez écrire quelque chose avant de continuer !', null);
         }
       }
 
       // Image Story Case
       if (_tabController.index == 1) {
         debugPrint('Processing with Image story...');
-        if (imageSelectedPath.isNotEmpty &&
-            imageSelectedPath.contains('/data/user/')) {
+        if (imageSelectedPath.isNotEmpty && imageSelectedPath.contains('/data/user/')) {
           // Upload StoryImage to Firestorage and getDownloadURL
-          String downloadUrl = await FireStorageMethods()
-              .uploadStoryContent(context, imageSelectedPath, 'image');
+          String downloadUrl = await FireStorageMethods().uploadStoryContent(context, imageSelectedPath, 'image');
           if (downloadUrl.isEmpty) return;
 
           // Modeling a new Image Story
@@ -224,30 +220,25 @@ class _CreateStoryState extends State<CreateStory>
           debugPrint('Story modelled : $newImageStory');
 
           //  Update Firestore Stories Table
-          result = await FirestoreMethods().createStory(
-              context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
+          result = await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
         } else {
           // Content Attached error handler
           result = false;
-          showSnackbar(
-              context, 'Veuillez ajouter une image avant de continuer !', null);
+          showSnackbar(context, 'Veuillez ajouter une image avant de continuer !', null);
         }
       }
 
       // Video Story Case
       if (_tabController.index == 2) {
         debugPrint('Processing with Video story...');
-        if (videoSelectedPath.isNotEmpty &&
-            videoSelectedPath.contains('/data/user/')) {
+        if (videoSelectedPath.isNotEmpty && videoSelectedPath.contains('/data/user/')) {
           // Upload StoryVideo to Firestorage and getDownloadURL
-          String downloadUrl = await FireStorageMethods()
-              .uploadStoryContent(context, videoSelectedPath, 'video');
+          String downloadUrl = await FireStorageMethods().uploadStoryContent(context, videoSelectedPath, 'video');
 
           // Upload StoryVideo Thumbnail to Firestorage and get Thumbnail downloadUrl
-          String vidhumbnailInString =
-              await getVideoThumbnail(videoSelectedPath) ?? '';
-          String thumbnailVideoDownloadUrl = await FireStorageMethods()
-              .uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
+          String vidhumbnailInString = await getVideoThumbnail(videoSelectedPath) ?? '';
+          String thumbnailVideoDownloadUrl =
+              await FireStorageMethods().uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
 
           if (downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
             // Modeling a new Video Story
@@ -268,16 +259,15 @@ class _CreateStoryState extends State<CreateStory>
             debugPrint('Story created : $newVideoStory');
 
             //  Update Firestore Stories Table
-            result = await FirestoreMethods().createStory(
-                context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
+            result =
+                await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
           } else {
             result = false;
           }
         } else {
           // Content Attached error handler
           result = false;
-          showSnackbar(
-              context, 'Veuillez ajouter une video avant de continuer !', null);
+          showSnackbar(context, 'Veuillez ajouter une video avant de continuer !', null);
         }
       }
       // Pop Screen once story will be created
@@ -293,11 +283,11 @@ class _CreateStoryState extends State<CreateStory>
         );
 
         // ignore: use_build_context_synchronously
-        showSnackbar(
-            context, 'Votre story a bien été partagée !', kSuccessColor);
+        showSnackbar(context, 'Votre story a bien été partagée !', kSuccessColor);
       }
     } else {
       debugPrint("Has connection : $isConnected");
+      // ignore: use_build_context_synchronously
       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
     }
   }
@@ -308,10 +298,11 @@ class _CreateStoryState extends State<CreateStory>
       length: 3,
       initialIndex: 0,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: MorphingAppBar(
+          heroTag: 'createStoryPageAppBar',
           automaticallyImplyLeading: false,
           elevation: 0,
-          backgroundColor: Color.fromARGB(0, 95, 55, 55),
+          backgroundColor: const Color.fromARGB(0, 95, 55, 55),
           centerTitle: true,
           // Tab bar
           title: TabBar(
@@ -329,8 +320,7 @@ class _CreateStoryState extends State<CreateStory>
               unselectedLabelColor: Colors.white70,
               indicator: CircleTabIndicator(color: kSecondColor, radius: 3),
               // labelPadding: EdgeInsets.only(top: 20),
-              labelStyle:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               labelColor: kSecondColor,
               tabs: const [
                 Tab(
@@ -345,11 +335,9 @@ class _CreateStoryState extends State<CreateStory>
               ]),
         ),
         extendBodyBehindAppBar: true,
-        backgroundColor: isDefaultColorActivated
-            ? Colors.black
-            : storiesAvailableColorsList[storyBgColorIndex],
+        backgroundColor: isDefaultColorActivated ? Colors.black : storiesAvailableColorsList[storyBgColorIndex],
         body: TabBarView(
-          physics: const NeverScrollableScrollPhysics(),
+          // physics: const NeverScrollableScrollPhysics(),
           controller: _tabController,
           children: [
             // Text Page
@@ -359,8 +347,7 @@ class _CreateStoryState extends State<CreateStory>
                 // MAIN: TEXT FIELD
                 Center(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 10, right: 10, top: 30),
+                    padding: const EdgeInsets.only(left: 10, right: 10, top: 30),
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -368,8 +355,7 @@ class _CreateStoryState extends State<CreateStory>
                           Container(
                             constraints: BoxConstraints(
                               maxWidth: double.infinity,
-                              maxHeight:
-                                  MediaQuery.of(context).size.height / 1.8,
+                              maxHeight: MediaQuery.of(context).size.height / 1.8,
                             ),
                             child: AutoSizeTextField(
                               autofocus: true,
@@ -380,16 +366,14 @@ class _CreateStoryState extends State<CreateStory>
                               maxLines: null,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontFamily:
-                                      storiesAvailableFontsList[storyFontIndex],
+                                  fontFamily: storiesAvailableFontsList[storyFontIndex],
                                   fontSize: 50,
                                   color: Colors.white),
                               textAlignVertical: TextAlignVertical.center,
                               decoration: InputDecoration(
                                   counterText: '',
                                   hintText: 'Ecrivez quelque chose...',
-                                  hintStyle:
-                                      TextStyle(color: Colors.grey.shade400),
+                                  hintStyle: TextStyle(color: Colors.grey.shade400),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.all(20)),
                               keyboardType: TextInputType.multiline,
@@ -419,8 +403,7 @@ class _CreateStoryState extends State<CreateStory>
                 // Options TEXT STORY
                 AnimatedPadding(
                   duration: const Duration(milliseconds: 120),
-                  padding: EdgeInsets.only(
-                      left: 20, bottom: eventAttached == null ? 15 : 35),
+                  padding: EdgeInsets.only(left: 20, bottom: eventAttached == null ? 15 : 35),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -428,15 +411,13 @@ class _CreateStoryState extends State<CreateStory>
                       Tooltip(
                         message: 'Attacher un évènement',
                         child: IconButton(
-                          splashRadius: 25,
+                          splashRadius: 0.06.sw,
                           onPressed: () async {
                             attachEvent();
                           },
                           icon: Icon(
                             FontAwesomeIcons.splotch,
-                            color: eventAttached == null
-                                ? Colors.white
-                                : kSecondColor,
+                            color: eventAttached == null ? Colors.white : kSecondColor,
                           ),
                         ),
                       ),
@@ -446,11 +427,10 @@ class _CreateStoryState extends State<CreateStory>
                       Tooltip(
                         message: 'Changer la police',
                         child: IconButton(
-                          splashRadius: 25,
+                          splashRadius: 0.06.sw,
                           onPressed: () {
                             setState(() {
-                              if (storyFontIndex <
-                                  storiesAvailableFontsList.length - 1) {
+                              if (storyFontIndex < storiesAvailableFontsList.length - 1) {
                                 storyFontIndex = storyFontIndex + 1;
                               } else {
                                 storyFontIndex = 0;
@@ -458,8 +438,7 @@ class _CreateStoryState extends State<CreateStory>
                               debugPrint('Font selected: ${storyFontIndex}');
                             });
                           },
-                          icon: const Icon(FontAwesomeIcons.font,
-                              color: Colors.white),
+                          icon: const Icon(FontAwesomeIcons.font, color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -468,11 +447,10 @@ class _CreateStoryState extends State<CreateStory>
                       Tooltip(
                         message: 'Changer la couleur de fond',
                         child: IconButton(
-                          splashRadius: 25,
+                          splashRadius: 0.06.sw,
                           onPressed: () {
                             setState(() {
-                              if (storyBgColorIndex <
-                                  storiesAvailableColorsList.length - 1) {
+                              if (storyBgColorIndex < storiesAvailableColorsList.length - 1) {
                                 storyBgColorIndex = storyBgColorIndex + 1;
                               } else {
                                 storyBgColorIndex = 0;
@@ -527,8 +505,7 @@ class _CreateStoryState extends State<CreateStory>
                                   ],
                                 )
                               : PhotoView(
-                                  imageProvider:
-                                      FileImage(File(imageSelectedPath)),
+                                  imageProvider: FileImage(File(imageSelectedPath)),
                                 ),
                         ),
                       ],
@@ -539,8 +516,7 @@ class _CreateStoryState extends State<CreateStory>
                 // Options IMAGE STORY
                 AnimatedPadding(
                   duration: const Duration(milliseconds: 120),
-                  padding:
-                      EdgeInsets.only(bottom: eventAttached == null ? 15 : 35),
+                  padding: EdgeInsets.only(bottom: eventAttached == null ? 15 : 35),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -580,15 +556,13 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'Attacher un évènement',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
                                   attachEvent();
                                 },
                                 icon: Icon(
                                   FontAwesomeIcons.splotch,
-                                  color: eventAttached == null
-                                      ? Colors.white
-                                      : kSecondColor,
+                                  color: eventAttached == null ? Colors.white : kSecondColor,
                                 ),
                               ),
                             ),
@@ -598,12 +572,11 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'depuis la camera',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () {
                                   addImage(source: ImageSource.camera);
                                 },
-                                icon: const Icon(FontAwesomeIcons.camera,
-                                    color: Colors.white),
+                                icon: const Icon(FontAwesomeIcons.camera, color: Colors.white),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -612,12 +585,11 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'depuis la galerie',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
                                   addImage(source: ImageSource.gallery);
                                 },
-                                icon: const Icon(FontAwesomeIcons.image,
-                                    color: Colors.white),
+                                icon: const Icon(FontAwesomeIcons.image, color: Colors.white),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -626,7 +598,7 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'Ajouter une description',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
                                   // Show AddTextModal
                                   var textresult = await showModalBottomSheet(
@@ -637,14 +609,9 @@ class _CreateStoryState extends State<CreateStory>
                                     builder: ((context) => Scaffold(
                                           backgroundColor: Colors.transparent,
                                           body: Modal(
-                                            maxChildSize: .3,
-                                            initialChildSize: .3,
-                                            minChildSize: .3,
                                             child: AddTextModal(
-                                                hintText:
-                                                    'Votre description ici...',
-                                                modalTitle:
-                                                    'Ajouter une description',
+                                                hintText: 'Votre description ici...',
+                                                modalTitle: 'Ajouter une description',
                                                 initialText: imageCaption),
                                           ),
                                         )),
@@ -660,9 +627,7 @@ class _CreateStoryState extends State<CreateStory>
                                   imageCaption.isNotEmpty
                                       ? FontAwesomeIcons.solidClosedCaptioning
                                       : FontAwesomeIcons.closedCaptioning,
-                                  color: imageCaption.isNotEmpty
-                                      ? kSecondColor
-                                      : Colors.white,
+                                  color: imageCaption.isNotEmpty ? kSecondColor : Colors.white,
                                 ),
                               ),
                             ),
@@ -691,8 +656,7 @@ class _CreateStoryState extends State<CreateStory>
                             maxWidth: double.infinity,
                             maxHeight: MediaQuery.of(context).size.height / 1.5,
                           ),
-                          child: videoSelectedPath == '' &&
-                                  !isVideoPreviewLoading
+                          child: videoSelectedPath == '' && !isVideoPreviewLoading
                               ? TextButton(
                                   onPressed: () {
                                     // Add an Video
@@ -723,8 +687,7 @@ class _CreateStoryState extends State<CreateStory>
                 // Options VIDEO STORY
                 AnimatedPadding(
                   duration: const Duration(milliseconds: 120),
-                  padding:
-                      EdgeInsets.only(bottom: eventAttached == null ? 15 : 35),
+                  padding: EdgeInsets.only(bottom: eventAttached == null ? 15 : 35),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -764,15 +727,13 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'Attacher un évènement',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
                                   attachEvent();
                                 },
                                 icon: Icon(
                                   FontAwesomeIcons.splotch,
-                                  color: eventAttached == null
-                                      ? Colors.white
-                                      : kSecondColor,
+                                  color: eventAttached == null ? Colors.white : kSecondColor,
                                 ),
                               ),
                             ),
@@ -782,14 +743,11 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'depuis la camera',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () {
-                                  addVideo(
-                                      source: ImageSource.camera,
-                                      context: context);
+                                  addVideo(source: ImageSource.camera, context: context);
                                 },
-                                icon: const Icon(FontAwesomeIcons.video,
-                                    color: Colors.white),
+                                icon: const Icon(FontAwesomeIcons.video, color: Colors.white),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -798,14 +756,11 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'depuis la galerie',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
-                                  addVideo(
-                                      source: ImageSource.gallery,
-                                      context: context);
+                                  addVideo(source: ImageSource.gallery, context: context);
                                 },
-                                icon: const Icon(FontAwesomeIcons.clapperboard,
-                                    color: Colors.white),
+                                icon: const Icon(FontAwesomeIcons.clapperboard, color: Colors.white),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -814,7 +769,7 @@ class _CreateStoryState extends State<CreateStory>
                             Tooltip(
                               message: 'Ajouter une description',
                               child: IconButton(
-                                splashRadius: 25,
+                                splashRadius: 0.06.sw,
                                 onPressed: () async {
                                   // Show AddTextModal
                                   var textresult = await showModalBottomSheet(
@@ -825,14 +780,9 @@ class _CreateStoryState extends State<CreateStory>
                                     builder: ((context) => Scaffold(
                                           backgroundColor: Colors.transparent,
                                           body: Modal(
-                                            maxChildSize: .3,
-                                            initialChildSize: .3,
-                                            minChildSize: .3,
                                             child: AddTextModal(
-                                                hintText:
-                                                    'Votre description ici...',
-                                                modalTitle:
-                                                    'Ajouter une description',
+                                                hintText: 'Votre description ici...',
+                                                modalTitle: 'Ajouter une description',
                                                 initialText: videoCaption),
                                           ),
                                         )),
@@ -848,9 +798,7 @@ class _CreateStoryState extends State<CreateStory>
                                   videoCaption.isNotEmpty
                                       ? FontAwesomeIcons.solidClosedCaptioning
                                       : FontAwesomeIcons.closedCaptioning,
-                                  color: videoCaption.isNotEmpty
-                                      ? kSecondColor
-                                      : Colors.white,
+                                  color: videoCaption.isNotEmpty ? kSecondColor : Colors.white,
                                 ),
                               ),
                             ),
@@ -902,6 +850,9 @@ class _CreateStoryState extends State<CreateStory>
             ),
           ),
           onPressed: () async {
+            // VIBRATE
+            triggerVibration();
+
             createStory();
           },
         ),
@@ -915,8 +866,7 @@ class _CreateStoryState extends State<CreateStory>
 class CircleTabIndicator extends Decoration {
   final BoxPainter _painter;
 
-  CircleTabIndicator({required Color color, required double radius})
-      : _painter = _CirclePainter(color, radius);
+  CircleTabIndicator({required Color color, required double radius}) : _painter = _CirclePainter(color, radius);
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) => _painter;
@@ -933,8 +883,7 @@ class _CirclePainter extends BoxPainter {
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration cfg) {
-    final Offset circleOffset =
-        offset + Offset(cfg.size!.width / 2, cfg.size!.height - radius - 5);
+    final Offset circleOffset = offset + Offset(cfg.size!.width / 2, cfg.size!.height - radius - 5);
     canvas.drawCircle(circleOffset, radius, _paint);
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 
 import '../../utils/constants.dart';
 
@@ -14,12 +16,13 @@ class _AboutTheAppPageState extends State<AboutTheAppPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
+        appBar: MorphingAppBar(
+          heroTag: 'aboutTheAppPageAppBar',
           backgroundColor: Colors.white,
           titleSpacing: 0,
           elevation: 0,
           leading: IconButton(
-            splashRadius: 25,
+            splashRadius: 0.06.sw,
             onPressed: () {
               Navigator.pop(context);
             },
@@ -41,8 +44,7 @@ class _AboutTheAppPageState extends State<AboutTheAppPage> {
                   Container(
                     height: 100,
                     width: 100,
-                    decoration: const BoxDecoration(
-                        image: DecorationImage(image: AssetImage(weshLogoPic))),
+                    decoration: const BoxDecoration(image: DecorationImage(image: AssetImage(weshLogoPic))),
                   ),
                   const SizedBox(
                     height: 20,
@@ -84,9 +86,8 @@ class _AboutTheAppPageState extends State<AboutTheAppPage> {
                                   margin: const EdgeInsets.all(22),
                                   height: 40,
                                   width: 40,
-                                  decoration: const BoxDecoration(
-                                      image: DecorationImage(
-                                          image: AssetImage(weshFaviconPic))),
+                                  decoration:
+                                      const BoxDecoration(image: DecorationImage(image: AssetImage(weshFaviconPic))),
                                 ));
                           }),
                       const SizedBox(

@@ -1,4 +1,3 @@
-import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:wesh/utils/constants.dart';
 
@@ -26,10 +25,10 @@ class ImageWrapper extends StatelessWidget {
         // Profile has no Stories
         if (type == 'noStories') {
           final imageProvider = AssetImage(picture);
-          showImageViewer(context, imageProvider,
-              useSafeArea: true, swipeDismissible: true, onViewerDismissed: () {
-            debugPrint("dismissed");
-          });
+          // showImageViewer(context, imageProvider,
+          //     useSafeArea: true, swipeDismissible: true, onViewerDismissed: () {
+          //   debugPrint("dismissed");
+          // });
         }
 
         // Profile has Stories
@@ -41,9 +40,7 @@ class ImageWrapper extends StatelessWidget {
             ? BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                    color: bordercolor ?? kSecondColor,
-                    width: borderradius ?? 3),
+                border: Border.all(color: bordercolor ?? kSecondColor, width: borderradius ?? 3),
               )
             : null,
         child: child,

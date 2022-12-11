@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth_controller_page.dart';
 import 'package:wesh/pages/login.dart';
 import '../../utils/functions.dart';
@@ -33,12 +35,11 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     if (!isEmailVerified) {
       sendEmailVerification();
 
-      timer =
-          Timer.periodic(const Duration(seconds: 3), (_) => checkEmailVerify());
+      timer = Timer.periodic(const Duration(seconds: 3), (_) => checkEmailVerify());
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(
+        SwipeablePageRoute(
           builder: (_) => AuthPageController(),
         ),
       );
@@ -68,7 +69,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     // FirebaseAuth.instance.signOut();
     Navigator.push(
       context,
-      MaterialPageRoute(
+      SwipeablePageRoute(
         builder: (context) => AuthPageController(),
       ),
     );
@@ -82,11 +83,12 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: MorphingAppBar(
+          heroTag: 'verifyEmailPageAppBar',
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            splashRadius: 25,
+            splashRadius: 0.06.sw,
             onPressed: () {
               // PUSH BACK STEPS OR POP SCREEN
               holdBackBtn();

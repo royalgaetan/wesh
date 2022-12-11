@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/question.dart';
 import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
@@ -20,8 +22,7 @@ class AskUsQuestionPage extends StatefulWidget {
 class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
   TextEditingController textController = TextEditingController();
   bool isLoading = false;
-  ValueNotifier<UserModel.User?> currentUser =
-      ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
 
   @override
   void initState() {
@@ -42,8 +43,8 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+      builder: (_) => Center(
+        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
       ),
     );
 
@@ -69,8 +70,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
       Navigator.pop(context);
 
       // ignore: use_build_context_synchronously
-      showSnackbar(
-          context, 'Votre question à bien été envoyée !', kSuccessColor);
+      showSnackbar(context, 'Votre question à bien été envoyée !', kSuccessColor);
     }
   }
 
@@ -78,12 +78,13 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'askUsQuestionPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -120,13 +121,11 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
                         padding: const EdgeInsets.all(15),
                         child: buildTextFormField(
                           controller: textController,
-                          hintText:
-                              'Comment pouvons-nous vous aider ? (moins de 500 caractères)',
+                          hintText: 'Comment pouvons-nous vous aider ? (moins de 500 caractères)',
                           icon: const Icon(Icons.person_pin_rounded),
                           maxLines: 10,
                           maxLength: 500,
-                          inputBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: kSecondColor)),
+                          inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
                           validateFn: (text) {
                             return null;
                           },
@@ -140,12 +139,19 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
                       const SizedBox(
                         height: 10,
                       ),
-                      const Padding(
-                        padding: EdgeInsets.all(10),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
                         child: ListTile(
-                          title: Text('N.B'),
+                          title: Text(
+                            'N.B',
+                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                          ),
                           subtitle: Text(
-                              'Nous allons vous répondre dans votre messagerie $appName avec notre compte officiel'),
+                            'Nous allons vous répondre dans votre messagerie $appName avec notre compte officiel',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                            ),
+                          ),
                         ),
                       )
                     ],
@@ -156,15 +162,13 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
                   // Handle error
                   debugPrint('error: ${snapshot.error}');
                   return const Center(
-                    child: Text('Une erreur s\'est produite',
-                        style: TextStyle(color: Colors.white)),
+                    child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
                   );
                 }
 
                 // Display CircularProgressIndicator
                 return const Center(
-                  child: CupertinoActivityIndicator(
-                      color: Colors.white60, radius: 15),
+                  child: CupertinoActivityIndicator(color: Colors.white60, radius: 15),
                 );
               }),
         ],
@@ -179,6 +183,9 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         onPressed: () async {
+          // VIBRATE
+          triggerVibration();
+
           // Send a bug report
 
           setState(() {
@@ -202,8 +209,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
           } else {
             debugPrint("Has connection : $isConnected");
             // ignore: use_build_context_synchronously
-            showSnackbar(
-                context, 'Veuillez vérifier votre connexion internet', null);
+            showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
           }
         },
       ),

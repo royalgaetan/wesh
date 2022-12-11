@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:wesh/utils/constants.dart';
 
 class SeekBar extends StatefulWidget {
   final Duration duration;
@@ -8,6 +10,7 @@ class SeekBar extends StatefulWidget {
   final Duration bufferedPosition;
   final ValueChanged<Duration>? onChanged;
   final ValueChanged<Duration>? onChangeEnd;
+  final String? btnTheme;
 
   const SeekBar({
     Key? key,
@@ -16,6 +19,7 @@ class SeekBar extends StatefulWidget {
     required this.bufferedPosition,
     this.onChanged,
     this.onChangeEnd,
+    this.btnTheme,
   }) : super(key: key);
 
   @override
@@ -42,15 +46,14 @@ class SeekBarState extends State<SeekBar> {
         SliderTheme(
           data: _sliderThemeData.copyWith(
             thumbShape: HiddenThumbComponentShape(),
-            activeTrackColor: Colors.blue.shade100,
-            inactiveTrackColor: Colors.grey.shade300,
+            activeTrackColor: kGreyColor,
+            inactiveTrackColor: kGreyColor,
           ),
           child: ExcludeSemantics(
             child: Slider(
               min: 0.0,
               max: widget.duration.inMilliseconds.toDouble(),
-              value: min(widget.bufferedPosition.inMilliseconds.toDouble(),
-                  widget.duration.inMilliseconds.toDouble()),
+              value: min(widget.bufferedPosition.inMilliseconds.toDouble(), widget.duration.inMilliseconds.toDouble()),
               onChanged: (value) {
                 setState(() {
                   _dragValue = value;
@@ -69,14 +72,12 @@ class SeekBarState extends State<SeekBar> {
           ),
         ),
         SliderTheme(
-          data: _sliderThemeData.copyWith(
-            inactiveTrackColor: Colors.transparent,
-          ),
+          data: _sliderThemeData.copyWith(),
           child: Slider(
             min: 0.0,
             max: widget.duration.inMilliseconds.toDouble(),
-            value: min(_dragValue ?? widget.position.inMilliseconds.toDouble(),
-                widget.duration.inMilliseconds.toDouble()),
+            value:
+                min(_dragValue ?? widget.position.inMilliseconds.toDouble(), widget.duration.inMilliseconds.toDouble()),
             onChanged: (value) {
               setState(() {
                 _dragValue = value;
@@ -97,11 +98,12 @@ class SeekBarState extends State<SeekBar> {
           right: 16.0,
           bottom: 0.0,
           child: Text(
-              RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
-                      .firstMatch("$_remaining")
-                      ?.group(1) ??
-                  '$_remaining',
-              style: Theme.of(context).textTheme.caption),
+            RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$').firstMatch("$_remaining")?.group(1) ?? '$_remaining',
+            style: Theme.of(context).textTheme.caption!.copyWith(
+                  fontSize: 11.sp,
+                  color: widget.btnTheme == 'white' ? Colors.white : Colors.black,
+                ),
+          ),
         ),
       ],
     );
@@ -161,11 +163,14 @@ void showSliderDialog({
           height: 100.0,
           child: Column(
             children: [
-              Text('${snapshot.data?.toStringAsFixed(1)}$valueSuffix',
-                  style: const TextStyle(
-                      fontFamily: 'Fixed',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0)),
+              Text(
+                '${snapshot.data?.toStringAsFixed(1)}$valueSuffix',
+                style: TextStyle(
+                  fontFamily: 'Fixed',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.sp,
+                ),
+              ),
               Slider(
                 divisions: divisions,
                 min: min,

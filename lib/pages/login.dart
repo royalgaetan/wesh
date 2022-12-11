@@ -1,6 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/add_phone.dart';
 import 'package:wesh/pages/auth.pages/add_username.dart';
 import 'package:wesh/pages/forgotpassword.dart';
@@ -50,23 +52,19 @@ class _LoginPageState extends State<LoginPage> {
   continueWithEmailAndPassword(context) async {
     // IF [redirectToAddEmailandPasswordPage == true]
     if (widget.redirectToAddEmailandPasswordPage) {
-      debugPrint(
-          "Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
-      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(
-          true);
+      debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
+      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
     }
 
     // IF [redirectToAddEmailPage == true]
     if (widget.redirectToAddEmailPage) {
-      debugPrint(
-          "Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
+      debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
       await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
     }
 
     // IF [redirectToUpdatePasswordPage == true]
     if (widget.redirectToUpdatePasswordPage) {
-      debugPrint(
-          "Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
+      debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
       await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
     }
 
@@ -85,25 +83,22 @@ class _LoginPageState extends State<LoginPage> {
       var psw = passwordController.text.trim();
 
       if (email != null && !EmailValidator.validate(email)) {
-        return showSnackbar(
-            context, 'Veuillez entrer une adresse email valide', null);
+        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
       if (psw != null && psw.length < 6) {
-        return showSnackbar(context,
-            'Veuillez entrer un mot de passe de plus de 6 caractères', null);
+        return showSnackbar(context, 'Veuillez entrer un mot de passe de plus de 6 caractères', null);
       }
 
-      var result =
-          await AuthMethods().loginWithEmailAndPassword(context, email, psw);
+      var result = await AuthMethods().loginWithEmailAndPassword(context, email, psw);
 
       if (result) {
         // Return to Start Page
         Navigator.of(context).pop();
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => const StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       }
@@ -116,23 +111,19 @@ class _LoginPageState extends State<LoginPage> {
   continueWithGoogle() async {
     // IF [redirectToAddEmailandPasswordPage == true]
     if (widget.redirectToAddEmailandPasswordPage) {
-      debugPrint(
-          "Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
-      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(
-          true);
+      debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
+      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
     }
 
     // IF [redirectToAddEmailPage == true]
     if (widget.redirectToAddEmailPage) {
-      debugPrint(
-          "Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
+      debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
       await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
     }
 
     // IF [redirectToUpdatePasswordPage == true]
     if (widget.redirectToUpdatePasswordPage) {
-      debugPrint(
-          "Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
+      debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
       await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
     }
 
@@ -162,8 +153,8 @@ class _LoginPageState extends State<LoginPage> {
         // ignore: use_build_context_synchronously
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => const StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       } else {
@@ -180,23 +171,19 @@ class _LoginPageState extends State<LoginPage> {
   continueWithFacebook() async {
     // IF [redirectToAddEmailandPasswordPage == true]
     if (widget.redirectToAddEmailandPasswordPage) {
-      debugPrint(
-          "Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
-      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(
-          true);
+      debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
+      await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
     }
 
     // IF [redirectToAddEmailPage == true]
     if (widget.redirectToAddEmailPage) {
-      debugPrint(
-          "Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
+      debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
       await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
     }
 
     // IF [redirectToUpdatePasswordPage == true]
     if (widget.redirectToUpdatePasswordPage) {
-      debugPrint(
-          "Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
+      debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
       await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
     }
 
@@ -226,8 +213,8 @@ class _LoginPageState extends State<LoginPage> {
         // ignore: use_build_context_synchronously
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => const StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       } else {
@@ -262,11 +249,11 @@ class _LoginPageState extends State<LoginPage> {
               reverse: true,
               children: [
                 // App Title
-                const SizedBox(height: 50),
+                SizedBox(height: 0.12.sw),
                 const buildlogo(),
 
                 // Form Fields
-                const SizedBox(height: 70),
+                SizedBox(height: 0.14.sw),
 
                 Form(
                   key: formKey,
@@ -278,15 +265,14 @@ class _LoginPageState extends State<LoginPage> {
                         child: TextFormField(
                           keyboardType: TextInputType.emailAddress,
                           controller: emailController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
+                              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                               hintText: 'Email',
-                              contentPadding: EdgeInsets.all(20),
+                              contentPadding: EdgeInsets.all(0.04.sw),
                               border: InputBorder.none),
                         ),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      SizedBox(height: 0.04.sw),
 
                       // Password Field
                       TextformContainer(
@@ -308,12 +294,13 @@ class _LoginPageState extends State<LoginPage> {
                               }),
                           obscureText: isPswVisible,
                           decoration: InputDecoration(
+                              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                               hintText: 'Mot de passe',
-                              contentPadding: const EdgeInsets.all(20),
+                              contentPadding: EdgeInsets.all(0.04.sw),
                               border: InputBorder.none,
                               suffixIcon: showVisibilityIcon
                                   ? IconButton(
-                                      splashRadius: 22,
+                                      splashRadius: 0.06.sw,
                                       onPressed: () {
                                         setState(() {
                                           isPswVisible = !isPswVisible;
@@ -321,17 +308,14 @@ class _LoginPageState extends State<LoginPage> {
                                       },
                                       icon: isPswVisible
                                           ? const Icon(Icons.visibility_rounded)
-                                          : const Icon(
-                                              Icons.visibility_off_rounded))
-                                  : const SizedBox(
-                                      width: 2,
-                                      height: 2,
+                                          : const Icon(Icons.visibility_off_rounded))
+                                  : SizedBox(
+                                      width: 0.04.sw,
+                                      height: 0.04.sw,
                                     )),
                         ),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
+                      SizedBox(height: 0.04.sw),
                     ],
                   ),
                 ),
@@ -341,10 +325,10 @@ class _LoginPageState extends State<LoginPage> {
                 const buildforgotpswBTN(),
 
                 // Action Buttons
-                const SizedBox(height: 20),
+                SizedBox(height: 0.04.sw),
                 // Login Button
                 Button(
-                  height: 50,
+                  height: 0.12.sw,
                   width: double.infinity,
                   text: 'Se connecter',
                   color: kSecondColor,
@@ -353,14 +337,12 @@ class _LoginPageState extends State<LoginPage> {
                     continueWithEmailAndPassword(context);
                   },
                 ),
-                const SizedBox(
-                  height: 30,
-                ),
+                SizedBox(height: 0.08.sw),
 
                 // Divider
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 20),
-                  child: buildDividerWithLabel(label: 'ou continuer avec'),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 0.03.sw, horizontal: 0.02.sw),
+                  child: const buildDividerWithLabel(label: 'ou continuer avec'),
                 ),
 
                 // Other login Methods : Phone, Google, Facebook
@@ -368,13 +350,11 @@ class _LoginPageState extends State<LoginPage> {
                   continueWithGoogleOnTap: continueWithGoogle,
                   continueWithFacebookOnTap: continueWithFacebook,
                   redirectToAddEmailPage: widget.redirectToAddEmailPage,
-                  redirectToAddEmailandPasswordPage:
-                      widget.redirectToAddEmailandPasswordPage,
-                  redirectToUpdatePasswordPage:
-                      widget.redirectToUpdatePasswordPage,
+                  redirectToAddEmailandPasswordPage: widget.redirectToAddEmailandPasswordPage,
+                  redirectToUpdatePasswordPage: widget.redirectToUpdatePasswordPage,
                 ),
 
-                const SizedBox(height: 50),
+                SizedBox(height: 0.1.sw),
 
                 // Sign Up Button
                 Row(
@@ -385,18 +365,15 @@ class _LoginPageState extends State<LoginPage> {
                         // Redirect to Sign Up Page : CheckUsernanePage
                         Navigator.push(
                             context,
-                            MaterialPageRoute(
+                            SwipeablePageRoute(
                               builder: (context) => AddUsernamePage(),
                             ));
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
+                      child: Padding(
+                        padding: EdgeInsets.all(0.04.sw),
                         child: Text(
                           'Créer un compte',
-                          style: TextStyle(
-                              fontSize: 17,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.bold),
                         ),
                       ),
                     )
@@ -426,18 +403,15 @@ class buildforgotpswBTN extends StatelessWidget {
             // Redirect to Forgot Password Page
             Navigator.push(
                 context,
-                MaterialPageRoute(
+                SwipeablePageRoute(
                   builder: (context) => ForgotPasswordPage(),
                 ));
           },
-          child: const Padding(
-            padding: EdgeInsets.all(8.0),
+          child: Padding(
+            padding: EdgeInsets.all(0.04.sw),
             child: Text(
               'Mot de passe oublié ?',
-              style: TextStyle(
-                  fontSize: 17,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.w500),
             ),
           ),
         )
@@ -464,8 +438,7 @@ class buildOtherSignupMethods extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<buildOtherSignupMethods> createState() =>
-      _buildOtherSignupMethodsState();
+  State<buildOtherSignupMethods> createState() => _buildOtherSignupMethodsState();
 }
 
 class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
@@ -478,38 +451,30 @@ class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
           onTap: () async {
             //  Phone Auth
             if (widget.redirectToAddEmailandPasswordPage) {
-              debugPrint(
-                  "Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
-              await UserSimplePreferences
-                  .setRedirectToAddEmailandPasswordPageValue(true);
+              debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
+              await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
             }
 
             // IF [redirectToAddEmailPage == true]
             if (widget.redirectToAddEmailPage) {
-              debugPrint(
-                  "Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
+              debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
               await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
             }
 
             // IF [redirectToUpdatePasswordPage == true]
             if (widget.redirectToUpdatePasswordPage) {
-              debugPrint(
-                  "Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
-              await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(
-                  true);
+              debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
+              await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
             }
 
-            print(
-                'From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
-            print(
-                'From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
-            print(
-                'From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
+            print('From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
+            print('From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
+            print('From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
 
             // ignore: use_build_context_synchronously
             Navigator.push(
                 context,
-                MaterialPageRoute(
+                SwipeablePageRoute(
                   builder: (context) => const AddPhonePage(
                     isUpdatingPhoneNumber: false,
                   ),
@@ -519,7 +484,7 @@ class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
             padding: const EdgeInsets.all(8.0),
             child: SvgPicture.asset(
               phoneLogo,
-              height: 34,
+              height: 32,
             ),
           ),
         ),
@@ -529,7 +494,7 @@ class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
             padding: const EdgeInsets.all(8.0),
             child: SvgPicture.asset(
               googleLogo,
-              height: 29,
+              height: 28,
             ),
           ),
         ),
@@ -558,7 +523,7 @@ class buildlogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return SvgPicture.asset(
       weshLogoColored,
-      height: 90,
+      height: 0.11.sh,
       color: kSecondColor,
     );
   }

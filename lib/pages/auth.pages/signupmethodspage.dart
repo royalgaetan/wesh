@@ -2,9 +2,11 @@ import 'package:country_picker/country_picker.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/createpassword_and_confirm.dart';
 import 'package:wesh/pages/auth.pages/otp.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
@@ -25,8 +27,7 @@ class SignUpMethodPage extends StatefulWidget {
   State<SignUpMethodPage> createState() => _CheckUsernameState();
 }
 
-class _CheckUsernameState extends State<SignUpMethodPage>
-    with TickerProviderStateMixin {
+class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderStateMixin {
   late TabController _tabController;
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
@@ -80,13 +81,12 @@ class _CheckUsernameState extends State<SignUpMethodPage>
 
           if (isPhoneValid) {
             //  Check if the phone is used
-            bool isPhoneNumberUsed = await checkIfPhoneNumberInUse(
-                context, '+${phoneCode}${phoneController.text}');
+            bool isPhoneNumberUsed = await checkIfPhoneNumberInUse(context, '+${phoneCode}${phoneController.text}');
 
             if (isPhoneNumberUsed == false) {
               Navigator.push(
                 context,
-                MaterialPageRoute(
+                SwipeablePageRoute(
                   builder: (_) => OTPverificationPage(
                     authType: 'signup',
                   ),
@@ -102,24 +102,20 @@ class _CheckUsernameState extends State<SignUpMethodPage>
           debugPrint("Has connection : $isConnected");
         } else {
           debugPrint("Has connection : $isConnected");
-          showSnackbar(
-              context, 'Veuillez vérifier votre connexion internet', null);
+          showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
         }
       } else {
-        return showSnackbar(
-            context, 'Veuillez entrer un numéro de téléphone valide', null);
+        return showSnackbar(context, 'Veuillez entrer un numéro de téléphone valide', null);
       }
     }
 
     // IF method == Email
     if (_tabController.index == 1) {
-      if (emailController.text.isEmpty ||
-          !EmailValidator.validate(emailController.text)) {
+      if (emailController.text.isEmpty || !EmailValidator.validate(emailController.text)) {
         setState(() {
           isPageLoading = false;
         });
-        return showSnackbar(
-            context, 'Veuillez entrer une adresse email valide', null);
+        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
       // Returns true if email address is available
@@ -130,8 +126,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
         setState(() {
           isPageLoading = false;
         });
-        return showSnackbar(
-            context, 'Cette adresse email est déjà utilisée', null);
+        return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
       }
       // Go to Sign Up OTPverificationPage: Email Verify
       UserSimplePreferences.setEmail(emailController.text);
@@ -143,7 +138,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
       emailController.clear();
       Navigator.push(
         context,
-        MaterialPageRoute(
+        SwipeablePageRoute(
           builder: (_) => const CreatePassword(isUpdatingEmail: false),
         ),
       );
@@ -164,8 +159,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
 
       debugPrint("Has connection : $isConnected");
 
-      List isAllowedToContinue =
-          await AuthMethods().continueWithGoogle(context, 'signup');
+      List isAllowedToContinue = await AuthMethods().continueWithGoogle(context, 'signup');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
@@ -175,8 +169,8 @@ class _CheckUsernameState extends State<SignUpMethodPage>
         // Redirect to StartPage
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       } else {
@@ -202,8 +196,7 @@ class _CheckUsernameState extends State<SignUpMethodPage>
 
       debugPrint("Has connection : $isConnected");
 
-      List isAllowedToContinue =
-          await AuthMethods().continueWithFacebook(context, 'signup');
+      List isAllowedToContinue = await AuthMethods().continueWithFacebook(context, 'signup');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
@@ -213,8 +206,8 @@ class _CheckUsernameState extends State<SignUpMethodPage>
         // Redirect to StartPage
         Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => StartPage(),
+            SwipeablePageRoute(
+              builder: (context) => StartPage(context: context),
             ),
             (route) => false);
       } else {
@@ -229,18 +222,22 @@ class _CheckUsernameState extends State<SignUpMethodPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          splashRadius: 25,
-          onPressed: () {
-            // PUSH BACK STEPS OR POP SCREEN
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
+      appBar: PreferredSize(
+        preferredSize: Size(double.infinity, 0.08.sh),
+        child: MorphingAppBar(
+          heroTag: 'signUpMethodsPagePageAppBar',
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            splashRadius: 0.06.sw,
+            onPressed: () {
+              // PUSH BACK STEPS OR POP SCREEN
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.black,
+            ),
           ),
         ),
       ),
@@ -254,232 +251,213 @@ class _CheckUsernameState extends State<SignUpMethodPage>
                   color: kSecondColor,
                 )
               : Container(),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: ListView(
-                shrinkWrap: true,
-                reverse: true,
-                children: [
-                  Column(children: const [
-                    Text(
-                      'Continuer avec...',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                    ),
-                    SizedBox(
-                      height: 30,
-                    ),
-                  ]),
+          Center(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+              shrinkWrap: true,
+              reverse: true,
+              children: [
+                Column(children: [
+                  Text(
+                    'Continuer avec...',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22.sp),
+                  ),
+                  SizedBox(height: 0.12.sw),
+                ]),
 
-                  // Tab Bar
-                  TabBar(
-                    indicatorColor: Colors.black,
-                    labelColor: Colors.black,
-                    unselectedLabelColor: Colors.black54,
+                // Tab Bar
+                TabBar(
+                  indicatorColor: Colors.black,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.black54,
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(
+                      text: 'Numéro de téléphone',
+                    ),
+                    Tab(
+                      text: 'Email',
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 0.07.sw),
+
+                // Tab Bar View
+                Container(
+                  padding: EdgeInsets.all(0.01.sw),
+                  height: 0.18.sw,
+                  child: TabBarView(
                     controller: _tabController,
-                    tabs: const [
-                      Tab(
-                        text: 'Numéro de téléphone',
-                      ),
-                      Tab(
-                        text: 'Email',
-                      ),
-                    ],
-                  ),
+                    children: [
+                      //  Phone Field
 
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  // Tab Bar View
-                  Container(
-                    padding: const EdgeInsets.all(10.0),
-                    height: 80,
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        //  Phone Field
-
-                        // Phone Field Input
-                        Container(
-                          decoration: BoxDecoration(
-                            color: kGreyColor,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              // Pick  country
-                              FittedBox(
-                                child: InkWell(
-                                  onTap: () {
-                                    showCountryPicker(
-                                      context: context,
-                                      showPhoneCode: true,
-                                      countryListTheme: CountryListThemeData(
-                                        flagSize: 25,
-                                        backgroundColor: Colors.white,
-                                        textStyle: const TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.blueGrey),
-                                        bottomSheetHeight: 600,
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(20.0),
-                                          topRight: Radius.circular(20.0),
-                                        ),
-                                        //Optional. Styles the search field.
-                                        inputDecoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: kGreyColor,
-                                          prefixIcon: const Icon(Icons.search),
-                                          prefixIconColor: kSecondColor,
-                                          border: OutlineInputBorder(
-                                            borderSide: const BorderSide(
-                                                color: Colors.transparent,
-                                                width: 0),
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderSide: const BorderSide(
-                                                color: Colors.transparent,
-                                                width: 0),
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                          disabledBorder: OutlineInputBorder(
-                                            borderSide: const BorderSide(
-                                                color: kGreyColor, width: 0),
-                                            borderRadius:
-                                                BorderRadius.circular(14),
-                                          ),
-                                          hintText: 'Recherchez un pays',
-                                          hintStyle: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 18),
-                                        ),
-                                      ),
-                                      favorite: ['CG'],
-                                      onSelect: (Country country) {
-                                        setState(() {
-                                          phoneCode = country.phoneCode;
-                                          regionCode = country.countryCode;
-                                        });
-                                        debugPrint(
-                                          'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        20, 10, 0, 10),
-                                    child: Text('+$phoneCode'),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp("[0-9]")),
-                                  ],
-                                  keyboardType: TextInputType.phone,
-                                  controller: phoneController,
-                                  decoration: const InputDecoration(
-                                      hintText: 'Numéro de téléphone',
-                                      contentPadding: EdgeInsets.all(20),
-                                      border: InputBorder.none),
-                                ),
-                              ),
-                            ],
-                          ),
+                      // Phone Field Input
+                      Container(
+                        decoration: BoxDecoration(
+                          color: kGreyColor,
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        child: Row(
+                          children: [
+                            // Pick  country
+                            FittedBox(
+                              child: InkWell(
+                                onTap: () {
+                                  showCountryPicker(
+                                    context: context,
+                                    showPhoneCode: true,
+                                    countryListTheme: CountryListThemeData(
+                                      flagSize: 25,
+                                      backgroundColor: Colors.white,
+                                      textStyle: TextStyle(fontSize: 14.sp, color: Colors.blueGrey),
+                                      bottomSheetHeight: 600,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(20.0),
+                                        topRight: Radius.circular(20.0),
+                                      ),
+                                      //Optional. Styles the search field.
+                                      inputDecoration: InputDecoration(
+                                        filled: true,
+                                        fillColor: kGreyColor,
+                                        prefixIcon: const Icon(Icons.search),
+                                        prefixIconColor: kSecondColor,
+                                        border: OutlineInputBorder(
+                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        disabledBorder: OutlineInputBorder(
+                                          borderSide: const BorderSide(color: kGreyColor, width: 0),
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        hintText: 'Recherchez un pays',
+                                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
+                                      ),
+                                    ),
+                                    favorite: ['CG'],
+                                    onSelect: (Country country) {
+                                      setState(() {
+                                        phoneCode = country.phoneCode;
+                                        regionCode = country.countryCode;
+                                      });
+                                      debugPrint(
+                                        'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
+                                  child: Text('+$phoneCode'),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp("[0-9]")),
+                                ],
+                                keyboardType: TextInputType.phone,
+                                controller: phoneController,
+                                decoration: InputDecoration(
+                                    hintText: 'Numéro de téléphone',
+                                    hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                                    contentPadding: EdgeInsets.all(0.04.sw),
+                                    border: InputBorder.none),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                        // Email Field
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: TextformContainer(
-                            child: TextFormField(
-                              controller: emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                  hintText: 'Email',
-                                  contentPadding: EdgeInsets.all(20),
-                                  border: InputBorder.none),
+                      // Email Field
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: TextformContainer(
+                          child: TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                              contentPadding: EdgeInsets.all(0.04.sw),
+                              hintText: 'Email',
+                              border: InputBorder.none,
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Action Button : SIGN UP BUTTON or Login
+                SizedBox(height: 0.12.sw),
+                Column(
+                  children: [
+                    // Login Button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Button(
+                        height: 0.12.sw,
+                        width: double.infinity,
+                        text: 'Continuer',
+                        color: kSecondColor,
+                        onTap: () {
+                          // Check Sign Up Method --> Continue
+                          checkSignUpMethod(context);
+                        },
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                SizedBox(height: 0.12.sw),
 
-                  // Action Button : SIGN UP BUTTON or Login
-                  const SizedBox(
-                    height: 40,
-                  ),
-                  Column(
-                    children: [
-                      // Login Button
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Button(
-                          height: 50,
-                          width: double.infinity,
-                          text: 'Continuer',
-                          color: kSecondColor,
-                          onTap: () {
-                            // Check Sign Up Method --> Continue
-                            checkSignUpMethod(context);
-                          },
+                // Divider
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 0.05.sw, horizontal: 0.02.sw),
+                  child: const buildDividerWithLabel(label: 'ou'),
+                ),
+
+                // Other Sign Up Methods : Google, Facebook
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        // Sign Up with Google
+                        continueWithGoogle(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SvgPicture.asset(
+                          googleLogo,
+                          height: 28,
                         ),
                       ),
-                    ],
-                  ),
-
-                  // Divider
-                  const Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 40.0, horizontal: 20),
-                    child: buildDividerWithLabel(label: 'ou'),
-                  ),
-
-                  // Other Sign Up Methods : Google, Facebook
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          // Sign Up with Google
-                          continueWithGoogle(context);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SvgPicture.asset(
-                            googleLogo,
-                            height: 29,
-                          ),
+                    ),
+                    const SizedBox(width: 28),
+                    InkWell(
+                      onTap: () {
+                        // Sign Up with Facebook
+                        continueWithFacebook(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SvgPicture.asset(
+                          facebookLogo,
+                          height: 34,
+                          color: const Color(0xFF1977F3),
                         ),
                       ),
-                      const SizedBox(width: 28),
-                      InkWell(
-                        onTap: () {
-                          // Sign Up with Facebook
-                          continueWithFacebook(context);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SvgPicture.asset(
-                            facebookLogo,
-                            height: 34,
-                            color: Color(0xFF1977F3),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ].reversed.toList(),
-              ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 0.1.sw),
+              ].reversed.toList(),
             ),
           ),
         ],

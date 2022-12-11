@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/profile.dart';
 
 import '../utils/constants.dart';
@@ -26,9 +27,8 @@ class userposterheader extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                ProfilePage(uid: uid, showBackButton: true),
+          SwipeablePageRoute<void>(
+            builder: (BuildContext context) => ProfilePage(uid: uid, showBackButton: true),
           ),
         );
       },
@@ -49,10 +49,7 @@ class userposterheader extends StatelessWidget {
           ),
           Text(
             username,
-            style: TextStyle(
-                fontSize: 15,
-                color: usernameColor ?? Colors.black,
-                fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 15, color: usernameColor ?? Colors.black, fontWeight: FontWeight.bold),
           )
         ],
       ),

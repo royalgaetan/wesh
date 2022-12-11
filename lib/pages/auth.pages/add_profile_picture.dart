@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/imagepickermodal.dart';
@@ -26,12 +28,12 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
   }
 
   updateProfilePicture(String profilePicturePath) async {
-    await FireStorageMethods()
-        .uploadimageToProfilePic(context, profilePicturePath);
+    await FireStorageMethods().uploadimageToProfilePic(context, profilePicturePath);
 
+    // ignore: use_build_context_synchronously
     Navigator.push(
         context,
-        MaterialPageRoute(
+        SwipeablePageRoute(
           builder: (context) => AddFriends(),
         ));
   }
@@ -46,14 +48,12 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Ajouter une photo de profil',
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
             ),
-            const SizedBox(
-              height: 40,
-            ),
+            SizedBox(height: 0.12.sw),
 
             // Profile Picture Picker
             InkWell(
@@ -69,9 +69,6 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                   context: context,
                   backgroundColor: Colors.transparent,
                   builder: ((context) => Modal(
-                        initialChildSize: .4,
-                        maxChildSize: .4,
-                        minChildSize: .4,
                         child: const ImagePickerModal(),
                       )),
                 );
@@ -92,16 +89,15 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                   (() {
                     if (profilePicturePath.contains('/data/user/')) {
                       return CircleAvatar(
-                        radius: 100,
+                        radius: 70,
                         backgroundColor: kGreyColor,
                         backgroundImage: FileImage(File(profilePicturePath)),
                       );
                     }
                     return const CircleAvatar(
-                      radius: 100,
+                      radius: 70,
                       backgroundColor: kGreyColor,
-                      backgroundImage: AssetImage(
-                          'assets/images/default_profile_picture.jpg'),
+                      backgroundImage: AssetImage('assets/images/default_profile_picture.jpg'),
                     );
                   }()),
                   Transform.translate(
@@ -115,13 +111,7 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                 ],
               ),
             ),
-            const SizedBox(
-              height: 27,
-            ),
-
-            const SizedBox(
-              height: 27,
-            ),
+            SizedBox(height: 0.24.sw),
 
             // Button Action : Update Profile Picture
             Column(
@@ -129,7 +119,7 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Button(
-                    height: 50,
+                    height: 0.12.sw,
                     width: double.infinity,
                     text: 'Confirmer',
                     color: kSecondColor,
@@ -141,9 +131,7 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                     },
                   ),
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 0.07.sw),
 
                 // Ignore BUTTON : go to Add_Friends_And_Contacts_Page
                 Row(
@@ -154,14 +142,11 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                         // Redirect to Add_Friends_And_Contacts_Page
                         updateProfilePicture('');
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
                         child: Text(
                           'Ignorer',
-                          style: TextStyle(
-                              fontSize: 17,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 14.sp, color: Colors.black54, fontWeight: FontWeight.bold),
                         ),
                       ),
                     )
@@ -169,9 +154,7 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                 ),
               ],
             ),
-            const SizedBox(
-              height: 20,
-            ),
+            SizedBox(height: 0.12.sw),
           ],
         ),
       ),

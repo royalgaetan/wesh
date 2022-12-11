@@ -1,0 +1,36 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "wesh --use app bin",
+      "type": "dart",
+      "request": "launch",
+      "args": [
+        "--use-application-binary",
+        "build/app/outputs/apk/debug/app-debug.apk"
+      ]
+    },
+
+    {
+      "name": "wesh",
+      "request": "launch",
+      "type": "dart"
+    },
+
+    {
+      "name": "wesh (profile mode)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "wesh (release mode)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

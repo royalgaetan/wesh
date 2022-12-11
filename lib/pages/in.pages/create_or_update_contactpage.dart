@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/contact.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
@@ -23,12 +25,9 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    contactNameController.text =
-        widget.contact == null ? '' : widget.contact!.name;
-    contactPhoneController.text =
-        widget.contact == null ? '' : widget.contact!.phone;
-    contactEmailController.text =
-        widget.contact == null ? '' : widget.contact!.email;
+    contactNameController.text = widget.contact == null ? '' : widget.contact!.name;
+    contactPhoneController.text = widget.contact == null ? '' : widget.contact!.phone;
+    contactEmailController.text = widget.contact == null ? '' : widget.contact!.email;
   }
 
   @override
@@ -45,16 +44,17 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: MorphingAppBar(
+        heroTag: 'createOrUpdateContactPageAppBar',
         backgroundColor: Colors.white,
         titleSpacing: 0,
         elevation: 0,
         leading: IconButton(
-          splashRadius: 25,
+          splashRadius: 0.06.sw,
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios_rounded,
             color: Colors.black,
           ),
@@ -69,10 +69,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
               backgroundColor: MaterialStateProperty.resolveWith<Color?>(
                 (Set<MaterialState> states) {
                   if (states.contains(MaterialState.pressed))
-                    return Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.5);
+                    return Theme.of(context).colorScheme.primary.withOpacity(0.5);
                   return null; // Use the component's default.
                 },
               ),
@@ -142,8 +139,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Ajouter un nom',
-                            hintStyle: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 18),
+                            hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
                           ),
                         ),
                       ),
@@ -165,8 +161,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Ajouter un numéro',
-                            hintStyle: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 18),
+                            hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
                           ),
                         ),
                       ),
@@ -188,8 +183,7 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: 'Ajouter un email',
-                            hintStyle: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 18),
+                            hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
                           ),
                         ),
                       ),
@@ -209,15 +203,12 @@ class _AddContactStatePage extends State<CreateOrUpdateContactPage> {
                       leading: const Icon(FontAwesomeIcons.cakeCandles),
                       title: Text(
                         'Ajouter une date d\'anniversaire',
-                        style: TextStyle(
-                            color: Colors.grey.shade600, fontSize: 18),
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 18),
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.fromLTRB(0, 18, 30, 20),
                         child: DateTimeButton(
-                          date: widget.contact == null
-                              ? DateTime(2000, 1, 1)
-                              : widget.contact!.birthday,
+                          date: widget.contact == null ? DateTime(2000, 1, 1) : widget.contact!.birthday,
                           type: 'date',
                           onTap: () {
                             debugPrint('Pick start date');

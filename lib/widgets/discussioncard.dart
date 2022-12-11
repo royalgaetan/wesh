@@ -1,12 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:wesh/models/discussion.dart';
-import 'package:wesh/models/messagetype.dart';
-import 'package:wesh/pages/in.pages/inbox.dart';
-import 'package:wesh/utils/constants.dart';
+import 'dart:async';
 
-class DiscussionCard extends StatelessWidget {
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:wesh/models/discussion.dart';
+import 'package:wesh/pages/in.pages/inbox.dart';
+import 'package:wesh/services/firestore.methods.dart';
+import 'package:wesh/utils/constants.dart';
+import 'package:wesh/utils/functions.dart';
+import 'package:wesh/widgets/buildWidgets.dart';
+import '../main.dart';
+import '../models/message.dart';
+import '../providers/user.provider.dart';
+import '../services/background.service.dart';
+
+class DiscussionCard extends StatefulWidget {
   final Discussion discussion;
 
   const DiscussionCard({
@@ -14,169 +30,168 @@ class DiscussionCard extends StatelessWidget {
   });
 
   @override
+  State<DiscussionCard> createState() => _DiscussionCardState();
+}
+
+class _DiscussionCardState extends State<DiscussionCard> {
+  //
+  bool isConnected = false;
+  StreamSubscription? internetSubscription;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    //
+    internetSubscription = InternetConnectionChecker().onStatusChange.listen((status) {
+      final hasConnection = status == InternetConnectionStatus.connected;
+      setState(() {
+        isConnected = hasConnection;
+      });
+      print('isConnected: $isConnected');
+    });
+    //
+
+    //
+    FirestoreMethods().updateMessagesToStatus2(widget.discussion.messages.map((m) => m as String).toList());
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    //
+    internetSubscription != null ? internetSubscription!.cancel() : null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => InboxPage(uid: '4')),
+          SwipeablePageRoute(
+              canOnlySwipeFromEdge: true,
+              builder: (_) => InboxPage(
+                    userReceiverId: widget.discussion.participants
+                        .where((userId) =>
+                            userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
+                        .toList()
+                        .first,
+                    discussion: widget.discussion,
+                  )),
         );
       },
       child: Container(
-        padding: EdgeInsets.all(15),
-        child: Row(children: [
+        padding: const EdgeInsets.fromLTRB(15, 15, 15, 5),
+        child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
           // Trailing Avatar
-          CircleAvatar(
-            radius: 25,
-            backgroundImage: AssetImage(discussion.profilPicture),
-          ),
+
+          buildUserProfilePicture(
+              userId: widget.discussion.participants
+                  .where(
+                      (userId) => userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
+                  .toList()
+                  .first),
 
           // Username + Last Message
-          SizedBox(
+          const SizedBox(
             width: 15,
           ),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${discussion.username}',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                // Username + Unread Messages Number
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    buildUserNameToDisplay(
+                      userId: widget.discussion.participants
+                          .where((userId) =>
+                              userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
+                          .toList()
+                          .first,
+                    ),
+                    buildNumberOfUnreadMessages(discussion: widget.discussion),
+                  ],
                 ),
-                SizedBox(
-                  height: 6,
+                const SizedBox(
+                  height: 4,
                 ),
 
-                // Last Message Row
-                !discussion.isTyping
-                    ? Row(
-                        children: [
-                          getMsgTypeIcon(discussion.lastMessageType),
-                          Expanded(
-                            child: Text(
-                              '${discussion.lastMessage}',
+                // Last Message + Date OR IsTyping OR IsRecordingVoiceNote
+                StreamBuilder(
+                  stream: FirestoreMethods().getDiscussionById(widget.discussion.discussionId),
+                  builder: (context, snapshot) {
+                    // Handle error
+                    if (snapshot.hasError) {
+                      return Container();
+                    }
+                    // Handle Data
+                    if (snapshot.hasData) {
+                      Discussion streamDiscussion = snapshot.data as Discussion;
+
+                      List otherParticipants = streamDiscussion.participants
+                          .where((userId) =>
+                              userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
+                          .toList();
+                      print('otherParticipants: $otherParticipants');
+
+                      // IF [ANOTHER USER IS] TYPING : only display if Internet Connection is active
+                      if (isConnected && streamDiscussion.isTypingList.contains(otherParticipants.first)) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'écrit...',
                               style: TextStyle(
                                   overflow: TextOverflow.ellipsis,
-                                  fontSize: 16,
-                                  color: Colors.black.withOpacity(0.7)),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.sp,
+                                  color: kSecondColor),
                             ),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Ecrit...',
-                              style: TextStyle(
-                                  overflow: TextOverflow.ellipsis,
-                                  fontSize: 16,
-                                  color: kSecondColor,
-                                  fontWeight: FontWeight.bold),
+                          ],
+                        );
+                      }
+
+                      // // IF [ANOTHER USER IS] RECORDING VOICE NOTE : only display if Internet Connection is active
+                      if (isConnected && streamDiscussion.isRecordingVoiceNoteList.contains(otherParticipants.first)) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Lottie.asset(
+                              height: 20,
+                              'assets/animations/73778-wave-solo.json',
+                              // width: double.infinity,
                             ),
-                          ),
-                        ],
-                      )
+                          ],
+                        );
+                      }
+
+                      return buildLastMessageInDiscussionCard(discussion: widget.discussion);
+                    }
+
+                    // Loader
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade400,
+                            child: Container(
+                                margin: const EdgeInsets.only(bottom: 2),
+                                width: 100,
+                                height: 12,
+                                color: Colors.grey.shade400)),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
-          ),
-
-          // Unread Messages Number + Last Message Date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${DateFormat('HH:mm').format(discussion.lastMessageDate)}',
-                style:
-                    TextStyle(color: kSecondColor, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 6,
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: kSecondColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${discussion.nbMessagesUnread}',
-                  style: TextStyle(fontSize: 14, color: Colors.white),
-                ),
-              ),
-            ],
           ),
         ]),
       ),
     );
   }
-}
-
-// Get Message Type Icon
-Widget getMsgTypeIcon(MessageType lastMessageType) {
-  // if MessageType.text
-  // if (lastMessageType == MessageType.text) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(right: 5),
-  //     child: CircleAvatar(
-  //       radius: 11,
-  //       backgroundColor: Colors.lightBlue.shade200,
-  //       child: Icon(FontAwesomeIcons.comment, color: Colors.white, size: 13),
-  //     ),
-  //   );
-  // }
-
-  // if MessageType.image
-  if (lastMessageType == MessageType.image) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Icon(FontAwesomeIcons.image, color: Colors.grey, size: 18),
-    );
-  }
-
-  // if MessageType.video
-  else if (lastMessageType == MessageType.video) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Icon(FontAwesomeIcons.play, color: Colors.red, size: 18),
-    );
-  }
-
-  // if MessageType.music
-  else if (lastMessageType == MessageType.music) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Icon(FontAwesomeIcons.itunesNote,
-          color: Colors.purple.shade300, size: 18),
-    );
-  }
-
-  // if MessageType.voicenote
-  else if (lastMessageType == MessageType.voicenote) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Icon(FontAwesomeIcons.microphone, color: Colors.black87, size: 18),
-    );
-  }
-
-  // if MessageType.gift
-  else if (lastMessageType == MessageType.gift) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 7),
-      child: CircleAvatar(
-        radius: 11,
-        backgroundColor: Colors.orangeAccent,
-        child: Icon(FontAwesomeIcons.gift, color: Colors.white, size: 13),
-      ),
-    );
-  }
-
-  // if MessageType.payment
-  else if (lastMessageType == MessageType.payment) {
-    return Icon(FontAwesomeIcons.dollarSign,
-        color: Colors.green.shade300, size: 18);
-  }
-
-  // Default
-  return Container();
 }
