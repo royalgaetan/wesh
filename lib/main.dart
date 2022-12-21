@@ -4,42 +4,29 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:timeago/timeago.dart';
-import 'package:wesh/google_provider.dart';
-import 'package:wesh/pages/in.pages/forward_to.dart';
-import 'package:wesh/pages/in.pages/request_permissions.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/providers/user.provider.dart';
 import 'package:wesh/services/background.service.dart';
-import 'package:wesh/services/firestore.methods.dart';
-import 'package:wesh/services/notifications_api.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
-import 'package:wesh/utils/functions.dart';
 import 'pages/login.dart';
 import 'utils/constants.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
-import 'utils/globals.dart' as globals;
-import 'package:flutter_isolate/flutter_isolate.dart';
-import 'models/message.dart' as MessageModel;
-import 'models/user.dart' as UserModel;
 
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
@@ -155,12 +142,15 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
 
-  print("Handling a background message: ${message.messageId}");
+  debugPrint("Handling a background message: ${message.messageId}");
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await UserSimplePreferences.init();
@@ -182,15 +172,14 @@ void main() async {
 
   runApp(MultiProvider(
     providers: [
-      ChangeNotifierProvider<GoogleProvider>(create: (_) => GoogleProvider()),
       ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ],
-    child: App(),
+    child: const App(),
   ));
 }
 
 class App extends StatefulWidget {
-  App({Key? key}) : super(key: key);
+  const App({Key? key}) : super(key: key);
 
   @override
   State<App> createState() => _AppState();
@@ -200,6 +189,12 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
+    //
+    log('Ready to start...');
+    FlutterNativeSplash.remove();
+    //
+    SystemChrome.setApplicationSwitcherDescription(
+        const ApplicationSwitcherDescription(label: 'Wesh', primaryColor: 1));
   }
 
   @override
@@ -338,7 +333,7 @@ class _AppState extends State<App> {
                         ),
                       );
                     } else {
-                      return LoginPage(
+                      return const LoginPage(
                         redirectToAddEmailandPasswordPage: false,
                         redirectToAddEmailPage: false,
                         redirectToUpdatePasswordPage: false,

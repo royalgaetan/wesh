@@ -1,16 +1,12 @@
-import 'dart:async';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/functions.dart';
 import '../models/message.dart';
-import '../services/background.service.dart';
 import '../services/sharedpreferences.service.dart';
+import '../utils/constants.dart';
 import '../widgets/buildWidgets.dart';
-import 'in.pages/searchpage.dart';
-import 'package:wesh/pages/settings.pages/bug_report_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -20,7 +16,7 @@ import '../models/discussion.dart';
 import '../providers/user.provider.dart';
 
 class MessagesPage extends StatefulWidget {
-  MessagesPage({Key? key}) : super(key: key);
+  const MessagesPage({Key? key}) : super(key: key);
 
   @override
   State<MessagesPage> createState() => _MessagesPageState();
@@ -32,13 +28,13 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     // Remove Current Active Page
@@ -94,11 +90,11 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
                     // DATA FOUND
                     if (result.isNotEmpty) {
                       return StreamBuilder<List<Map<String, Object>>>(
-                          stream: FirestoreMethods().getMessagesFromListOfDiscussion(result),
+                          stream: FirestoreMethods.getMessagesFromListOfDiscussion(result),
                           builder: (context, snapshot) {
                             // Create Map<String, Object>
                             List<Map<String, Object>> listOfDiscussionAndMessages = snapshot.data ?? [];
-                            List<Map<String, Object>> ListOfDiscussionsWithLastMessageDateTime = [];
+                            List<Map<String, Object>> listOfDiscussionsWithLastMessageDateTime = [];
 
                             for (Discussion discussion in result) {
                               List<Message> discussionMessages = listOfDiscussionAndMessages
@@ -108,33 +104,41 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
 
                               Message? lastMessage = getLastMessageOfDiscussion(discussionMessages);
                               if (lastMessage != null) {
-                                ListOfDiscussionsWithLastMessageDateTime.add(
-                                    {'lastMessageDateTime': lastMessage.createdAt, 'discussion': discussion});
+                                listOfDiscussionsWithLastMessageDateTime
+                                    .add({'lastMessageDateTime': lastMessage.createdAt, 'discussion': discussion});
                               }
                             }
 
-                            return GroupedListView<Map<String, Object>, DateTime>(
-                              useStickyGroupSeparators: true, // optional
-                              floatingHeader: true, // optional
-                              order: GroupedListOrder.DESC, // optional
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.all(0),
-                              elements: ListOfDiscussionsWithLastMessageDateTime,
-                              groupBy: (discussionMap) =>
-                                  DateUtils.dateOnly(discussionMap['lastMessageDateTime'] as DateTime),
-                              itemComparator: (discussionMap1, discussionMap2) =>
-                                  (discussionMap1['lastMessageDateTime'] as DateTime)
-                                      .compareTo(discussionMap2['lastMessageDateTime'] as DateTime),
-                              groupSeparatorBuilder: (DateTime groupByValue) {
-                                return buildGroupSeparatorWidget(groupByValue: groupByValue, simpleMode: true);
-                              },
-                              itemBuilder: (context, Map<String, Object> discussionMap) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 5),
-                                  child: DiscussionCard(discussion: (discussionMap['discussion'] as Discussion)),
-                                );
-                              },
+                            return SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  GroupedListView<Map<String, Object>, DateTime>(
+                                    useStickyGroupSeparators: true, // optional
+                                    floatingHeader: true, // optional
+                                    order: GroupedListOrder.DESC, // optional
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    elements: listOfDiscussionsWithLastMessageDateTime,
+                                    groupBy: (discussionMap) =>
+                                        DateUtils.dateOnly(discussionMap['lastMessageDateTime'] as DateTime),
+                                    itemComparator: (discussionMap1, discussionMap2) =>
+                                        (discussionMap1['lastMessageDateTime'] as DateTime)
+                                            .compareTo(discussionMap2['lastMessageDateTime'] as DateTime),
+                                    groupSeparatorBuilder: (DateTime groupByValue) {
+                                      return buildGroupSeparatorWidget(groupByValue: groupByValue, simpleMode: true);
+                                    },
+                                    itemBuilder: (context, Map<String, Object> discussionMap) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 5),
+                                        child: DiscussionCard(discussion: (discussionMap['discussion'] as Discussion)),
+                                      );
+                                    },
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 40),
+                                  )
+                                ],
+                              ),
                             );
                           });
                     }
@@ -148,8 +152,8 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Lottie.asset(
+                              empty,
                               height: 150,
-                              'assets/animations/112136-empty-red.json',
                               width: double.infinity,
                             ),
                             const SizedBox(

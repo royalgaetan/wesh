@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_number/phone_number.dart';
@@ -27,25 +26,67 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:wesh/models/event_duration_type.dart';
 import 'package:wesh/models/eventtype.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
+import 'package:xid/xid.dart';
 import '../models/event.dart';
 import '../models/message.dart';
+import '../models/stories_handler.dart';
 import '../models/story.dart';
-import '../pages/in.pages/storyviewer_single_story.dart';
+import '../pages/in.pages/storiesViewer.dart';
 import '../providers/user.provider.dart';
-import '../services/firestorage.methods.dart';
 import '../services/firestore.methods.dart';
 import '../services/sharedpreferences.service.dart';
 import 'constants.dart';
-import '../models/user.dart' as UserModel;
-import 'package:external_path/external_path.dart';
+import '../models/user.dart' as usermodel;
+
+// GET UNIQUE ID
+getUniqueId() {
+  var xid = Xid();
+  log('generated id: $xid');
+
+  return xid;
+}
+
+// SHOW FULLPAGE LOADER
+showFullPageLoader({required BuildContext context, double? radius, Color? color}) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => Center(
+      child: CupertinoActivityIndicator(radius: radius ?? 12.sp, color: color ?? Colors.white),
+    ),
+  );
+}
 
 // VIBRATE
 Future triggerVibration({int? duration}) async {
   if (await Vibration.hasVibrator() == true) {
     Vibration.vibrate(duration: duration ?? 100);
   }
+}
+
+// COMPRESS/RESIZE IMAGE FILE
+Future resizeImageFile({required String filePath, int? imageWidth}) async {
+  log('COMPRESSING FILE [BECAUSE IT\'S TOO HEAVY]...');
+
+  ImageProperties properties = await FlutterNativeImage.getImageProperties(filePath);
+  int targetWidth = imageWidth ?? 600;
+
+  File compressedImageFile = await FlutterNativeImage.compressImage(filePath,
+      quality: 80,
+      percentage: 60,
+      targetWidth: targetWidth,
+      targetHeight: (properties.height! * targetWidth / properties.width!).round());
+  log('File resized is: ${compressedImageFile.path}');
+  return compressedImageFile;
+}
+
+int daysBetween(DateTime from, DateTime to) {
+  from = DateTime(from.year, from.month, from.day);
+  to = DateTime(to.year, to.month, to.day);
+  return (to.difference(from).inHours / 24).round();
 }
 
 // Debouncer
@@ -61,6 +102,150 @@ class Debouncer {
       _timer!.cancel();
     }
     _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
+}
+
+// Get event relative start time
+String getEventRelativeStartTime(Event event) {
+  if (event.eventDurations.isNotEmpty) {
+    // Build DateTime for first EventDuration : add The current year as the lastEventDuration's year [For Event with reccurence]
+    EventDurationType firstEventDuration = EventDurationType.fromJson(event.eventDurations[0]);
+
+    DateTime firstEventDurationDateTime = DateTime(
+      eventAvailableTypeList.where((e) => e.key == event.type).first.recurrence == true
+          ? DateTime.now().year
+          : firstEventDuration.date.year,
+      firstEventDuration.date.month,
+      firstEventDuration.date.day,
+      firstEventDuration.startTime.hour,
+      firstEventDuration.startTime.minute,
+    );
+
+    //
+    if (isOutdatedEvent(event)) {
+      return 'Déjà passé !';
+    }
+    //
+    else if (isHappeningEvent(event)) {
+      return 'a déjà commencé !';
+    }
+    //
+    else {
+      //
+      num diffInDays = daysBetween(DateTime.now(), firstEventDurationDateTime);
+      if (diffInDays == 0) {
+        int diffInHours = firstEventDurationDateTime.difference(DateTime.now()).inHours;
+        //
+
+        if (diffInHours > 0 && diffInHours <= 23) {
+          return '...dans ${diffInHours.toString()} heure${diffInHours > 1 ? 's' : ''}';
+        }
+        // Less than 1 hour
+        else {
+          int diffInMinutes = firstEventDurationDateTime.difference(DateTime.now()).inMinutes;
+          //
+          if (diffInMinutes > 0 && diffInMinutes < 60) {
+            return '...dans ${diffInMinutes.toString()} minute${diffInMinutes > 1 ? 's' : ''}';
+          }
+          return 'bientôt !';
+        }
+      }
+      return '...dans ${diffInDays.toString()} jour${diffInDays > 1 ? 's' : ''}';
+    }
+  }
+  return '';
+}
+
+// Check whether event is outdated or not
+bool isOutdatedEvent(Event event) {
+  if (event.eventDurations.isNotEmpty) {
+    EventDurationType lastEventDuration =
+        EventDurationType.fromJson(event.eventDurations[event.eventDurations.length - 1]);
+
+    // Build DateTime for lastEventDuration : add The current year as the lastEventDuration's year [For Event with reccurence]
+    DateTime lastEventDurationDateTime = DateTime(
+      eventAvailableTypeList.where((e) => e.key == event.type).first.recurrence == true
+          ? DateTime.now().year
+          : lastEventDuration.date.year,
+      lastEventDuration.date.month,
+      lastEventDuration.date.day,
+      lastEventDuration.endTime.hour,
+      lastEventDuration.endTime.minute,
+    );
+
+    //
+    if (lastEventDurationDateTime.isBefore(DateTime.now())) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return false;
+}
+
+// Check whether event is outdated or not
+bool isHappeningEvent(Event event) {
+  if (event.eventDurations.isNotEmpty) {
+    // Build DateTime for first EventDuration : add The current year as the lastEventDuration's year [For Event with reccurence]
+    EventDurationType firstEventDuration = EventDurationType.fromJson(event.eventDurations[0]);
+
+    DateTime firstEventDurationDateTime = DateTime(
+      eventAvailableTypeList.where((e) => e.key == event.type).first.recurrence == true
+          ? DateTime.now().year
+          : firstEventDuration.date.year,
+      firstEventDuration.date.month,
+      firstEventDuration.date.day,
+      firstEventDuration.startTime.hour,
+      firstEventDuration.startTime.minute,
+    );
+
+    // Build DateTime for lastEventDuration : add The current year as the lastEventDuration's year [For Event with reccurence]
+    EventDurationType lastEventDuration =
+        EventDurationType.fromJson(event.eventDurations[event.eventDurations.length - 1]);
+
+    DateTime lastEventDurationDateTime = DateTime(
+      eventAvailableTypeList.where((e) => e.key == event.type).first.recurrence == true
+          ? DateTime.now().year
+          : lastEventDuration.date.year,
+      lastEventDuration.date.month,
+      lastEventDuration.date.day,
+      lastEventDuration.startTime.hour,
+      lastEventDuration.startTime.minute,
+    );
+
+    //
+    if (firstEventDurationDateTime.isBefore(DateTime.now()) ||
+        firstEventDurationDateTime.isAtSameMomentAs(DateTime.now()) &&
+            lastEventDurationDateTime.isAfter(DateTime.now())) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return false;
+}
+
+bool isEventWithRecurrence(Event? event) {
+  if (event == null) return false;
+  return eventAvailableTypeList.where((e) => e.key == event.type).first.recurrence;
+}
+
+// Have I seen all stories
+bool hasSeenAllStories(List<Story> storiesList) {
+  List<bool> results = [];
+  // Sort messages : by the latest
+  for (Story story in storiesList) {
+    if (story.viewers.contains(FirebaseAuth.instance.currentUser!.uid)) {
+      results.add(true);
+    } else {
+      results.add(false);
+    }
+  }
+  //
+  if (results.contains(false)) {
+    return false;
+  } else {
+    return true;
   }
 }
 
@@ -82,6 +267,13 @@ String getTimeAgoLongForm(DateTime dateTime) {
 String getTimeAgoShortForm(DateTime dateTime) {
   timeago.setLocaleMessages('fr', FrMessagesShortsform());
   return timeago.format(dateTime, locale: 'fr');
+}
+
+// Get Last Story of StoriesList
+Story getLastStoryOfStoriesList(List<Story> storiesList) {
+  // Sort messages : by the latest
+  storiesList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return storiesList.first;
 }
 
 //
@@ -115,6 +307,7 @@ Message? getLastMessageOfDiscussion(List<Message> discussionMessages) {
       return messageToDisplay;
     }
   }
+  return null;
 }
 
 // Get Directories
@@ -377,7 +570,7 @@ Future deleteMessageAssociatedFiles(Message message) async {
 }
 
 // Get User by Id /current user or anyone else
-Stream<UserModel.User?> getUserById(context, String userId) {
+Stream<usermodel.User?> getUserById(context, String userId) {
   // await Future.delayed(Duration(seconds: 3));
 
   if (userId == FirebaseAuth.instance.currentUser!.uid || userId.isEmpty) {
@@ -503,7 +696,7 @@ Future<DateTime?> pickDate(
     initialDate: initialDate ?? DateTime.now(),
     firstDate: firstDate ?? DateTime.now(),
     initialEntryMode: DatePickerEntryMode.calendarOnly,
-    lastDate: lastDate ?? DateTime.now().add(const Duration(days: 10000)),
+    lastDate: lastDate ?? DateTime(3000),
   );
   return newDate;
 }
@@ -648,7 +841,7 @@ Future sendMessage({
     //
     if (messageType == 'voicenote') {
       // Voicenote filename
-      final voiceNoteFilename = '${appName}_voicenote_msg_${const Uuid().v4()}.aac';
+      final voiceNoteFilename = '${appName}_voicenote_msg_${getUniqueId()}.aac';
       filename = voiceNoteFilename;
 
       voicenoteMoved = await copyFile(
@@ -658,7 +851,7 @@ Future sendMessage({
     //
     else if (messageType == 'music') {
       // Music filename
-      final musicFilename = '${appName}_music_msg_${const Uuid().v4()}.mp3';
+      final musicFilename = '${appName}_music_msg_${getUniqueId()}.mp3';
       filename = musicFilename;
 
       musicMoved = await copyFile(
@@ -668,7 +861,7 @@ Future sendMessage({
     //
     else if (messageType == 'image') {
       // Image filename
-      final imageFilename = '${appName}_image_msg_${const Uuid().v4()}.png';
+      final imageFilename = '${appName}_image_msg_${getUniqueId()}.png';
       filename = imageFilename;
 
       imageMoved = await copyFile(
@@ -688,7 +881,7 @@ Future sendMessage({
     //
     else if (messageType == 'video') {
       // Video filename
-      final videoFilename = '${appName}_video_msg_${const Uuid().v4()}.mp4';
+      final videoFilename = '${appName}_video_msg_${getUniqueId()}.mp4';
       filename = videoFilename;
 
       videoMoved = await copyFile(
@@ -758,7 +951,7 @@ Future sendMessage({
   // CREATE MESSAGE IN FIRESTORE
   //
   // ignore: use_build_context_synchronously
-  List messageResult = await FirestoreMethods().createMessage(
+  List messageResult = await FirestoreMethods.createMessage(
     context: context,
     userSenderId: userSenderId,
     userReceiverId: userReceiverId,
@@ -1094,12 +1287,27 @@ StoryItem getStoryItemByType(Story storySelected, StoryController storyControlle
 }
 
 // Get story GridPreview by Type
-Widget getStoryGridPreviewThumbnail({required Story storySelected, double? height, double? width}) {
+Widget getStoryGridPreviewThumbnail({required Story storySelected, double? height, double? width, bool? isForever}) {
   return Stack(
     alignment: Alignment.center,
     children: [
-      const Center(
-        child: CupertinoActivityIndicator(),
+      Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(isForever != null && isForever == true ? 50 : 15), color: kGreyColor),
+        margin: const EdgeInsets.only(bottom: 2),
+        height: height ?? 45,
+        width: width ?? 45,
+        child: const Padding(
+          padding: EdgeInsets.all(10),
+          child: SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.black54,
+            ),
+          ),
+        ),
       ),
       (() {
         // Case : Story Text
@@ -1108,7 +1316,7 @@ Widget getStoryGridPreviewThumbnail({required Story storySelected, double? heigh
             height: height ?? 45,
             width: width ?? 45,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(isForever != null && isForever == true ? 50 : 15),
               color: storiesAvailableColorsList[storySelected.bgColor],
             ),
             child: Center(
@@ -1125,10 +1333,10 @@ Widget getStoryGridPreviewThumbnail({required Story storySelected, double? heigh
           );
         }
 
-        // Case : Story Video
+        // Case : Story Video/Image
         else {
           return ClipRRect(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(isForever != null && isForever == true ? 50 : 15),
             child: ProgressiveImage(
               height: height ?? 45,
               width: width ?? 45,
@@ -1156,7 +1364,7 @@ Widget getStoryGridPreview({
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
     child: StreamBuilder<Story>(
-      stream: FirestoreMethods().getStoryById(storyId),
+      stream: FirestoreMethods.getStoryById(storyId),
       builder: (context, snapshot) {
         // Handle error
         if (snapshot.hasError) {
@@ -1167,12 +1375,36 @@ Widget getStoryGridPreview({
           Story storyGet = snapshot.data!;
 
           return InkWell(
-            onTap: () {
+            onTap: () async {
               // View Story
               if (!hasStoryExpired(storyGet.endAt)) {
-                context.pushTransparentRoute(SingleStoryPageViewer(
-                  storyTodiplay: storyGet,
-                ));
+                //
+                showFullPageLoader(context: context, color: Colors.white);
+                //
+
+                usermodel.User? userPoster =
+                    await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
+
+                // Dismiss loader
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pop();
+                if (userPoster != null) {
+                  // Build Story Handler
+                  StoriesHandler storiesHandler = StoriesHandler(
+                    avatarPath: userPoster.profilePicture,
+                    posterId: userPoster.id,
+                    title: userPoster.name,
+                    origin: 'singleStory',
+                    lastStoryDateTime: storyGet.createdAt,
+                    stories: [storyGet],
+                  );
+                  // Preview Story
+                  // ignore: use_build_context_synchronously
+                  context.pushTransparentRoute(StoriesViewer(
+                    indexInStoriesHandlerList: 0,
+                    storiesHandlerList: [storiesHandler],
+                  ));
+                }
               }
             },
             child: Column(
@@ -1206,22 +1438,37 @@ Widget getStoryGridPreview({
                                       children: [
                                         Icon(
                                           FontAwesomeIcons.circleNotch,
-                                          size: 0.06.sw,
+                                          size: 13.sp,
                                         ),
                                         const SizedBox(
                                           width: 7,
                                         ),
-                                        buildUserNameToDisplay(
-                                          userId: storyGet.uid,
-                                          isMessagePreviewCard: true,
-                                          hasShimmerLoader: hasDivider,
+                                        Text(
+                                          'Story',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
                                         ),
                                       ],
                                     ),
-                                    Text(
-                                      storyGet.storyType == 'text' ? storyGet.content : storyGet.caption,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 14.sp),
+                                    const SizedBox(
+                                      height: 5,
+                                    ),
+                                    Wrap(
+                                      children: [
+                                        Text(
+                                          storyGet.storyType == 'text'
+                                              ? storyGet.content
+                                              : storyGet.caption.isNotEmpty
+                                                  ? storyGet.caption
+                                                  : storyGet.storyType == 'image'
+                                                      ? 'Image'
+                                                      : storyGet.storyType == 'video'
+                                                          ? 'Video'
+                                                          : '',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(fontSize: 14.sp),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -1256,7 +1503,7 @@ Widget getStoryGridPreview({
                 baseColor: Colors.grey.shade200,
                 highlightColor: Colors.grey.shade400,
                 child: const CircleAvatar(
-                  radius: 23,
+                  radius: 22,
                 ),
               ),
               const SizedBox(
@@ -1292,7 +1539,7 @@ Widget getStoryGridPreview({
 // Get Event GridPreview by Type
 Widget getEventGridPreview({required String eventId, bool? hasDivider}) {
   return StreamBuilder<Event>(
-    stream: FirestoreMethods().getEventById(eventId),
+    stream: FirestoreMethods.getEventById(eventId),
     builder: (context, snapshot) {
       // Handle error
       if (snapshot.hasError) {
@@ -1524,10 +1771,11 @@ Future<bool> checkIfEmailInUse(context, String emailAddress) async {
       // Return false because email adress is not in use
       return false;
     }
-  } catch (error) {
+  } catch (e) {
     // Handle error
     // ...
-    showSnackbar(context, 'Une erreur s\'est produite : $error', null);
+    log('Error:$e');
+    showSnackbar(context, 'Une erreur s\'est produite', null);
     return false;
   }
 }
@@ -1555,10 +1803,11 @@ Future<bool> checkIfEmailInUseInFirestore(context, String emailAddress) async {
     } else {
       return false;
     }
-  } catch (error) {
+  } catch (e) {
     // Handle error
     // ...
-    showSnackbar(context, 'Une erreur s\'est produite : $error', null);
+    log('Error:$e');
+    showSnackbar(context, 'Une erreur s\'est produite', null);
     return true;
   }
 }
@@ -1586,10 +1835,11 @@ Future<bool> checkIfPhoneNumberInUse(context, String phoneNumber) async {
     } else {
       return false;
     }
-  } catch (error) {
+  } catch (e) {
     // Handle error
     // ...
-    showSnackbar(context, 'Une erreur s\'est produite : $error', null);
+    log('Error:$e');
+    showSnackbar(context, 'Une erreur s\'est produite', null);
     return true;
   }
 }
@@ -1617,10 +1867,11 @@ Future<bool> checkIfUsernameInUse(context, String username) async {
     } else {
       return false;
     }
-  } catch (error) {
+  } catch (e) {
     // Handle error
     // ...
-    showSnackbar(context, 'Une erreur s\'est produite : $error', null);
+    log('Error:$e');
+    showSnackbar(context, 'Une erreur s\'est produite', null);
     return true;
   }
 }

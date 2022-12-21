@@ -1,71 +1,175 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:wesh/models/story.dart';
 import 'package:wesh/widgets/storycard.dart';
-import '../models/user.dart' as UserModel;
+import '../models/stories_handler.dart';
+import '../models/user.dart' as usermodel;
+import '../services/firestore.methods.dart';
 import '../utils/functions.dart';
 import 'in.pages/create_story.dart';
-// import 'package:story_view/story_view.dart';
 
 class StoriesPage extends StatefulWidget {
-  StoriesPage({Key? key}) : super(key: key);
+  const StoriesPage({Key? key}) : super(key: key);
 
   @override
   State<StoriesPage> createState() => _StoriesPageState();
 }
 
-class _StoriesPageState extends State<StoriesPage> with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
+class _StoriesPageState extends State<StoriesPage> {
+  //
+  List<String> currentUserFollowingsIds = [FirebaseAuth.instance.currentUser!.uid];
+  usermodel.User? currentUser;
+  List<usermodel.User> currentUserFollowingsUser = [];
+  List<Story> storiesList = [];
+  List<StoriesHandler> storiesHandlerList = [];
+
+  //
+  late Stream<usermodel.User> streamCurrentUser;
+  late Stream<List<usermodel.User>> streamCurrentUserFollowingsUser;
+  late Stream<List<Story>> streamStories;
+
+  StreamSubscription<usermodel.User>? streamCurrentUserSubscription;
+  StreamSubscription<List<usermodel.User>>? streamCurrentUserFollowingsUserSubscription;
+  StreamSubscription<List<Story>>? streamStoriesSubscription;
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
+    //
+
+    // INIT STORIES /+ Listen to incoming events
+    streamCurrentUser = FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid);
+    streamCurrentUserSubscription = streamCurrentUser.asBroadcastStream().listen((event) {
+      currentUser = event;
+      //
+      // Get current User Stories : first of all
+      FirestoreMethods.getNonExpiredStoriesByUserPosterIdInList([FirebaseAuth.instance.currentUser!.uid])
+          .asBroadcastStream()
+          .listen(((currentUserStories) {
+        initStories(storiesList: currentUserStories, currentUser: currentUser, currentUserFollowingsUser: []);
+      }));
+
+      currentUserFollowingsIds = event.followings?.map((userId) => userId.toString()).toList() ?? [];
+
+      //  Get Users data in FollowingsList
+      streamCurrentUserFollowingsUser = FirestoreMethods.getUserByIdInList(currentUserFollowingsIds);
+
+      streamCurrentUserFollowingsUserSubscription = streamCurrentUserFollowingsUser.listen((event) {
+        currentUserFollowingsUser = event;
+      });
+
+      // Add [Me] in Following --> to display also my Stories
+      currentUserFollowingsIds.insert(0, FirebaseAuth.instance.currentUser!.uid);
+      streamStories = FirestoreMethods.getNonExpiredStoriesByUserPosterIdInList(currentUserFollowingsIds);
+
+      streamStoriesSubscription = streamStories.listen((event) {
+        // Remove outdated stories
+
+        storiesList = event;
+        // .where((event) => !hasStoryExpired(event.endAt)).toList();
+
+        initStories(
+            storiesList: storiesList, currentUser: currentUser, currentUserFollowingsUser: currentUserFollowingsUser);
+      });
+    });
   }
 
-  // List<Widget> getStories() {
-  //   List<Widget> _storiesWidgets = [];
+  initStories(
+      {required List<Story> storiesList,
+      required usermodel.User? currentUser,
+      required List<usermodel.User> currentUserFollowingsUser}) {
+    List<StoriesHandler> _storiesHandlerList = [];
 
-  //   late StoryCard story;
+    // Manage first of all [My] Stories
+    List<Story> myStories = storiesList.where((story) => story.uid == FirebaseAuth.instance.currentUser!.uid).toList();
 
-  //   for (story in storiesList) {
-  //     var _StoriesWidget = StoryCard(
-  //         profilePicture: story.profilePicture,
-  //         username: story.username,
-  //         lastStoryTime: story.lastStoryTime,
-  //         type: story.type);
+    if (myStories.isNotEmpty) {
+      // Sort [My] Stories
+      myStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-  //     _storiesWidgets.add(_StoriesWidget);
-  //   }
+      // Build [My] StoriesHandler
+      _storiesHandlerList = [
+        StoriesHandler(
+          origin: 'userStories',
+          posterId: FirebaseAuth.instance.currentUser!.uid,
+          avatarPath: currentUser?.profilePicture ?? '',
+          title: currentUser?.name ?? '',
+          lastStoryDateTime: getLastStoryOfStoriesList(myStories).createdAt,
+          stories: myStories,
+        )
+      ];
+    } else {
+      // Build [ADD STORY] StoriesHandler
+      _storiesHandlerList = [
+        StoriesHandler(
+          origin: 'addStories',
+          posterId: FirebaseAuth.instance.currentUser!.uid,
+          avatarPath: currentUser?.profilePicture ?? '',
+          title: currentUser?.name ?? '',
+          lastStoryDateTime: DateTime.now(),
+          stories: [],
+        )
+      ];
+    }
 
-  //   return _storiesWidgets;
-  // }
+    //
+    List<StoriesHandler> storiesHandlerWithStoriesUnseenList = [];
+    List<StoriesHandler> storiesHandlerWithStoriesSeenList = [];
 
-  // List<Widget> getStoriesSeen() {
-  //   List<Widget> _storiesSeenWidgets = [];
+    // Build [Others] StoriesHandler
+    for (usermodel.User userGet in currentUserFollowingsUser) {
+      // Manage [UserGet] Stories
 
-  //   late StoryCard storySeen;
+      List<Story> userGetStories = storiesList.where((story) => story.uid == userGet.id).toList();
 
-  //   for (storySeen in storiesSeenList) {
-  //     var _StoriesWidget = StoryCard(
-  //         profilePicture: storySeen.profilePicture,
-  //         username: storySeen.username,
-  //         lastStoryTime: storySeen.lastStoryTime,
-  //         type: storySeen.type);
+      if (userGetStories.isNotEmpty) {
+        // Sort [UserGet] Stories
+        userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-  //     _storiesSeenWidgets.add(_StoriesWidget);
-  //   }
+        // Build [UserGet] StoriesHandler
+        StoriesHandler userStoriesHandler = StoriesHandler(
+          origin: 'userStories',
+          posterId: userGet.id,
+          avatarPath: userGet.profilePicture,
+          title: userGet.name,
+          lastStoryDateTime: getLastStoryOfStoriesList(userGetStories).createdAt,
+          stories: userGetStories,
+        );
+        // Add: as Seen or Unseen
+        if (hasSeenAllStories(userGetStories)) {
+          storiesHandlerWithStoriesSeenList.add(userStoriesHandler);
+        } else {
+          storiesHandlerWithStoriesUnseenList.add(userStoriesHandler);
+        }
+      }
+    }
 
-  //   return _storiesSeenWidgets;
-  // }
+    // Sort StoriesHandler by already seen
+
+    //
+
+    setState(() {
+      storiesHandlerList =
+          _storiesHandlerList + storiesHandlerWithStoriesUnseenList + storiesHandlerWithStoriesSeenList;
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    //
+    streamCurrentUserSubscription != null ? streamCurrentUserSubscription!.cancel() : null;
+    streamCurrentUserFollowingsUserSubscription != null ? streamCurrentUserFollowingsUserSubscription!.cancel() : null;
+    streamStoriesSubscription != null ? streamStoriesSubscription!.cancel() : null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    //Notice the super-call here.
-    super.build(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: NestedScrollView(
@@ -112,62 +216,35 @@ class _StoriesPageState extends State<StoriesPage> with AutomaticKeepAliveClient
             ),
           ),
         ],
-        body: SingleChildScrollView(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Add To My Stories Header
-            Padding(
-              padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Ajouter à ma story', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-            ),
-
-            Column(
+        body: ListView.builder(
+          itemCount: storiesHandlerList.length,
+          itemBuilder: (context, index) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //
-                StreamBuilder(
-                  stream: getUserById(context, ''),
-                  builder: ((context, snapshot) {
-                    if (snapshot.hasData) {
-                      return StoryCard(
-                        user: (snapshot.data! as UserModel.User),
-                        type: 'addstory',
-                      );
-                    } else if (snapshot.hasError) {
-                      //probably an error occured
-                      debugPrint('Erreur: ${snapshot.error}');
-                      return const Padding(
-                        padding: EdgeInsets.all(15),
-                        child: Text('Une erreur s\'est produite'),
-                      );
-                    }
-                    // your waiting Widget Ex: CircularLoadingIndicator();
-                    // TODO
-                    return Container();
-                  }),
-                ),
+                // HEADER
+                () {
+                  if (storiesHandlerList[index].posterId == FirebaseAuth.instance.currentUser!.uid) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 15, top: 10),
+                      child: Text('Ma story', style: TextStyle(color: Colors.grey.shade600, fontSize: 11.sp)),
+                    );
+                  }
+                  if (index == 1) {
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 15, top: 10),
+                      child: Text('Stories récentes', style: TextStyle(color: Colors.grey.shade600, fontSize: 11.sp)),
+                    );
+                  }
+                  return Container();
+                }(),
+
+                // STORY CARD
+                StoryCard(storiesHandler: storiesHandlerList[index], storiesHandlerList: storiesHandlerList),
               ],
-            ),
-
-            // Recent Stories : Header
-            Padding(
-              padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Stories récentes', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-            ),
-            Column(
-                // children: getStories(),
-                ),
-
-            // Stories Seen  : Header
-            Padding(
-              padding: const EdgeInsets.only(left: 15, top: 10),
-              child: Text('Stories déjà vues', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-            ),
-            Column(
-                // children: getStoriesSeen(),
-                ),
-          ],
-        )),
+            );
+          },
+        ),
       ),
     );
   }

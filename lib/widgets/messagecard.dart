@@ -1,11 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dismissible_page/dismissible_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:network_to_file_image/network_to_file_image.dart';
 import 'package:progressive_image/progressive_image.dart';
@@ -16,7 +13,6 @@ import 'package:wesh/widgets/audiowidget.dart';
 import 'package:wesh/widgets/upload_or_download_button.dart';
 import 'package:widget_size/widget_size.dart';
 import '../pages/in.pages/fileviewer.dart';
-import '../pages/settings.pages/bug_report_page.dart';
 import '../utils/functions.dart';
 import 'buildWidgets.dart';
 import 'eventview.dart';
@@ -59,7 +55,7 @@ class _MessageCardState extends State<MessageCard> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
   }
 
@@ -389,13 +385,6 @@ class _buildMessageDataSectionState extends State<buildMessageDataSection> {
             Container(
                 margin: const EdgeInsets.only(top: 5, bottom: 10),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  // image: DecorationImage(
-                  //   image: NetworkImage(data),
-                  //   fit: BoxFit.cover,
-                  // ),
-                ),
                 child: () {
                   // Image Sent
                   if (widget.uidPoster == FirebaseAuth.instance.currentUser!.uid) {
@@ -575,13 +564,6 @@ class _buildMessageDataSectionState extends State<buildMessageDataSection> {
             Container(
                 margin: const EdgeInsets.only(top: 5, bottom: 10),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  // image: DecorationImage(
-                  //   image: NetworkImage(data),
-                  //   fit: BoxFit.cover,
-                  // ),
-                ),
                 child: () {
                   // Video Sent
                   if (widget.uidPoster == FirebaseAuth.instance.currentUser!.uid) {
@@ -734,13 +716,6 @@ class _buildMessageDataSectionState extends State<buildMessageDataSection> {
             Container(
                 margin: const EdgeInsets.only(top: 5, bottom: 10),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  // image: DecorationImage(
-                  //   image: NetworkImage(data),
-                  //   fit: BoxFit.cover,
-                  // ),
-                ),
                 child: () {
                   // Music Sent
                   if (widget.uidPoster == FirebaseAuth.instance.currentUser!.uid) {

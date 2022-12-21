@@ -1,5 +1,3 @@
-final String remindersTable = 'reminders';
-
 // FIELDS
 class ReminderFields {
   static final List<String> values = [
@@ -16,17 +14,17 @@ class ReminderFields {
     'status',
   ];
 
-  static final String title = 'title';
-  static final String reminderId = 'reminderId';
-  static final String uid = 'uid';
-  static final String reminderDelay = 'reminderDelay';
-  static final String eventId = 'eventId';
-  static final String createdAt = 'createdAt';
-  static final String modifiedAt = 'modifiedAt';
-  static final String remindAt = 'remindAt';
-  static final String remindFrom = 'remindFrom';
-  static final String recurrence = 'recurrence';
-  static final String status = 'status';
+  static const String title = 'title';
+  static const String reminderId = 'reminderId';
+  static const String uid = 'uid';
+  static const String reminderDelay = 'reminderDelay';
+  static const String eventId = 'eventId';
+  static const String createdAt = 'createdAt';
+  static const String modifiedAt = 'modifiedAt';
+  static const String remindAt = 'remindAt';
+  static const String remindFrom = 'remindFrom';
+  static const String recurrence = 'recurrence';
+  static const String status = 'status';
 }
 
 class Reminder {
@@ -84,21 +82,17 @@ class Reminder {
         recurrence: json[ReminderFields.recurrence] ?? '',
         status: json[ReminderFields.status] ?? '',
         //
-        createdAt: json[ReminderFields.createdAt] != null
-            ? DateTime.parse(json[ReminderFields.createdAt])
-            : DateTime.now(),
+        createdAt:
+            json[ReminderFields.createdAt] != null ? DateTime.parse(json[ReminderFields.createdAt]) : DateTime.now(),
         //
-        modifiedAt: json[ReminderFields.modifiedAt] != null
-            ? DateTime.parse(json[ReminderFields.modifiedAt])
-            : DateTime.now(),
+        modifiedAt:
+            json[ReminderFields.modifiedAt] != null ? DateTime.parse(json[ReminderFields.modifiedAt]) : DateTime.now(),
         //
-        remindFrom: json[ReminderFields.remindFrom] != null
-            ? DateTime.parse(json[ReminderFields.remindFrom])
-            : DateTime.now(),
+        remindFrom:
+            json[ReminderFields.remindFrom] != null ? DateTime.parse(json[ReminderFields.remindFrom]) : DateTime.now(),
         //
-        remindAt: json[ReminderFields.remindAt] != null
-            ? DateTime.parse(json[ReminderFields.remindAt])
-            : DateTime.now(),
+        remindAt:
+            json[ReminderFields.remindAt] != null ? DateTime.parse(json[ReminderFields.remindAt]) : DateTime.now(),
         //
       );
 }

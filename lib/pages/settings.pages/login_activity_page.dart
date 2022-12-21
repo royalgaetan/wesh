@@ -17,7 +17,7 @@ class _LoginActivityPageState extends State<LoginActivityPage> {
   User? user;
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     setState(() {
       user = FirebaseAuth.instance.currentUser;

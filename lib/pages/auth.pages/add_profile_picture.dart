@@ -1,18 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/imagepickermodal.dart';
 import 'package:wesh/widgets/modal.dart';
-
 import '../../services/firestorage.methods.dart';
+import '../../utils/functions.dart';
 import 'add_friends.dart';
 
 class AddProfilePicture extends StatefulWidget {
-  AddProfilePicture({Key? key}) : super(key: key);
+  const AddProfilePicture({Key? key}) : super(key: key);
 
   @override
   State<AddProfilePicture> createState() => _AddNameAndBirthdayPageState();
@@ -23,19 +22,36 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
   String profilePicturePath = '';
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
-  updateProfilePicture(String profilePicturePath) async {
-    await FireStorageMethods().uploadimageToProfilePic(context, profilePicturePath);
-
-    // ignore: use_build_context_synchronously
-    Navigator.push(
-        context,
-        SwipeablePageRoute(
-          builder: (context) => AddFriends(),
-        ));
+  updateProfilePicture(context, String profilePicturePath) async {
+    //
+    showFullPageLoader(context: context);
+    //
+    if (profilePicturePath.isEmpty) {
+      // Redirect to ADD_FRIEND_PAGE
+      Navigator.pop(context);
+      Navigator.push(
+          context,
+          SwipeablePageRoute(
+            builder: (context) => const AddFriends(),
+          ));
+    } else {
+      String result = await FireStorageMethods.uploadimageToProfilePic(context, profilePicturePath);
+      Navigator.pop(context);
+      if (result.isNotEmpty) {
+        // CONTINUE
+        // Redirect to ADD_FRIEND_PAGE
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context,
+            SwipeablePageRoute(
+              builder: (context) => const AddFriends(),
+            ));
+      }
+    }
   }
 
   @override
@@ -59,17 +75,14 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
             InkWell(
               onTap: () async {
                 // Pick image
-                // TODO: check image format, size,...
-                //
-                //
 
                 dynamic file = await showModalBottomSheet(
                   enableDrag: true,
                   isScrollControlled: true,
                   context: context,
                   backgroundColor: Colors.transparent,
-                  builder: ((context) => Modal(
-                        child: const ImagePickerModal(),
+                  builder: ((context) => const Modal(
+                        child: ImagePickerModal(),
                       )),
                 );
 
@@ -89,23 +102,37 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                   (() {
                     if (profilePicturePath.contains('/data/user/')) {
                       return CircleAvatar(
-                        radius: 70,
+                        radius: 0.25.sw,
                         backgroundColor: kGreyColor,
                         backgroundImage: FileImage(File(profilePicturePath)),
                       );
                     }
-                    return const CircleAvatar(
-                      radius: 70,
+                    return CircleAvatar(
+                      radius: 0.25.sw,
                       backgroundColor: kGreyColor,
-                      backgroundImage: AssetImage('assets/images/default_profile_picture.jpg'),
+                      backgroundImage: const AssetImage(defaultProfilePicture),
                     );
                   }()),
                   Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: const CircleAvatar(
-                      radius: 20,
-                      backgroundColor: kSecondColor,
-                      child: Icon(Icons.edit, color: Colors.white),
+                    offset: const Offset(-5, -5),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: 0.06.sw,
+                      child: Padding(
+                        padding: const EdgeInsets.all(3),
+                        child: CircleAvatar(
+                          backgroundColor: kSecondColor,
+                          radius: 0.06.sw,
+                          child: Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 17.sp,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   )
                 ],
@@ -126,8 +153,8 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                     onTap: () {
                       // Add Picture Profile
 
-                      // AND Redirect to Add_Friends_And_Contacts_Page
-                      updateProfilePicture(profilePicturePath);
+                      // AND Redirect to Add_Friends_Page
+                      updateProfilePicture(context, profilePicturePath);
                     },
                   ),
                 ),
@@ -140,12 +167,12 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                     InkWell(
                       onTap: () {
                         // Redirect to Add_Friends_And_Contacts_Page
-                        updateProfilePicture('');
+                        updateProfilePicture(context, '');
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          'Ignorer',
+                          'Plus tard',
                           style: TextStyle(fontSize: 14.sp, color: Colors.black54, fontWeight: FontWeight.bold),
                         ),
                       ),

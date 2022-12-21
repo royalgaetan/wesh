@@ -1,10 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/pages/in.pages/create_or_update_reminder.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
@@ -24,7 +22,7 @@ class _ReminderViewState extends State<ReminderView> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Reminder>(
-      stream: FirestoreMethods().getReminderById(widget.reminderId),
+      stream: FirestoreMethods.getReminderById(widget.reminderId),
       builder: (context, snapshot) {
         // Handle error
         if (snapshot.hasError) {
@@ -53,7 +51,7 @@ class _ReminderViewState extends State<ReminderView> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 19.sp,
+                        fontSize: 17.sp,
                       ),
                     ),
                     Button(
@@ -66,7 +64,7 @@ class _ReminderViewState extends State<ReminderView> {
                       isBordered: true,
                       prefixIcon: Icons.edit,
                       prefixIconColor: Colors.black,
-                      prefixIconSize: 19,
+                      prefixIconSize: 19.sp,
                       onTap: () {
                         // Edit Event here !
                         Navigator.push(
@@ -75,7 +73,6 @@ class _ReminderViewState extends State<ReminderView> {
                             builder: (_) => (CreateOrUpdateReminderPage(reminder: reminder)),
                           ),
                         );
-                        ;
                       },
                     ),
                   ],

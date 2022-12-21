@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,10 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:uuid/uuid.dart';
 import 'package:wesh/widgets/addtextmodal.dart';
 import '../../models/event.dart';
 import '../../models/story.dart';
@@ -47,6 +45,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
   int storyFontIndex = Random().nextInt(storiesAvailableFontsList.length - 1);
   int storyBgColorIndex = Random().nextInt(storiesAvailableColorsList.length - 1);
 
+  StreamController<String> togglePlayPauseVideo = StreamController.broadcast();
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
 
@@ -58,6 +57,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
   }
 
   void _handleTabSelection() {
+    togglePlayPauseVideo.sink.add('pause');
     setState(() {
       if (_tabController.index == 0) {
         isDefaultColorActivated = false;
@@ -77,7 +77,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
   attachEvent() async {
     // Get the selected event
     // Show Event Selector
-    Event? selectedEvent = await showModalBottomSheet(
+    dynamic selectedEvent = await showModalBottomSheet(
       isDismissible: true,
       enableDrag: true,
       isScrollControlled: true,
@@ -91,12 +91,12 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
     );
 
     // Check the Event Selected
-    if (selectedEvent != null) {
+    if (selectedEvent != null && selectedEvent != 'remove') {
       setState(() {
         eventAttached = selectedEvent;
       });
       debugPrint('selected event is: ${selectedEvent.title}');
-    } else if (selectedEvent == null) {
+    } else if (selectedEvent == 'remove') {
       setState(() {
         eventAttached = null;
       });
@@ -146,7 +146,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
   }
 
   createStory() async {
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
 
     if (isConnected) {
       debugPrint("Has connection : $isConnected");
@@ -155,14 +155,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
 
       // Create a story
       bool result = false;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => Center(
-          child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-        ),
-      );
+      showFullPageLoader(context: context, color: Colors.white);
 
       // Text Story Case
       if (_tabController.index == 0) {
@@ -186,45 +179,68 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
           debugPrint('Story created : $newTextStory');
 
           //  Update Firestore Stories Table
-          result = await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
+          // ignore: use_build_context_synchronously
+          result = await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
         } else {
-          // Content Attached error handler
-          result = false;
+          // ignore: use_build_context_synchronously
+          Navigator.pop(
+            context,
+          );
+          // ignore: use_build_context_synchronously
           showSnackbar(context, 'Veuillez écrire quelque chose avant de continuer !', null);
+          return;
         }
       }
 
       // Image Story Case
       if (_tabController.index == 1) {
         debugPrint('Processing with Image story...');
+
         if (imageSelectedPath.isNotEmpty && imageSelectedPath.contains('/data/user/')) {
           // Upload StoryImage to Firestorage and getDownloadURL
-          String downloadUrl = await FireStorageMethods().uploadStoryContent(context, imageSelectedPath, 'image');
-          if (downloadUrl.isEmpty) return;
+          // ignore: use_build_context_synchronously
+          List resultFromStoryImageFile =
+              // ignore: use_build_context_synchronously
+              await FireStorageMethods.uploadStoryContent(context, imageSelectedPath, 'image');
+          bool isAllowToContinue = resultFromStoryImageFile[0];
+          String downloadUrl = resultFromStoryImageFile[1];
 
-          // Modeling a new Image Story
-          Map<String, Object?> newImageStory = Story(
-              storyId: '',
-              content: downloadUrl,
-              uid: FirebaseAuth.instance.currentUser!.uid,
-              bgColor: 0,
-              fontType: 0,
-              storyType: 'image',
-              caption: imageCaption,
-              videoThumbnail: '',
-              eventId: eventAttached == null ? '' : eventAttached!.eventId,
-              createdAt: DateTime.now(),
-              endAt: DateTime.now().add(const Duration(hours: 24)),
-              viewers: []).toJson();
+          if (isAllowToContinue && downloadUrl.isNotEmpty) {
+            // Modeling a new Image Story
+            Map<String, Object?> newImageStory = Story(
+                storyId: '',
+                content: downloadUrl,
+                uid: FirebaseAuth.instance.currentUser!.uid,
+                bgColor: 0,
+                fontType: 0,
+                storyType: 'image',
+                caption: imageCaption,
+                videoThumbnail: '',
+                eventId: eventAttached == null ? '' : eventAttached!.eventId,
+                createdAt: DateTime.now(),
+                endAt: DateTime.now().add(const Duration(hours: 24)),
+                viewers: []).toJson();
 
-          debugPrint('Story modelled : $newImageStory');
+            debugPrint('Story modelled : $newImageStory');
 
-          //  Update Firestore Stories Table
-          result = await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
+            //  Update Firestore Stories Table
+            // ignore: use_build_context_synchronously
+            result = await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
+          } else {
+            // ignore: use_build_context_synchronously
+            Navigator.pop(
+              context,
+            );
+            return;
+          }
         } else {
-          // Content Attached error handler
-          result = false;
+          // ignore: use_build_context_synchronously
+          Navigator.pop(
+            context,
+          );
+          // ignore: use_build_context_synchronously
           showSnackbar(context, 'Veuillez ajouter une image avant de continuer !', null);
+          return;
         }
       }
 
@@ -232,15 +248,42 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
       if (_tabController.index == 2) {
         debugPrint('Processing with Video story...');
         if (videoSelectedPath.isNotEmpty && videoSelectedPath.contains('/data/user/')) {
+          //
+          // STORY VIDEO FILE
+          //
+
           // Upload StoryVideo to Firestorage and getDownloadURL
-          String downloadUrl = await FireStorageMethods().uploadStoryContent(context, videoSelectedPath, 'video');
+          // ignore: use_build_context_synchronously
+          List resultFromStoryVidFile =
+              // ignore: use_build_context_synchronously
+              await FireStorageMethods.uploadStoryContent(context, videoSelectedPath, 'video');
+          bool isAllowToContinue = resultFromStoryVidFile[0];
+          String downloadUrl = resultFromStoryVidFile[1];
+
+          //
+          // STORY VIDEO THUMBNAIL
+          //
 
           // Upload StoryVideo Thumbnail to Firestorage and get Thumbnail downloadUrl
+          if (!isAllowToContinue) {
+            // ignore: use_build_context_synchronously
+            Navigator.pop(
+              context,
+            );
+            return;
+          }
           String vidhumbnailInString = await getVideoThumbnail(videoSelectedPath) ?? '';
-          String thumbnailVideoDownloadUrl =
-              await FireStorageMethods().uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
+          List resultFromStoryVidThumbnailFile =
+              // ignore: use_build_context_synchronously
+              await FireStorageMethods.uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
+          isAllowToContinue = resultFromStoryVidThumbnailFile[0];
+          String thumbnailVideoDownloadUrl = resultFromStoryVidThumbnailFile[1];
 
-          if (downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
+          //
+          // CONTINUE THERE IS NO ERROR AFTER UPLOADING FILE
+          //
+
+          if (isAllowToContinue && downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
             // Modeling a new Video Story
             Map<String, Object?> newVideoStory = Story(
                 storyId: '',
@@ -259,19 +302,28 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
             debugPrint('Story created : $newVideoStory');
 
             //  Update Firestore Stories Table
+            // ignore: use_build_context_synchronously
             result =
-                await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
+                // ignore: use_build_context_synchronously
+                await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
           } else {
-            result = false;
+            // ignore: use_build_context_synchronously
+            Navigator.pop(
+              context,
+            );
+            return;
           }
         } else {
-          // Content Attached error handler
-          result = false;
+          // ignore: use_build_context_synchronously
+          Navigator.pop(
+            context,
+          );
+          // ignore: use_build_context_synchronously
           showSnackbar(context, 'Veuillez ajouter une video avant de continuer !', null);
+          return;
         }
       }
-      // Pop Screen once story will be created
-
+      // Pop Screen once story has been created
       if (result) {
         // ignore: use_build_context_synchronously
         Navigator.pop(
@@ -320,7 +372,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
               unselectedLabelColor: Colors.white70,
               indicator: CircleTabIndicator(color: kSecondColor, radius: 3),
               // labelPadding: EdgeInsets.only(top: 20),
-              labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              labelStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
               labelColor: kSecondColor,
               tabs: const [
                 Tab(
@@ -403,68 +455,76 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                 // Options TEXT STORY
                 AnimatedPadding(
                   duration: const Duration(milliseconds: 120),
-                  padding: EdgeInsets.only(left: 20, bottom: eventAttached == null ? 15 : 35),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      // Attach an Event
-                      Tooltip(
-                        message: 'Attacher un évènement',
-                        child: IconButton(
-                          splashRadius: 0.06.sw,
-                          onPressed: () async {
-                            attachEvent();
-                          },
-                          icon: Icon(
-                            FontAwesomeIcons.splotch,
-                            color: eventAttached == null ? Colors.white : kSecondColor,
+                  padding: EdgeInsets.only(left: 10, right: 0.32.sw, bottom: eventAttached == null ? 15 : 35),
+                  child: FittedBox(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // Attach an Event
+                        Tooltip(
+                          message: 'Attacher un évènement',
+                          child: IconButton(
+                            splashRadius: 0.06.sw,
+                            onPressed: () async {
+                              attachEvent();
+                            },
+                            icon: Icon(
+                              FontAwesomeIcons.splotch,
+                              size: 21.sp,
+                              color: eventAttached == null ? Colors.white : kSecondColor,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
+                        const SizedBox(width: 7),
 
-                      // Change Font
-                      Tooltip(
-                        message: 'Changer la police',
-                        child: IconButton(
-                          splashRadius: 0.06.sw,
-                          onPressed: () {
-                            setState(() {
-                              if (storyFontIndex < storiesAvailableFontsList.length - 1) {
-                                storyFontIndex = storyFontIndex + 1;
-                              } else {
-                                storyFontIndex = 0;
-                              }
-                              debugPrint('Font selected: ${storyFontIndex}');
-                            });
-                          },
-                          icon: const Icon(FontAwesomeIcons.font, color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // Change Bg color
-                      Tooltip(
-                        message: 'Changer la couleur de fond',
-                        child: IconButton(
-                          splashRadius: 0.06.sw,
-                          onPressed: () {
-                            setState(() {
-                              if (storyBgColorIndex < storiesAvailableColorsList.length - 1) {
-                                storyBgColorIndex = storyBgColorIndex + 1;
-                              } else {
-                                storyBgColorIndex = 0;
-                              }
-                              debugPrint('Value: ${storyBgColorIndex}');
-                            });
-                          },
-                          icon: const Icon(
-                            FontAwesomeIcons.brush,
-                            color: Colors.white,
+                        // Change Font
+                        Tooltip(
+                          message: 'Changer la police',
+                          child: IconButton(
+                            splashRadius: 0.06.sw,
+                            onPressed: () {
+                              setState(() {
+                                if (storyFontIndex < storiesAvailableFontsList.length - 1) {
+                                  storyFontIndex = storyFontIndex + 1;
+                                } else {
+                                  storyFontIndex = 0;
+                                }
+                                debugPrint('Font selected: $storyFontIndex');
+                              });
+                            },
+                            icon: Icon(
+                              FontAwesomeIcons.font,
+                              size: 21.sp,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      )
-                    ],
+                        const SizedBox(width: 7),
+
+                        // Change Bg color
+                        Tooltip(
+                          message: 'Changer la couleur de fond',
+                          child: IconButton(
+                            splashRadius: 0.06.sw,
+                            onPressed: () {
+                              setState(() {
+                                if (storyBgColorIndex < storiesAvailableColorsList.length - 1) {
+                                  storyBgColorIndex = storyBgColorIndex + 1;
+                                } else {
+                                  storyBgColorIndex = 0;
+                                }
+                                debugPrint('Value: $storyBgColorIndex');
+                              });
+                            },
+                            icon: Icon(
+                              CupertinoIcons.paintbrush_fill,
+                              color: Colors.white,
+                              size: 25.sp,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -548,90 +608,94 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
 
                       // IMAGE Options ROW
                       Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            // Attach an Event
-                            Tooltip(
-                              message: 'Attacher un évènement',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  attachEvent();
-                                },
-                                icon: Icon(
-                                  FontAwesomeIcons.splotch,
-                                  color: eventAttached == null ? Colors.white : kSecondColor,
+                        padding: EdgeInsets.only(left: 10, right: 0.32.sw),
+                        child: FittedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              // Attach an Event
+                              Tooltip(
+                                message: 'Attacher un évènement',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    attachEvent();
+                                  },
+                                  icon: Icon(
+                                    FontAwesomeIcons.splotch,
+                                    size: 21.sp,
+                                    color: eventAttached == null ? Colors.white : kSecondColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
+                              const SizedBox(width: 10),
 
-                            // Pick an image from Camera
-                            Tooltip(
-                              message: 'depuis la camera',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () {
-                                  addImage(source: ImageSource.camera);
-                                },
-                                icon: const Icon(FontAwesomeIcons.camera, color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            // Pick an image from Gallery
-                            Tooltip(
-                              message: 'depuis la galerie',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  addImage(source: ImageSource.gallery);
-                                },
-                                icon: const Icon(FontAwesomeIcons.image, color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            // Add Caption to Story Image
-                            Tooltip(
-                              message: 'Ajouter une description',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  // Show AddTextModal
-                                  var textresult = await showModalBottomSheet(
-                                    enableDrag: true,
-                                    isScrollControlled: true,
-                                    context: context,
-                                    backgroundColor: Colors.transparent,
-                                    builder: ((context) => Scaffold(
-                                          backgroundColor: Colors.transparent,
-                                          body: Modal(
-                                            child: AddTextModal(
-                                                hintText: 'Votre description ici...',
-                                                modalTitle: 'Ajouter une description',
-                                                initialText: imageCaption),
-                                          ),
-                                        )),
-                                  );
-
-                                  if (textresult != null) {
-                                    setState(() {
-                                      imageCaption = textresult;
-                                    });
-                                  }
-                                },
-                                icon: Icon(
-                                  imageCaption.isNotEmpty
-                                      ? FontAwesomeIcons.solidClosedCaptioning
-                                      : FontAwesomeIcons.closedCaptioning,
-                                  color: imageCaption.isNotEmpty ? kSecondColor : Colors.white,
+                              // Pick an image from Camera
+                              Tooltip(
+                                message: 'depuis la camera',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () {
+                                    addImage(source: ImageSource.camera);
+                                  },
+                                  icon: Icon(FontAwesomeIcons.camera, size: 21.sp, color: Colors.white),
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+
+                              // Pick an image from Gallery
+                              Tooltip(
+                                message: 'depuis la galerie',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    addImage(source: ImageSource.gallery);
+                                  },
+                                  icon: Icon(FontAwesomeIcons.image, size: 21.sp, color: Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+
+                              // Add Caption to Story Image
+                              Tooltip(
+                                message: 'Ajouter une description',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    // Show AddTextModal
+                                    var textresult = await showModalBottomSheet(
+                                      enableDrag: true,
+                                      isScrollControlled: true,
+                                      context: context,
+                                      backgroundColor: Colors.transparent,
+                                      builder: ((context) => Scaffold(
+                                            backgroundColor: Colors.transparent,
+                                            body: Modal(
+                                              child: AddTextModal(
+                                                  hintText: 'Votre description ici...',
+                                                  modalTitle: 'Ajouter une description',
+                                                  initialText: imageCaption),
+                                            ),
+                                          )),
+                                    );
+
+                                    if (textresult != null) {
+                                      setState(() {
+                                        imageCaption = textresult;
+                                      });
+                                    }
+                                  },
+                                  icon: Icon(
+                                    imageCaption.isNotEmpty
+                                        ? FontAwesomeIcons.solidClosedCaptioning
+                                        : FontAwesomeIcons.closedCaptioning,
+                                    color: imageCaption.isNotEmpty ? kSecondColor : Colors.white,
+                                    size: 21.sp,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -677,7 +741,10 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                                   ? const CircularProgressIndicator(
                                       color: kSecondColor,
                                     )
-                                  : VideoPlayerWidget(data: videoSelectedPath),
+                                  : VideoPlayerWidget(
+                                      data: videoSelectedPath,
+                                      togglePlayPause: togglePlayPauseVideo,
+                                    ),
                         ),
                       ],
                     ),
@@ -719,90 +786,102 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
 
                       // VIDEO Options ROW
                       Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            // Attach an Event
-                            Tooltip(
-                              message: 'Attacher un évènement',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  attachEvent();
-                                },
-                                icon: Icon(
-                                  FontAwesomeIcons.splotch,
-                                  color: eventAttached == null ? Colors.white : kSecondColor,
+                        padding: EdgeInsets.only(left: 10, right: 0.32.sw),
+                        child: FittedBox(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              // Attach an Event
+                              Tooltip(
+                                message: 'Attacher un évènement',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    togglePlayPauseVideo.sink.add('pause');
+                                    attachEvent();
+                                  },
+                                  icon: Icon(
+                                    FontAwesomeIcons.splotch,
+                                    size: 21.sp,
+                                    color: eventAttached == null ? Colors.white : kSecondColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
+                              const SizedBox(width: 10),
 
-                            // Pick a video from Camera
-                            Tooltip(
-                              message: 'depuis la camera',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () {
-                                  addVideo(source: ImageSource.camera, context: context);
-                                },
-                                icon: const Icon(FontAwesomeIcons.video, color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            // Pick a video from Gallery
-                            Tooltip(
-                              message: 'depuis la galerie',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  addVideo(source: ImageSource.gallery, context: context);
-                                },
-                                icon: const Icon(FontAwesomeIcons.clapperboard, color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            // Add Caption to Story Video
-                            Tooltip(
-                              message: 'Ajouter une description',
-                              child: IconButton(
-                                splashRadius: 0.06.sw,
-                                onPressed: () async {
-                                  // Show AddTextModal
-                                  var textresult = await showModalBottomSheet(
-                                    enableDrag: true,
-                                    isScrollControlled: true,
-                                    context: context,
-                                    backgroundColor: Colors.transparent,
-                                    builder: ((context) => Scaffold(
-                                          backgroundColor: Colors.transparent,
-                                          body: Modal(
-                                            child: AddTextModal(
-                                                hintText: 'Votre description ici...',
-                                                modalTitle: 'Ajouter une description',
-                                                initialText: videoCaption),
-                                          ),
-                                        )),
-                                  );
-
-                                  if (textresult != null) {
-                                    setState(() {
-                                      videoCaption = textresult;
-                                    });
-                                  }
-                                },
-                                icon: Icon(
-                                  videoCaption.isNotEmpty
-                                      ? FontAwesomeIcons.solidClosedCaptioning
-                                      : FontAwesomeIcons.closedCaptioning,
-                                  color: videoCaption.isNotEmpty ? kSecondColor : Colors.white,
+                              // Pick a video from Camera
+                              Tooltip(
+                                message: 'depuis la camera',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () {
+                                    togglePlayPauseVideo.sink.add('pause');
+                                    addVideo(source: ImageSource.camera, context: context);
+                                  },
+                                  icon: Icon(
+                                    FontAwesomeIcons.video,
+                                    size: 21.sp,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+
+                              // Pick a video from Gallery
+                              Tooltip(
+                                message: 'depuis la galerie',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    togglePlayPauseVideo.sink.add('pause');
+                                    addVideo(source: ImageSource.gallery, context: context);
+                                  },
+                                  icon: Icon(FontAwesomeIcons.clapperboard, size: 21.sp, color: Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+
+                              // Add Caption to Story Video
+                              Tooltip(
+                                message: 'Ajouter une description',
+                                child: IconButton(
+                                  splashRadius: 0.06.sw,
+                                  onPressed: () async {
+                                    togglePlayPauseVideo.sink.add('pause');
+                                    // Show AddTextModal
+                                    var textresult = await showModalBottomSheet(
+                                      enableDrag: true,
+                                      isScrollControlled: true,
+                                      context: context,
+                                      backgroundColor: Colors.transparent,
+                                      builder: ((context) => Scaffold(
+                                            backgroundColor: Colors.transparent,
+                                            body: Modal(
+                                              child: AddTextModal(
+                                                  hintText: 'Votre description ici...',
+                                                  modalTitle: 'Ajouter une description',
+                                                  initialText: videoCaption),
+                                            ),
+                                          )),
+                                    );
+
+                                    if (textresult != null) {
+                                      setState(() {
+                                        videoCaption = textresult;
+                                      });
+                                    }
+                                  },
+                                  icon: Icon(
+                                    videoCaption.isNotEmpty
+                                        ? FontAwesomeIcons.solidClosedCaptioning
+                                        : FontAwesomeIcons.closedCaptioning,
+                                    size: 21.sp,
+                                    color: videoCaption.isNotEmpty ? kSecondColor : Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -829,7 +908,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
               ),
               Text(
                 eventAttached != null ? eventAttached!.title : '',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -852,6 +931,8 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
           onPressed: () async {
             // VIBRATE
             triggerVibration();
+
+            togglePlayPauseVideo.sink.add('pause');
 
             createStory();
           },

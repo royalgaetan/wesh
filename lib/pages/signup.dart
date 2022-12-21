@@ -8,11 +8,10 @@ import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/textfieldcontainer.dart';
-
 import 'in.pages/introductionpages.dart';
 
 class SignUpPage extends StatefulWidget {
-  SignUpPage({Key? key}) : super(key: key);
+  const SignUpPage({Key? key}) : super(key: key);
 
   @override
   State<SignUpPage> createState() => _LoginPageState();
@@ -20,7 +19,7 @@ class SignUpPage extends StatefulWidget {
 
 class _LoginPageState extends State<SignUpPage> {
   late int stepIndex;
-  PageController _StepController = PageController(initialPage: 0);
+  final PageController _StepController = PageController(initialPage: 0);
 
   TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -29,13 +28,13 @@ class _LoginPageState extends State<SignUpPage> {
   late TextEditingController passwordController = TextEditingController();
   late TextEditingController passwordConfirmationController = TextEditingController();
   bool showVisibilityIcon = false;
-  bool showPasswordConfirmation_VisibilityIcon = false;
+  bool showPasswordConfirmationVisibilityIcon = false;
   bool isPswVisible = true;
   bool isPswConfirmationVisible = true;
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
@@ -49,7 +48,7 @@ class _LoginPageState extends State<SignUpPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     _StepController.dispose();
@@ -123,7 +122,7 @@ class _LoginPageState extends State<SignUpPage> {
                   passwordController: passwordController,
                   passwordConfirmationController: passwordConfirmationController,
                   showVisibilityIcon: showVisibilityIcon,
-                  showPasswordConfirmation_VisibilityIcon: showPasswordConfirmation_VisibilityIcon,
+                  showPasswordConfirmationVisibilityIcon: showPasswordConfirmationVisibilityIcon,
                   isPswVisible: isPswVisible,
                   isPswConfirmationVisible: isPswConfirmationVisible)
             ],
@@ -145,7 +144,7 @@ class UsernameChecker extends StatefulWidget {
 
 class _UsernameCheckerState extends State<UsernameChecker> {
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
   }
 
@@ -344,7 +343,7 @@ class _AddEmailOrPhone_GoogleOrFacebookState extends State<AddEmailOrPhone_Googl
                     child: SvgPicture.asset(
                       facebookLogo,
                       height: 34,
-                      color: Color(0xFF1977F3),
+                      color: const Color(0xFF1977F3),
                     ),
                   ),
                 ),
@@ -400,7 +399,7 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     if (widget.methodSelected == 'phone') {
@@ -422,11 +421,11 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
+          const Text(
             'Vérification du code',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
           ),
-          SizedBox(
+          const SizedBox(
             height: 24,
           ),
           RichText(
@@ -434,17 +433,17 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
             text: TextSpan(
               text:
                   'Un code de vérification a été envoyé ${widget.methodSelected == 'phone' ? 'au numéro' : 'à l\'adresse'} ',
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black54,
               ),
               children: <TextSpan>[
                 TextSpan(
-                    text: ' ${widget.methodSelected == 'phone' ? '${widget.phone}' : '${widget.email}'} ',
+                    text: ' ${widget.methodSelected == 'phone' ? widget.phone : widget.email} ',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 40,
           ),
           PinCodeTextField(
@@ -464,7 +463,7 @@ class _CodeConfirmationState extends State<CodeConfirmation> {
                 disabledColor: Colors.white,
                 inactiveFillColor: kGreyColor,
                 selectedColor: kSecondColor),
-            animationDuration: Duration(milliseconds: 180),
+            animationDuration: const Duration(milliseconds: 180),
             enableActiveFill: true,
             // errorAnimationController: errorController,
             // controller: textEditingController,
@@ -496,7 +495,7 @@ class PasswordAndPasswordConfirmation extends StatefulWidget {
   final TextEditingController passwordConfirmationController;
 
   bool showVisibilityIcon;
-  bool showPasswordConfirmation_VisibilityIcon;
+  bool showPasswordConfirmationVisibilityIcon;
   bool isPswVisible;
   bool isPswConfirmationVisible;
 
@@ -505,7 +504,7 @@ class PasswordAndPasswordConfirmation extends StatefulWidget {
       required this.passwordController,
       required this.passwordConfirmationController,
       required this.showVisibilityIcon,
-      required this.showPasswordConfirmation_VisibilityIcon,
+      required this.showPasswordConfirmationVisibilityIcon,
       required this.isPswVisible,
       required this.isPswConfirmationVisible})
       : super(key: key);
@@ -562,15 +561,16 @@ class _PasswordAndPasswordConfirmationState extends State<PasswordAndPasswordCon
                               widget.isPswVisible = !widget.isPswVisible;
                             });
                           },
-                          icon:
-                              widget.isPswVisible ? Icon(Icons.visibility_rounded) : Icon(Icons.visibility_off_rounded))
-                      : Container(
+                          icon: widget.isPswVisible
+                              ? const Icon(Icons.visibility_rounded)
+                              : const Icon(Icons.visibility_off_rounded))
+                      : const SizedBox(
                           width: 2,
                           height: 2,
                         )),
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
 
@@ -585,13 +585,13 @@ class _PasswordAndPasswordConfirmationState extends State<PasswordAndPasswordCon
                               if (value != '')
                                 {
                                   setState(() {
-                                    widget.showPasswordConfirmation_VisibilityIcon = true;
+                                    widget.showPasswordConfirmationVisibilityIcon = true;
                                   })
                                 }
                               else
                                 {
                                   setState(() {
-                                    widget.showPasswordConfirmation_VisibilityIcon = false;
+                                    widget.showPasswordConfirmationVisibilityIcon = false;
                                   })
                                 }
                             }),
@@ -609,15 +609,15 @@ class _PasswordAndPasswordConfirmationState extends State<PasswordAndPasswordCon
                                       });
                                     },
                                     icon: widget.isPswConfirmationVisible
-                                        ? Icon(Icons.visibility_rounded)
-                                        : Icon(Icons.visibility_off_rounded))
-                                : Container(
+                                        ? const Icon(Icons.visibility_rounded)
+                                        : const Icon(Icons.visibility_off_rounded))
+                                : const SizedBox(
                                     width: 2,
                                     height: 2,
                                   )),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 40,
                     ),
                   ],
@@ -637,7 +637,7 @@ class _PasswordAndPasswordConfirmationState extends State<PasswordAndPasswordCon
                 Navigator.push(
                   context,
                   SwipeablePageRoute(
-                    builder: (context) => IntroductionScreensPage(),
+                    builder: (context) => const IntroductionScreensPage(),
                   ),
                 );
               },

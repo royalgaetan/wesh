@@ -1,12 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:wesh/utils/functions.dart';
 import '../models/event.dart';
-import '../pages/profile.dart';
 import '../utils/constants.dart';
 import 'buildWidgets.dart';
 import 'eventview.dart';
@@ -15,7 +12,7 @@ import 'modal.dart';
 class EventCard extends StatefulWidget {
   final Event event;
 
-  EventCard({required this.event});
+  const EventCard({Key? key, required this.event}) : super(key: key);
 
   @override
   State<EventCard> createState() => _EventCardState();
@@ -24,13 +21,14 @@ class EventCard extends StatefulWidget {
 class _EventCardState extends State<EventCard> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.translucent,
       onTap: () {
         // Show EventView Modal
         showModalBottomSheet(
@@ -58,16 +56,50 @@ class _EventCardState extends State<EventCard> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Hero(
                     tag: widget.event.eventId,
-                    child: widget.event.trailing.isNotEmpty
-                        ? CircleAvatar(
-                            backgroundColor: kGreyColor,
-                            radius: 22,
-                            backgroundImage: NetworkImage(widget.event.trailing))
-                        : CircleAvatar(
-                            radius: 22,
-                            backgroundColor: kGreyColor,
-                            backgroundImage: AssetImage('assets/images/eventtype.icons/${widget.event.type}.png'),
-                          ),
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        // Main Trailing
+                        widget.event.trailing.isEmpty
+                            ? Container(
+                                width: 0.14.sw,
+                                height: 0.14.sw,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: kGreyColor,
+                                  image: DecorationImage(
+                                    image: AssetImage('assets/images/eventtype.icons/${widget.event.type}.png'),
+                                    colorFilter: isOutdatedEvent(widget.event)
+                                        ? ColorFilter.mode(Colors.grey.shade200, BlendMode.saturation)
+                                        : null,
+                                  ),
+                                ),
+                              )
+                            : buildCachedNetworkImage(
+                                url: widget.event.trailing,
+                                radius: 0.075.sw,
+                                backgroundColor: kGreyColor,
+                                paddingOfProgressIndicator: 10,
+                                blendMode: isOutdatedEvent(widget.event) ? BlendMode.saturation : null,
+                              ),
+
+                        // Outdate || isHappening Indicator
+                        isOutdatedEvent(widget.event) || isHappeningEvent(widget.event)
+                            ? CircleAvatar(
+                                backgroundColor: Colors.white,
+                                radius: 0.024.sw,
+                                child: Padding(
+                                  padding: EdgeInsets.all(0.009.sw),
+                                  child: CircleAvatar(
+                                    backgroundColor:
+                                        isOutdatedEvent(widget.event) == true ? kWarningColor : kSecondColor,
+                                    radius: 0.024.sw,
+                                  ),
+                                ),
+                              )
+                            : Container()
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(
@@ -112,24 +144,28 @@ class _EventCardState extends State<EventCard> {
                       // Event Poster Name
 
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           buildAvatarAndUsername(
                             uidPoster: widget.event.uid,
+                            fontSize: 12.sp,
                             radius: 0.02.sw,
                           ),
                           Row(
                             children: [
                               Icon(
-                                widget.event.type == 'birthday' ? Icons.cake_rounded : Icons.calendar_today,
+                                isEventWithRecurrence(widget.event) ? Icons.cake_rounded : Icons.calendar_today,
                                 size: 14.sp,
                                 color: Colors.black54,
                               ),
                               const SizedBox(
                                 width: 6,
                               ),
-                              Text(DateFormat(widget.event.type == 'birthday' ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr')
-                                  .format((widget.event.eventDurations[0]['date'] as Timestamp).toDate()))
+                              Text(
+                                DateFormat(isEventWithRecurrence(widget.event) ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr')
+                                    .format((widget.event.eventDurations[0]['date'] as Timestamp).toDate()),
+                                style: TextStyle(fontSize: 12.sp),
+                              )
                             ],
                           )
                         ],

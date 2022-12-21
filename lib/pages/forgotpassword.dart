@@ -10,7 +10,7 @@ import '../services/auth.methods.dart';
 import '../services/internet_connection_checker.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
-  ForgotPasswordPage({Key? key}) : super(key: key);
+  const ForgotPasswordPage({Key? key}) : super(key: key);
 
   @override
   State<ForgotPasswordPage> createState() => _LoginPageState();
@@ -22,7 +22,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     emailController.dispose();
   }
@@ -31,7 +31,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });

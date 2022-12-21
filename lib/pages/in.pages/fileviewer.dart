@@ -5,10 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:network_to_file_image/network_to_file_image.dart';
 import 'dart:io';
 import 'package:photo_view/photo_view.dart';
-import 'package:progressive_image/progressive_image.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/widgets/videowidget.dart';
-
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
@@ -19,8 +17,13 @@ class FileViewer extends StatefulWidget {
   final String fileName;
   final String thumbnail;
 
-  FileViewer({Key? key, required this.fileType, required this.data, required this.fileName, required this.thumbnail})
-      : super(key: key);
+  const FileViewer({
+    Key? key,
+    required this.fileType,
+    required this.data,
+    required this.fileName,
+    required this.thumbnail,
+  }) : super(key: key);
 
   @override
   State<FileViewer> createState() => _FileviewerState();
@@ -56,6 +59,15 @@ class _FileviewerState extends State<FileViewer> {
               Center(
                   child: Column(
                 children: [
+                  // PROFILE PICTURE
+                  widget.fileType == 'profilePicture'
+                      ? Expanded(
+                          child: PhotoView(
+                            imageProvider: NetworkImage(widget.data),
+                          ),
+                        )
+                      : Container(),
+
                   // IMAGE
                   widget.fileType == 'image'
                       ? Expanded(

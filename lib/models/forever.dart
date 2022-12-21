@@ -1,5 +1,3 @@
-final String foreverTable = 'forevers';
-
 // FIELDS
 class ForeverFields {
   static final List<String> values = [
@@ -53,13 +51,9 @@ class Forever {
         foreverId: json[ForeverFields.foreverId] ?? '',
         uid: json[ForeverFields.uid] ?? '',
         //
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'])
-            : DateTime(0),
+        createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime(0),
         //
-        modifiedAt: json['modifiedAt'] != null
-            ? DateTime.parse(json['modifiedAt'])
-            : DateTime(0),
+        modifiedAt: json['modifiedAt'] != null ? DateTime.parse(json['modifiedAt']) : DateTime(0),
         //
         stories: json[ForeverFields.stories] ?? [],
       );

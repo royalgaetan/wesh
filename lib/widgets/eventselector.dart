@@ -5,10 +5,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/services/firestore.methods.dart';
-import 'package:wesh/utils/db.dart';
 import 'package:wesh/widgets/searcheventcard.dart';
-import '../utils/functions.dart';
-import 'eventcard.dart';
+import '../utils/constants.dart';
 
 class EventSelector extends StatefulWidget {
   const EventSelector({Key? key}) : super(key: key);
@@ -66,7 +64,7 @@ class _EventSelectorState extends State<EventSelector> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    radius: 22,
+                    radius: 0.07.sw,
                     backgroundColor: Colors.grey.shade400,
                     child: Icon(
                       FontAwesomeIcons.linkSlash,
@@ -95,7 +93,7 @@ class _EventSelectorState extends State<EventSelector> {
           // Events List
 
           StreamBuilder<List<Event>>(
-            stream: FirestoreMethods().getAllEvents(),
+            stream: FirestoreMethods.getAllEvents(),
             builder: (context, snapshot) {
               // QUERY SETTLED
               if (query.isNotEmpty) {
@@ -146,8 +144,8 @@ class _EventSelectorState extends State<EventSelector> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Lottie.asset(
+                            empty,
                             height: 150,
-                            'assets/animations/112136-empty-red.json',
                             width: double.infinity,
                           ),
                           const SizedBox(

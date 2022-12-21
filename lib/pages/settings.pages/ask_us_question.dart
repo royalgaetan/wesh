@@ -10,7 +10,7 @@ import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/textformfield.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 
 class AskUsQuestionPage extends StatefulWidget {
   const AskUsQuestionPage({super.key});
@@ -22,17 +22,17 @@ class AskUsQuestionPage extends StatefulWidget {
 class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
   TextEditingController textController = TextEditingController();
   bool isLoading = false;
-  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<usermodel.User?> currentUser = ValueNotifier<usermodel.User?>(null);
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     textController.dispose();
   }
@@ -40,13 +40,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
   sendQuestion() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Modeling a question model
     Map<String, Object?> questionToSend = Question(
@@ -58,7 +52,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
     ).toJson();
 
     // ignore: use_build_context_synchronously
-    result = await FirestoreMethods().sendQuestion(context, questionToSend);
+    result = await FirestoreMethods.sendQuestion(context, questionToSend);
     debugPrint('Question sent : $questionToSend');
 
     // ignore: use_build_context_synchronously
@@ -67,6 +61,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
     );
     // Pop the Screen once profile updated
     if (result) {
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
 
       // ignore: use_build_context_synchronously
@@ -107,7 +102,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
                   color: kSecondColor,
                 )
               : Container(),
-          StreamBuilder<UserModel.User?>(
+          StreamBuilder<usermodel.User?>(
               stream: Provider.of<UserProvider>(context).getCurrentUser(),
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data != null) {
@@ -191,7 +186,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
           setState(() {
             isLoading = true;
           });
-          var isConnected = await InternetConnection().isConnected(context);
+          var isConnected = await InternetConnection.isConnected(context);
           if (mounted) {
             setState(() {
               isLoading = false;

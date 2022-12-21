@@ -1,6 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,9 +17,7 @@ import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/remindercard.dart';
-import 'package:wesh/widgets/reminderselector.dart';
-import 'package:wesh/widgets/userposterheader.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import '../models/event_duration_type.dart';
 import '../pages/in.pages/create_or_update_reminder.dart';
 import '../pages/profile.dart';
@@ -32,7 +28,7 @@ import 'buildWidgets.dart';
 class EventView extends StatefulWidget {
   final String eventId;
 
-  EventView({required this.eventId});
+  const EventView({Key? key, required this.eventId}) : super(key: key);
 
   @override
   State<EventView> createState() => _EventViewState();
@@ -43,7 +39,7 @@ class _EventViewState extends State<EventView> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     // Check if the Event Date has a Reminder
@@ -71,7 +67,7 @@ class _EventViewState extends State<EventView> {
         children: [
           // PAGE 1 : Main Event Contents
           StreamBuilder<Event>(
-            stream: FirestoreMethods().getEventById(widget.eventId),
+            stream: FirestoreMethods.getEventById(widget.eventId),
             builder: (context, snapshot) {
               // Handle error
               if (snapshot.hasError) {
@@ -99,10 +95,11 @@ class _EventViewState extends State<EventView> {
                               backgroundColor: kGreyColor,
                               backgroundImage: AssetImage('assets/images/eventtype.icons/${event.type}.png'),
                             )
-                          : CircleAvatar(
+                          : buildCachedNetworkImage(
+                              url: event.trailing,
                               radius: 0.16.sw,
                               backgroundColor: kGreyColor,
-                              backgroundImage: NetworkImage(event.trailing),
+                              paddingOfProgressIndicator: 10,
                             ),
 
                       // Event Name
@@ -113,8 +110,29 @@ class _EventViewState extends State<EventView> {
                         style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold),
                       ),
 
-                      // Event Action Button
-                      const SizedBox(height: 20),
+                      // Outdate indicator
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 25, top: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        // decoration: BoxDecoration(
+                        //   border:
+                        //       Border.all(width: 1.3, color: isOutdatedEvent(event) ? Colors.black87 : kWarningColor),
+                        //   borderRadius: BorderRadius.circular(50),
+                        // ),
+                        child: Text(
+                          getEventRelativeStartTime(event),
+                          style: TextStyle(
+                              fontSize: 11.sp,
+                              color: isOutdatedEvent(event)
+                                  ? kWarningColor
+                                  : isHappeningEvent(event)
+                                      ? kSecondColor
+                                      : Colors.black54,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+
+                      // Event Action Button,
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -157,8 +175,8 @@ class _EventViewState extends State<EventView> {
                                   prefixIconSize: 15.sp,
                                   onTap: () async {
                                     // Get UserPoster
-                                    UserModel.User? userPoster =
-                                        await FirestoreMethods().getUser(FirebaseAuth.instance.currentUser!.uid);
+                                    usermodel.User? userPoster =
+                                        await FirestoreMethods.getUser(FirebaseAuth.instance.currentUser!.uid);
 
                                     // Edit Event here !
                                     // ignore: use_build_context_synchronously
@@ -173,7 +191,6 @@ class _EventViewState extends State<EventView> {
                                         )),
                                       ),
                                     );
-                                    ;
                                   },
                                 ),
 
@@ -181,8 +198,8 @@ class _EventViewState extends State<EventView> {
 
                           // REMINDER BUTTON
                           StreamBuilder<List<Reminder>>(
-                            stream: FirestoreMethods()
-                                .getEventRemindersById(widget.eventId, FirebaseAuth.instance.currentUser!.uid),
+                            stream: FirestoreMethods.getEventRemindersById(
+                                widget.eventId, FirebaseAuth.instance.currentUser!.uid),
                             builder: (context, snapshot) {
                               // Handle error
                               if (snapshot.hasError) {
@@ -262,22 +279,28 @@ class _EventViewState extends State<EventView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Event User Poster
-                          Padding(
-                            padding: const EdgeInsets.only(top: 15),
-                            child: GestureDetector(
-                              onTap: () {
-                                // Redirect to Profile Page
-                                Navigator.push(
-                                    context,
-                                    SwipeablePageRoute(
-                                      builder: (context) => ProfilePage(uid: event.uid, showBackButton: true),
-                                    ));
-                              },
-                              child: buildAvatarAndUsername(
-                                uidPoster: event.uid,
-                                radius: 10,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 15),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // Redirect to Profile Page
+                                    Navigator.push(
+                                        context,
+                                        SwipeablePageRoute(
+                                          builder: (context) => ProfilePage(uid: event.uid, showBackButton: true),
+                                        ));
+                                  },
+                                  child: buildAvatarAndUsername(
+                                    uidPoster: event.uid,
+                                    radius: 10,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
 
                           // Event Date + Time
@@ -291,9 +314,10 @@ class _EventViewState extends State<EventView> {
                               children: [
                                 EventInfoRow(
                                   noTextWrappring: true,
-                                  icon: event.type == 'birthday' ? Icons.cake_outlined : Icons.calendar_today,
-                                  label: DateFormat(event.type == 'birthday' ? 'dd MMM' : 'EEE, d MMM yyyy', 'fr_Fr')
-                                      .format(eventDurationGet.date),
+                                  icon: isEventWithRecurrence(event) ? Icons.cake_outlined : Icons.calendar_today,
+                                  label:
+                                      DateFormat(isEventWithRecurrence(event) ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr')
+                                          .format(eventDurationGet.date),
                                   type: 'date',
                                 ),
 
@@ -308,7 +332,8 @@ class _EventViewState extends State<EventView> {
                                 // // Event Time
                                 Expanded(
                                   child: EventInfoRow(
-                                    icon: Icons.access_time_outlined,
+                                    icon:
+                                        eventDurationGet.isAllTheDay == true ? Icons.sunny : Icons.access_time_outlined,
                                     label: eventDurationGet.isAllTheDay
                                         ? 'Toute la journée'
                                         : '${eventDurationGet.startTime.hour.toString().padLeft(2, "0")}:${eventDurationGet.startTime.minute.toString().padLeft(2, "0")} à ${eventDurationGet.endTime.hour.toString().padLeft(2, "0")}:${eventDurationGet.endTime.minute.toString().padLeft(2, "0")}',
@@ -332,8 +357,6 @@ class _EventViewState extends State<EventView> {
                           event.link.isNotEmpty
                               ? InkWell(
                                   onTap: () async {
-                                    final Uri url = Uri.parse(event.link);
-
                                     Uri urlToLaunch = Uri.parse(event.link);
 
                                     if (!event.link.startsWith("http://") && !event.link.startsWith("https://")) {
@@ -515,7 +538,7 @@ class _EventViewState extends State<EventView> {
                         prefixIconSize: 19,
                         onTap: () async {
                           // Edit Event here !
-                          Event? eventGet = await FirestoreMethods().getEventByIdAsFuture(widget.eventId);
+                          Event? eventGet = await FirestoreMethods.getEventByIdAsFuture(widget.eventId);
                           // ignore: use_build_context_synchronously
                           Navigator.push(
                             context,
@@ -532,7 +555,7 @@ class _EventViewState extends State<EventView> {
                 // REMINDERS LIST
                 StreamBuilder<List<Reminder>>(
                   stream:
-                      FirestoreMethods().getEventRemindersById(widget.eventId, FirebaseAuth.instance.currentUser!.uid),
+                      FirestoreMethods.getEventRemindersById(widget.eventId, FirebaseAuth.instance.currentUser!.uid),
                   builder: (context, snapshot) {
                     // Handle error
                     if (snapshot.hasError) {
@@ -565,7 +588,7 @@ class _EventViewState extends State<EventView> {
                             children: [
                               Lottie.asset(
                                 height: 150,
-                                'assets/animations/112136-empty-red.json',
+                                empty,
                                 width: double.infinity,
                               ),
                               const SizedBox(
@@ -654,26 +677,26 @@ class EventInfoRow extends StatelessWidget {
   final String type;
   final bool? noTextWrappring;
 
-  Widget getLabelData(_type) {
-    if (_type == 'date') {
+  Widget getLabelData(type) {
+    if (type == 'date') {
       return Text(
         label,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
-    } else if (_type == 'time') {
+    } else if (type == 'time') {
       return Text(
         label,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
-    } else if (_type == 'location') {
+    } else if (type == 'location') {
       return Text(
         label,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
-    } else if (_type == 'link') {
+    } else if (type == 'link') {
       return Text(
         label,
         overflow: TextOverflow.ellipsis,

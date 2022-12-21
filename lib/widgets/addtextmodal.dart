@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:validators/validators.dart';
-
 import '../utils/constants.dart';
 import '../utils/functions.dart';
 import 'button.dart';
@@ -39,14 +37,14 @@ class _AddTextModalState extends State<AddTextModal> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     textController = TextEditingController(text: widget.initialText);
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     textController.dispose();
   }
@@ -100,6 +98,7 @@ class _AddTextModalState extends State<AddTextModal> {
                         isUsernameUsed = isUsed;
                       });
                     }
+                    return null;
                   },
                 ),
               ),

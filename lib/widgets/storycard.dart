@@ -1,46 +1,75 @@
 import 'package:dismissible_page/dismissible_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'package:wesh/pages/in.pages/storyviewer_user_stories.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:wesh/models/stories_handler.dart';
+import 'package:wesh/pages/in.pages/nonexpired_stories_list.dart';
+import 'package:wesh/pages/in.pages/storiesViewer.dart';
 import 'package:wesh/utils/functions.dart';
-import '../../models/user.dart' as UserModel;
+import '../pages/in.pages/create_story.dart';
 import '../utils/constants.dart';
+import 'buildWidgets.dart';
 
 class StoryCard extends StatelessWidget {
-  final UserModel.User user;
-  final String? type;
+  final StoriesHandler storiesHandler;
+  final List<StoriesHandler> storiesHandlerList;
 
-  const StoryCard({Key? key, required this.user, required this.type}) : super(key: key);
+  const StoryCard({Key? key, required this.storiesHandler, required this.storiesHandlerList}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   SwipeablePageRoute(
-        //     builder: (context) => const CreateStory(),
-        //   ),
-        // );
-
-        // Story Page View
-        context.pushTransparentRoute(StoryPage(
-          user: user,
-        ));
+        if (storiesHandler.origin == 'addStories') {
+          Navigator.push(
+            context,
+            SwipeablePageRoute(
+              builder: (context) => const CreateStory(),
+            ),
+          );
+        } else {
+          // Story Page View
+          context.pushTransparentRoute(StoriesViewer(
+            storiesHandlerList: storiesHandlerList,
+            indexInStoriesHandlerList: storiesHandlerList.indexOf(storiesHandler),
+          ));
+        }
       },
       child: Padding(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.only(top: 10, bottom: 10, left: 15, right: 5),
         child: Row(
           children: [
             // Trailing Avatar
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: kGreyColor,
-              backgroundImage: NetworkImage(user.profilePicture),
-            ),
 
+            storiesHandler.origin == 'userStories'
+                ? buildCircleAvatarStoriesWrapper(
+                    storiesHandler: storiesHandler, child: buildUserProfilePicture(userId: storiesHandler.posterId))
+                : Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      buildCachedNetworkImage(
+                        url: storiesHandler.avatarPath,
+                        radius: 0.07.sw,
+                        backgroundColor: kGreyColor,
+                        paddingOfProgressIndicator: 10,
+                      ),
+
+                      // Add btn
+                      CircleAvatar(
+                        radius: 0.025.sw,
+                        backgroundColor: kSecondColor,
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
             // Username + Last Story Sent
-            SizedBox(
+            const SizedBox(
               width: 15,
             ),
             Expanded(
@@ -48,25 +77,56 @@ class StoryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${user.name}',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  Wrap(
+                    children: [
+                      Text(
+                        storiesHandler.posterId == FirebaseAuth.instance.currentUser!.uid
+                            ? 'Moi'
+                            : storiesHandler.title,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
 
                   // Last Message Row
-                  user.lastStoryUpdateDateTime != DateTime(0)
+                  storiesHandler.lastStoryDateTime != DateTime(0)
                       ? Padding(
-                          padding: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            getTimeAgoLongForm(user.lastStoryUpdateDateTime),
+                            storiesHandler.origin == 'addStories'
+                                ? 'Ajouter'
+                                : getTimeAgoLongForm(storiesHandler.lastStoryDateTime),
                             style: TextStyle(
-                                overflow: TextOverflow.ellipsis, fontSize: 16, color: Colors.black.withOpacity(0.7)),
+                                overflow: TextOverflow.ellipsis, fontSize: 12.sp, color: Colors.black.withOpacity(0.7)),
                           ),
                         )
                       : Container()
                 ],
               ),
             ),
+
+            // Edit Forever
+            storiesHandler.posterId == FirebaseAuth.instance.currentUser!.uid
+                ? IconButton(
+                    splashRadius: 0.06.sw,
+                    onPressed: () {
+                      //
+                      Navigator.push(
+                        context,
+                        SwipeablePageRoute(
+                          builder: (context) => const NonExpiredStoriesListPage(),
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      FontAwesomeIcons.circleNotch,
+                      color: kSecondColor,
+                      size: 20.sp,
+                    ),
+                  )
+                : Container(),
           ],
         ),
       ),

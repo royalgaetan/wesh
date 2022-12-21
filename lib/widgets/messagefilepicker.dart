@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:uuid/uuid.dart';
 import 'package:wesh/pages/in.pages/previewmessagefile.dart';
 import 'package:wesh/pages/in.pages/sendpayment.dart';
 import 'package:wesh/pages/in.pages/suggestions.dart';
@@ -14,7 +12,6 @@ import 'package:wesh/utils/constants.dart';
 import '../models/event.dart';
 import '../models/message.dart';
 import '../models/story.dart';
-import '../utils/functions.dart';
 import 'buildWidgets.dart';
 
 class MessageFilePicker extends StatefulWidget {
@@ -24,7 +21,7 @@ class MessageFilePicker extends StatefulWidget {
   final Event? eventAttached;
   final Story? storyAttached;
 
-  MessageFilePicker(
+  const MessageFilePicker(
       {Key? key,
       this.discussionId,
       required this.userReceiverId,

@@ -8,13 +8,13 @@ import 'package:wesh/pages/settings.pages/help_center_page.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/setting_card.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 import 'feedback_modal.dart';
 
 class HelpPage extends StatefulWidget {
-  final UserModel.User user;
+  final usermodel.User user;
 
-  HelpPage({super.key, required this.user});
+  const HelpPage({super.key, required this.user});
 
   @override
   State<HelpPage> createState() => _HelpPageState();

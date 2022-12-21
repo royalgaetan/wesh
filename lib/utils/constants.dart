@@ -5,7 +5,6 @@ import 'package:introduction_screen/introduction_screen.dart';
 import 'package:timeago/timeago.dart';
 import 'package:wesh/services/notifications_api.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
-
 import '../models/eventtype.dart';
 import '../models/feedbacktype.dart';
 
@@ -18,7 +17,10 @@ const String privacyPolicyUrl = 'https://wesh.grwebsite.com/politique-de-confide
 
 // ENV && App var
 // fileLimitSize : 15MB
-const int fileLimitSize = 15000000;
+const int fileLimitSize15MB = 15000000;
+const int fileLimitSize10MB = 10000000;
+const int fileLimitSize5MB = 5000000;
+const int fileLimitSize2MB = 2000000;
 
 // Notifications Channels
 
@@ -52,6 +54,7 @@ List<NotificationChannel> notificationsChannelList = [
 // Colors
 const kPrimaryColor = Color(0xFF68002C);
 const kSecondColor = Color(0xFFE02F66);
+const kWarningColor = Color.fromARGB(255, 255, 190, 50);
 final kSuccessColor = Colors.green.shade400;
 const kGreyColor = Color(0xFFF0F0F0);
 
@@ -60,18 +63,34 @@ const kGreyColor = Color(0xFFF0F0F0);
 const mtnMobileMoneyLabel = 'Mobile Money';
 const airtelMoneyLabel = 'Airtel Money';
 
-// Assets
-const String weshLogoBlack = 'assets/images/wesh_logo_black.svg';
-const String weshLogoColored = 'assets/images/wesh_logo_colored.svg';
-const String googleLogo = 'assets/images/google_logo.svg';
-const String phoneLogo = 'assets/images/phone_logo.svg';
-const String facebookLogo = 'assets/images/facebook_logo.svg';
-const String weshLogoPic = 'assets/images/wesh_logo.png';
-const String weshFaviconPic = 'assets/images/wesh_favicon.png';
-const String darkBackground = 'assets/images/dark_background.png';
-const String soundWaves = 'assets/images/sound_waves.png';
-const String mtnMobileMoneyLogo = 'assets/images/mtn_mobile_money_logo.png';
-const String airtelMoneyLogo = 'assets/images/airtel_money_logo.png';
+// Useful Logos
+const String weshLogoBlack = 'assets/images/useful.logos/wesh_logo_black.svg';
+const String weshLogoColored = 'assets/images/useful.logos/wesh_logo_colored.svg';
+const String weshFaviconPic = 'assets/images/useful.logos/wesh_favicon.png';
+const String weshLogoPic = 'assets/images/useful.logos/wesh_logo.png';
+const String googleLogo = 'assets/images/useful.logos/google_logo.svg';
+const String phoneLogo = 'assets/images/useful.logos/phone_logo.svg';
+const String facebookLogo = 'assets/images/useful.logos/facebook_logo.svg';
+const String mtnMobileMoneyLogo = 'assets/images/useful.logos/mtn_mobile_money_logo.png';
+const String airtelMoneyLogo = 'assets/images/useful.logos/airtel_money_logo.png';
+
+// Core Assets
+const String defaultProfilePicture = 'assets/images/core.assets/default_profile_picture.png';
+const String darkBackground = 'assets/images/core.assets/dark_background.png';
+const String gift = 'assets/images/core.assets/gift.png';
+const String music = 'assets/images/core.assets/music.png';
+const String soundWaves = 'assets/images/core.assets/sound_waves.png';
+
+// Audio Assets
+const String christmasCrowdCheer = 'assets/audios/christmas_crowd_cheer.mp3';
+
+// Animations | Lottie, JSON
+const String happyBirthday = 'assets/animations/happy_birthday.json';
+const String empty = 'assets/animations/empty.json';
+const String waves = 'assets/animations/waves.json';
+const String selfie = 'assets/animations/selfie.json';
+const String smartPhoneMoney = 'assets/animations/smartphone_money.json';
+const String star = 'assets/animations/star.json';
 
 const List<String> monthsList = [
   'Janvier',
@@ -447,10 +466,12 @@ List<EventType> eventAvailableTypeList = [
 // Event Available Colors
 const eventAvailableColorsList = [
   Color.fromARGB(255, 239, 79, 133),
-  Color.fromARGB(255, 15, 80, 134),
+  Color(0xFFFF6347),
+  Color.fromARGB(255, 248, 210, 61),
   Color.fromARGB(255, 19, 186, 64),
+  Color.fromARGB(255, 15, 80, 134),
   Color.fromARGB(255, 147, 13, 220),
-  Color.fromARGB(255, 2, 6, 9),
+  Color(0xFF4B4E53),
 ];
 
 // Stories Text BackGround Available Colors
@@ -481,7 +502,7 @@ List<PageViewModel> listPagesViewModel = [
   PageViewModel(
     title: "Bienvenue sur $appName",
     bodyWidget: const buildIntroductionPageContent(
-      animationPath: 'assets/animations/97585-star.json',
+      animationPath: star,
       title: 'Créez vos évenements',
       description:
           'Alertez vos amis sur les dates qui comptent beaucoup pour vous comme votre date d\'anniversaire 🎉🎈',
@@ -490,7 +511,7 @@ List<PageViewModel> listPagesViewModel = [
   PageViewModel(
     title: "",
     bodyWidget: const buildIntroductionPageContent(
-      animationPath: 'assets/animations/44822-selfie.json',
+      animationPath: selfie,
       title: 'Partagez les moments les plus forts dans votre Story',
       description: 'Montrez en direct à vos amis comment se déroule votre évenement 🔥',
     ),
@@ -498,7 +519,7 @@ List<PageViewModel> listPagesViewModel = [
   PageViewModel(
     title: "",
     bodyWidget: const buildIntroductionPageContent(
-      animationPath: 'assets/animations/97611-smartphone-money-green.json',
+      animationPath: smartPhoneMoney,
       title: 'Discutez rapidement avec vos amis',
       description:
           'Recevez des cadeaux, des messages ou de l\'argent 💰 de la part de vos amis concernant votre évenement ',

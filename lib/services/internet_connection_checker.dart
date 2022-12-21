@@ -1,11 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'dart:developer';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class InternetConnection {
-  Future<bool> isConnected(context) async {
-    var hasInternet = await InternetConnectionChecker().hasConnection;
+  static Future<bool> isConnected(context) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
 
-    debugPrint("Has connection : $hasInternet");
-    return true;
+    log("Has connection : ${connectivityResult.name}");
+    if (connectivityResult != ConnectivityResult.none) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

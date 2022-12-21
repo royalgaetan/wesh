@@ -1,5 +1,4 @@
 import 'package:email_validator/email_validator.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
@@ -24,14 +23,14 @@ class _AddEmailPageState extends State<AddEmailPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     toggleRedirectToAddEmailPageValue();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     emailController.dispose();
   }
@@ -43,15 +42,9 @@ class _AddEmailPageState extends State<AddEmailPage> {
   }
 
   checkEmailandUpdateProvider(context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
     if (isConnected) {

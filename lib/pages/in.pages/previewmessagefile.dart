@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,7 +17,6 @@ import '../../models/story.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/videowidget.dart';
-import '../settings.pages/bug_report_page.dart';
 
 class PreviewMessageFile extends StatefulWidget {
   final String filetype;
@@ -49,6 +48,8 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
   String messageTextValue = '';
   bool showEmojiKeyboard = false;
   //
+
+  StreamController<String> togglePlayPauseVideo = StreamController.broadcast();
 
   detachEventOrStoryOrMessage() {
     if (!mounted) return;
@@ -93,13 +94,7 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
   }
 
   sendMessageFile() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // init values
     bool? result = false;
@@ -250,7 +245,7 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
             leading: IconButton(
               splashRadius: 0.06.sw,
               onPressed: () async {
-                bool result = await onWillPopHandler(context);
+                bool result = onWillPopHandler(context);
                 if (result) {
                   // POP THE SCREEN
 
@@ -280,7 +275,12 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                   ? Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [VideoPlayerWidget(data: widget.file.path)],
+                        children: [
+                          VideoPlayerWidget(
+                            data: widget.file.path,
+                            togglePlayPause: togglePlayPauseVideo,
+                          )
+                        ],
                       ),
                     )
                   : Container(),
@@ -297,7 +297,7 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                             const CircleAvatar(
                               radius: 100,
                               backgroundColor: kGreyColor,
-                              backgroundImage: AssetImage('assets/images/music.png'),
+                              backgroundImage: AssetImage(music),
                             ),
 
                             //
@@ -501,6 +501,10 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
                                   onTap: () async {
                                     // VIBRATE
                                     triggerVibration();
+
+                                    // Stop playing video
+
+                                    togglePlayPauseVideo.sink.add('pause');
 
                                     // Send Message File Here !
                                     sendMessageFile();

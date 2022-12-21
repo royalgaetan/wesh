@@ -1,33 +1,24 @@
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/discussion.dart';
 import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
-import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
-import '../main.dart';
-import '../models/message.dart';
-import '../providers/user.provider.dart';
-import '../services/background.service.dart';
 
 class DiscussionCard extends StatefulWidget {
   final Discussion discussion;
 
   const DiscussionCard({
+    Key? key,
     required this.discussion,
-  });
+  }) : super(key: key);
 
   @override
   State<DiscussionCard> createState() => _DiscussionCardState();
@@ -40,7 +31,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     //
     internetSubscription = InternetConnectionChecker().onStatusChange.listen((status) {
@@ -48,17 +39,17 @@ class _DiscussionCardState extends State<DiscussionCard> {
       setState(() {
         isConnected = hasConnection;
       });
-      print('isConnected: $isConnected');
+      debugPrint('isConnected: $isConnected');
     });
     //
 
     //
-    FirestoreMethods().updateMessagesToStatus2(widget.discussion.messages.map((m) => m as String).toList());
+    FirestoreMethods.updateMessagesToStatus2(widget.discussion.messages.map((m) => m as String).toList());
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     //
     internetSubscription != null ? internetSubscription!.cancel() : null;
@@ -121,7 +112,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
 
                 // Last Message + Date OR IsTyping OR IsRecordingVoiceNote
                 StreamBuilder(
-                  stream: FirestoreMethods().getDiscussionById(widget.discussion.discussionId),
+                  stream: FirestoreMethods.getDiscussionById(widget.discussion.discussionId),
                   builder: (context, snapshot) {
                     // Handle error
                     if (snapshot.hasError) {
@@ -135,7 +126,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
                           .where((userId) =>
                               userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
                           .toList();
-                      print('otherParticipants: $otherParticipants');
+                      debugPrint('otherParticipants: $otherParticipants');
 
                       // IF [ANOTHER USER IS] TYPING : only display if Internet Connection is active
                       if (isConnected && streamDiscussion.isTypingList.contains(otherParticipants.first)) {
@@ -161,7 +152,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
                           children: [
                             Lottie.asset(
                               height: 20,
-                              'assets/animations/73778-wave-solo.json',
+                              waves,
                               // width: double.infinity,
                             ),
                           ],

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Discussion {
   final List participants;
   final String discussionId;

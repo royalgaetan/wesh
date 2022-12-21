@@ -15,7 +15,7 @@ class User {
   final List<dynamic>? events;
   final List<dynamic>? stories;
   final List<dynamic>? followers;
-  final List<dynamic>? following;
+  final List<dynamic>? followings;
   final List<dynamic>? reminders;
   final List<dynamic>? forevers;
   final List<dynamic>? discussions;
@@ -41,7 +41,7 @@ class User {
     this.events,
     this.stories,
     this.followers,
-    this.following,
+    this.followings,
     this.reminders,
     this.forevers,
     this.discussions,
@@ -70,7 +70,7 @@ class User {
         'events': events,
         'stories': stories,
         'followers': followers,
-        'following': following,
+        'followings': followings,
         'reminders': reminders,
         'forevers': forevers,
         'discussions': discussions,
@@ -104,7 +104,7 @@ class User {
         events: json['events'] ?? [],
         stories: json['stories'] ?? [],
         followers: json['followers'] ?? [],
-        following: json['following'] ?? [],
+        followings: json['followings'] ?? [],
         reminders: json['reminders'] ?? [],
         forevers: json['forevers'] ?? [],
         discussions: json['discussions'] ?? [],

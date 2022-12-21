@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:wesh/models/payment.dart';
-
 import '../services/firestore.methods.dart';
 import '../utils/constants.dart';
 import '../utils/functions.dart';
@@ -29,7 +28,7 @@ class _PaymentViewerModalState extends State<PaymentViewerModal> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Payment>(
-      stream: FirestoreMethods().getPaymentByPaymentId(widget.paymentId),
+      stream: FirestoreMethods.getPaymentByPaymentId(widget.paymentId),
       builder: (context, snapshot) {
         // Handle error
         if (snapshot.hasError) {

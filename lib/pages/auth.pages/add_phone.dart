@@ -28,7 +28,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     phoneController.dispose();
@@ -103,7 +103,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
                                 flagSize: 25,
                                 backgroundColor: Colors.white,
                                 textStyle: TextStyle(fontSize: 14.sp, color: Colors.blueGrey),
-                                bottomSheetHeight: 600,
+                                bottomSheetHeight: MediaQuery.of(context).size.height / 1.2,
                                 borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(20.0),
                                   topRight: Radius.circular(20.0),
@@ -126,8 +126,13 @@ class _AddPhonePageState extends State<AddPhonePage> {
                                     borderSide: const BorderSide(color: kGreyColor, width: 0),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  contentPadding: const EdgeInsets.all(0),
                                   hintText: 'Recherchez un pays',
-                                  hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
+                                  hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                                 ),
                               ),
                               favorite: ['CG'],
@@ -177,7 +182,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
                     setState(() {
                       isPageLoading = true;
                     });
-                    var isConnected = await InternetConnection().isConnected(context);
+                    var isConnected = await InternetConnection.isConnected(context);
                     setState(() {
                       isPageLoading = false;
                     });
@@ -227,7 +232,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
                               Navigator.push(
                                 context,
                                 SwipeablePageRoute(
-                                  builder: (_) => OTPverificationPage(
+                                  builder: (_) => const OTPverificationPage(
                                     authType: 'login',
                                   ),
                                 ),

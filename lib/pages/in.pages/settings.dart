@@ -12,12 +12,13 @@ import '../../services/auth.methods.dart';
 import '../../services/sharedpreferences.service.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
+import '../../widgets/buildWidgets.dart';
 import '../settings.pages/create_or_update_personal_informations.dart';
 import '../settings.pages/notifications_settings_page.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 
 class SettingsPage extends StatefulWidget {
-  final UserModel.User user;
+  final usermodel.User user;
 
   const SettingsPage({Key? key, required this.user}) : super(key: key);
 
@@ -26,11 +27,11 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  UserModel.User? updatedUser;
+  usermodel.User? updatedUser;
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     updatedUser = widget.user;
 
@@ -143,7 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
               SettingCard(
                 onTap: () async {
                   // Redirect to Edit_Personal_Informations
-                  UserModel.User? result = await Navigator.push(
+                  usermodel.User? result = await Navigator.push(
                       context,
                       SwipeablePageRoute(
                         builder: (context) => CreateOrUpdatePersonalInformations(user: updatedUser!),
@@ -157,10 +158,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 trailing: Container(),
                 leading: Hero(
                   tag: 'setting_profile_picture_tag_${FirebaseAuth.instance.currentUser!.uid}',
-                  child: CircleAvatar(
+                  child: buildCachedNetworkImage(
+                    url: updatedUser!.profilePicture,
                     radius: 0.08.sw,
                     backgroundColor: kGreyColor,
-                    backgroundImage: NetworkImage(updatedUser!.profilePicture),
+                    paddingOfProgressIndicator: 13,
                   ),
                 ),
                 settingTitle: 'Mon Compte',
@@ -171,7 +173,7 @@ class _SettingsPageState extends State<SettingsPage> {
               SettingCard(
                 onTap: () async {
                   // Redirect to NotificationsSettingsPage
-                  UserModel.User? result = await Navigator.push(
+                  usermodel.User? result = await Navigator.push(
                       context,
                       SwipeablePageRoute(
                         builder: (context) => NotificationsSettingsPage(user: updatedUser!),

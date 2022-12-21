@@ -4,13 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:path/path.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/createpassword_and_confirm.dart';
 import 'package:wesh/pages/auth.pages/otp.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
-
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -21,7 +18,7 @@ import '../../widgets/textfieldcontainer.dart';
 import '../startPage.dart';
 
 class SignUpMethodPage extends StatefulWidget {
-  SignUpMethodPage({Key? key}) : super(key: key);
+  const SignUpMethodPage({Key? key}) : super(key: key);
 
   @override
   State<SignUpMethodPage> createState() => _CheckUsernameState();
@@ -64,7 +61,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
         setState(() {
           isPageLoading = true;
         });
-        var isConnected = await InternetConnection().isConnected(context);
+        var isConnected = await InternetConnection.isConnected(context);
         setState(() {
           isPageLoading = false;
         });
@@ -81,15 +78,13 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
 
           if (isPhoneValid) {
             //  Check if the phone is used
-            bool isPhoneNumberUsed = await checkIfPhoneNumberInUse(context, '+${phoneCode}${phoneController.text}');
+            bool isPhoneNumberUsed = await checkIfPhoneNumberInUse(context, '+$phoneCode${phoneController.text}');
 
             if (isPhoneNumberUsed == false) {
               Navigator.push(
                 context,
                 SwipeablePageRoute(
-                  builder: (_) => OTPverificationPage(
-                    authType: 'signup',
-                  ),
+                  builder: (_) => const OTPverificationPage(authType: 'signup'),
                 ),
               );
             } else {
@@ -150,7 +145,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });
@@ -187,7 +182,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });
@@ -311,7 +306,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
                                       flagSize: 25,
                                       backgroundColor: Colors.white,
                                       textStyle: TextStyle(fontSize: 14.sp, color: Colors.blueGrey),
-                                      bottomSheetHeight: 600,
+                                      bottomSheetHeight: MediaQuery.of(context).size.height / 1.2,
                                       borderRadius: const BorderRadius.only(
                                         topLeft: Radius.circular(20.0),
                                         topRight: Radius.circular(20.0),
@@ -334,8 +329,13 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
                                           borderSide: const BorderSide(color: kGreyColor, width: 0),
                                           borderRadius: BorderRadius.circular(14),
                                         ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        contentPadding: const EdgeInsets.all(0),
                                         hintText: 'Recherchez un pays',
-                                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 18),
+                                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                                       ),
                                     ),
                                     favorite: ['CG'],

@@ -10,7 +10,6 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/pages/settings.pages/add_email_and_password_page.dart';
 import 'package:wesh/pages/settings.pages/change_email_or_password_page.dart';
 import 'package:wesh/pages/settings.pages/payment_activity_page.dart';
-
 import '../../providers/user.provider.dart';
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
@@ -19,10 +18,9 @@ import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/setting_card.dart';
-import '../auth.pages/add_email.dart';
 import '../auth.pages/add_phone.dart';
 import 'login_activity_page.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 
 class AccountSecuritySettingsPage extends StatefulWidget {
   const AccountSecuritySettingsPage({super.key});
@@ -36,10 +34,10 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
   String? passwordProviderEmail;
   String? googleAccountEmail;
   String? facebookAccountName;
-  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<usermodel.User?> currentUser = ValueNotifier<usermodel.User?>(null);
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     // Has currentUser Password Provider ?
@@ -62,7 +60,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
   fetchPasswordProviderInfo() {
     List<UserInfo> passwordProvider =
         FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
-    if (passwordProvider.length > 0) {
+    if (passwordProvider.isNotEmpty) {
       setState(() {
         hasPasswordProvider = true;
         passwordProviderEmail = passwordProvider[0].email;
@@ -78,7 +76,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
   fetchGoogleAccountEmail() {
     List<UserInfo> googleProvider =
         FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'google.com').toList();
-    if (googleProvider.length > 0) {
+    if (googleProvider.isNotEmpty) {
       setState(() {
         googleAccountEmail = googleProvider[0].email;
       });
@@ -89,7 +87,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
     List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
         .where((element) => element.providerId == 'facebook.com')
         .toList();
-    if (facebookProvider.length > 0) {
+    if (facebookProvider.isNotEmpty) {
       setState(() {
         facebookAccountName = facebookProvider[0].displayName;
       });
@@ -181,7 +179,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
           }
         },
         child: SingleChildScrollView(
-          child: StreamBuilder<UserModel.User?>(
+          child: StreamBuilder<usermodel.User?>(
               stream: Provider.of<UserProvider>(context).getCurrentUser(),
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data != null) {
@@ -398,7 +396,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Phone number
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'phone');
+                                    await AuthMethods().unlinkSpecificProvider(context, 'phone');
                                   }
                                 },
                               )
@@ -409,15 +407,11 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                       SettingCard(
                         onTap: () async {
                           // Redirect to
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => Center(
-                              child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-                            ),
-                          );
+                          //
+                          showFullPageLoader(context: context, color: Colors.white);
+                          //
 
-                          var isConnected = await InternetConnection().isConnected(context);
+                          var isConnected = await InternetConnection.isConnected(context);
                           // ignore: use_build_context_synchronously
                           Navigator.of(context).pop();
                           if (isConnected) {
@@ -492,7 +486,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Google account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'google.com');
+                                    await AuthMethods().unlinkSpecificProvider(context, 'google.com');
                                   }
                                 },
                               )
@@ -567,7 +561,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Facebook account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'facebook.com');
+                                    await AuthMethods().unlinkSpecificProvider(context, 'facebook.com');
                                   }
                                 },
                               )
@@ -589,9 +583,11 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                 }
 
                 // Display CircularProgressIndicator
-                return const Padding(
-                  padding: EdgeInsets.only(top: 100),
-                  child: Center(child: CupertinoActivityIndicator(color: Colors.black, radius: 15)),
+                return Padding(
+                  padding: const EdgeInsets.only(top: 100),
+                  child: Center(
+                    child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
+                  ),
                 );
               }),
         ),

@@ -4,41 +4,88 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/in.pages/create_or_update_forever.dart';
-import 'package:wesh/utils/constants.dart';
 import '../models/forever.dart';
-import '../pages/in.pages/storyviewer_forever_stories.dart';
+import '../models/stories_handler.dart';
+import '../models/story.dart';
+import '../pages/in.pages/storiesViewer.dart';
+import '../services/firestore.methods.dart';
 import '../utils/functions.dart';
 import 'buildWidgets.dart';
 
 class ForeverCard extends StatefulWidget {
+  final Forever forever;
   final List<Forever> foreversList;
-  final int initialForeverIndex;
-
-  const ForeverCard({super.key, required this.foreversList, required this.initialForeverIndex});
+  const ForeverCard({super.key, required this.forever, required this.foreversList});
 
   @override
   State<ForeverCard> createState() => _ForeverCardState();
 }
 
 class _ForeverCardState extends State<ForeverCard> {
+  Future<List<Story>> getStoriesFromStoriesIdList(List<String> storiesIdList) async {
+    List<Story> _storiesData = [];
+
+    for (String storyId in storiesIdList) {
+      Story? storyGet = await FirestoreMethods.getStoryByIdAsFuture(storyId);
+      if (storyGet != null) {
+        _storiesData.add(storyGet);
+      }
+    }
+    //
+    return _storiesData;
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        // Preview Story
+      onTap: () async {
+        //
+        showFullPageLoader(context: context, color: Colors.white);
+        //
 
-        context.pushTransparentRoute(ForeverStoriesPageViewer(
-          foreversList: widget.foreversList,
-          initialForeverIndex: widget.initialForeverIndex,
-        ));
+        //
+        List<StoriesHandler> _storiesHandlerList = [];
+        if (widget.foreversList.isNotEmpty) {
+          // Build StoriesHandler - for Forevers
+          for (Forever forever in widget.foreversList) {
+            // Build [My] StoriesHandler
+
+            List<Story> storiesGet =
+                await getStoriesFromStoriesIdList(forever.stories.map((storyId) => storyId.toString()).toList());
+
+            _storiesHandlerList.add(
+              StoriesHandler(
+                origin: 'foreverStories',
+                posterId: forever.foreverId,
+                avatarPath: forever.foreverId,
+                title: forever.title,
+                lastStoryDateTime: forever.createdAt,
+                stories: storiesGet,
+              ),
+            );
+          }
+
+          // Dismiss loader
+          // ignore: use_build_context_synchronously
+          Navigator.of(context).pop();
+
+          // Story Page View
+          StoriesHandler currentForeverStoriesHandler =
+              _storiesHandlerList.where((storiesHandler) => storiesHandler.posterId == widget.forever.foreverId).first;
+          // ignore: use_build_context_synchronously
+          context.pushTransparentRoute(StoriesViewer(
+            storiesHandlerList: _storiesHandlerList,
+            indexInStoriesHandlerList: _storiesHandlerList.indexOf(currentForeverStoriesHandler),
+          ));
+        }
       },
       child: Padding(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
         child: Row(
           children: [
             // Trailing Avatar
             buildForeverCover(
-              forever: widget.foreversList[widget.initialForeverIndex],
+              foreverId: widget.forever.foreverId,
             ),
 
             // Username + Last Story Sent
@@ -51,20 +98,22 @@ class _ForeverCardState extends State<ForeverCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.foreversList[widget.initialForeverIndex].title,
-                    style: const TextStyle(overflow: TextOverflow.ellipsis, fontSize: 17, fontWeight: FontWeight.bold),
+                    widget.forever.title,
+                    style: TextStyle(overflow: TextOverflow.ellipsis, fontSize: 14.sp, fontWeight: FontWeight.bold),
                   ),
 
                   // Last Message Row
-                  widget.foreversList[widget.initialForeverIndex].modifiedAt != DateTime(0)
+                  widget.forever.modifiedAt != DateTime(0)
                       ? Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(getTimeAgoShortForm(widget.foreversList[widget.initialForeverIndex].modifiedAt),
-                              style: const TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                fontSize: 14,
-                                color: Colors.black45,
-                              )),
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            getTimeAgoShortForm(widget.forever.modifiedAt),
+                            style: TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              fontSize: 12.sp,
+                              color: Colors.black45,
+                            ),
+                          ),
                         )
                       : Container()
                 ],
@@ -72,7 +121,7 @@ class _ForeverCardState extends State<ForeverCard> {
             ),
 
             // Edit Forever
-            widget.foreversList[widget.initialForeverIndex].uid == FirebaseAuth.instance.currentUser!.uid
+            widget.forever.uid == FirebaseAuth.instance.currentUser!.uid
                 ? IconButton(
                     splashRadius: 0.06.sw,
                     onPressed: () {
@@ -80,14 +129,14 @@ class _ForeverCardState extends State<ForeverCard> {
                       Navigator.push(
                         context,
                         SwipeablePageRoute(
-                          builder: (context) =>
-                              CreateOrUpdateForeverPage(forever: widget.foreversList[widget.initialForeverIndex]),
+                          builder: (context) => CreateOrUpdateForeverPage(forever: widget.forever),
                         ),
                       );
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.edit,
                       color: Colors.black54,
+                      size: 17.sp,
                     ),
                   )
                 : Container(),

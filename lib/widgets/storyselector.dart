@@ -4,18 +4,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:wesh/models/stories_handler.dart';
 import 'package:wesh/models/story.dart';
-import 'package:wesh/pages/in.pages/storyviewer_single_story.dart';
-import '../models/user.dart' as UserModel;
-import '../providers/user.provider.dart';
+import 'package:wesh/pages/in.pages/storiesViewer.dart';
+import 'package:wesh/services/firestore.methods.dart';
+import '../models/user.dart' as usermodel;
 import '../utils/constants.dart';
 import '../utils/functions.dart';
 import 'buildWidgets.dart';
 
 class StorySelector extends StatefulWidget {
-  const StorySelector({super.key});
+  final usermodel.User userPoster;
+  const StorySelector({super.key, required this.userPoster});
 
   @override
   State<StorySelector> createState() => _StorySelectorState();
@@ -52,9 +53,9 @@ class _StorySelectorState extends State<StorySelector> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+        padding: const EdgeInsets.only(left: 10, right: 10, top: 0),
         child: StreamBuilder(
-          stream: Provider.of<UserProvider>(context).getUserStories(FirebaseAuth.instance.currentUser!.uid),
+          stream: FirestoreMethods.getUserAllStories(FirebaseAuth.instance.currentUser!.uid),
           builder: (context, AsyncSnapshot snapshot) {
             if (snapshot.hasData && snapshot.data != null) {
               List<Story> allStories = (snapshot.data as List<Story>);
@@ -62,7 +63,7 @@ class _StorySelectorState extends State<StorySelector> {
               // No Stories found : 0
               if (allStories.isEmpty) {
                 return Container(
-                  padding: EdgeInsets.all(30),
+                  padding: const EdgeInsets.all(30),
                   height: 300,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -70,16 +71,16 @@ class _StorySelectorState extends State<StorySelector> {
                     children: [
                       Lottie.asset(
                         height: 150,
-                        'assets/animations/112136-empty-red.json',
+                        empty,
                         width: double.infinity,
                       ),
                       const SizedBox(
                         height: 10,
                       ),
-                      const Text(
+                      Text(
                         'Aucune story retrouvée !',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 14.sp,
                           color: Colors.black45,
                         ),
                       ),
@@ -93,8 +94,6 @@ class _StorySelectorState extends State<StorySelector> {
                 allStories.sort((a, b) => b.createdAt.compareTo(a.createdAt));
                 // Display All Stories
                 for (Story storySelected in allStories) {
-                  // Case : Story Text
-
                   storiesItemList.add(storySelected);
                 }
 
@@ -109,54 +108,75 @@ class _StorySelectorState extends State<StorySelector> {
                   ),
                   itemCount: storiesItemList.length,
                   itemBuilder: (context, index) {
-                    return buildStoryGridPreview(
-                        footer: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              splashRadius: 0.06.sw,
-                              onPressed: () {
-                                // Select Story
-                                storySelectedIndex.value = index;
-                                selectedStory = storiesItemList[index];
-                                debugPrint('storySelectedIndex: $index');
-                              },
-                              icon: Padding(
-                                padding: const EdgeInsets.only(right: 8, bottom: 8),
-                                child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: Colors.black,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(1.6),
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        const CircleAvatar(
-                                          backgroundColor: Colors.white,
-                                        ),
-                                        ValueListenableBuilder(
-                                          valueListenable: storySelectedIndex,
-                                          builder: (context, value, child) {
-                                            return value == index
-                                                ? Transform.scale(
-                                                    scale: 0.7,
-                                                    child: const Icon(
-                                                      Icons.done,
-                                                      color: Colors.black,
-                                                    ),
-                                                  )
-                                                : Container();
-                                          },
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                    return GestureDetector(
+                      onTap: () {
+                        // Select Story
+                        storySelectedIndex.value = index;
+                        selectedStory = storiesItemList[index];
+                      },
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          // MAIN CONTENT
+                          buildStoryGridPreview(
+                              footer: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: const [],
                               ),
+                              story: storiesItemList[index]),
+
+                          // SELECTED WRAPPER
+                          ValueListenableBuilder(
+                            valueListenable: storySelectedIndex,
+                            builder: (context, value, child) {
+                              return value == index
+                                  ? Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54.withOpacity(.4),
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      height: double.infinity,
+                                      width: double.infinity,
+                                      child: Icon(
+                                        Icons.done,
+                                        color: kSecondColor,
+                                        size: 40.sp,
+                                      ),
+                                    )
+                                  : Container();
+                            },
+                          ),
+
+                          // PREVIEW STORY BTN
+
+                          IconButton(
+                            splashRadius: 0.06.sw,
+                            onPressed: () async {
+                              // Build Story Handler
+                              StoriesHandler storiesHandler = StoriesHandler(
+                                avatarPath: widget.userPoster.profilePicture,
+                                posterId: widget.userPoster.id,
+                                title: widget.userPoster.name,
+                                origin: 'singleStory',
+                                lastStoryDateTime: storiesItemList[index].createdAt,
+                                stories: [storiesItemList[index]],
+                              );
+                              // Preview Story
+                              // ignore: use_build_context_synchronously
+                              context.pushTransparentRoute(StoriesViewer(
+                                indexInStoriesHandlerList: 0,
+                                storiesHandlerList: [storiesHandler],
+                              ));
+                            },
+                            icon: Icon(
+                              CupertinoIcons.viewfinder,
+                              color: Colors.white,
+                              size: 20.sp,
                             ),
-                          ],
-                        ),
-                        story: storiesItemList[index]);
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 );
               }
@@ -171,8 +191,8 @@ class _StorySelectorState extends State<StorySelector> {
             }
 
             // Display CircularProgressIndicator
-            return const Center(
-              child: CupertinoActivityIndicator(color: Colors.black54, radius: 16),
+            return Center(
+              child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.black54),
             );
           },
         ),
@@ -189,6 +209,9 @@ class _StorySelectorState extends State<StorySelector> {
               color: Colors.white,
             )),
         onPressed: () async {
+          // VIBRATE
+          triggerVibration();
+
           if (selectedStory != null) {
             // Pop the page and return the selected story
             Navigator.pop(context, selectedStory);

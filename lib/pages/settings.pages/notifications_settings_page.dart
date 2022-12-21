@@ -1,21 +1,18 @@
 import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import '../../models/user.dart' as UserModel;
-import '../../providers/user.provider.dart';
+import '../../models/user.dart' as usermodel;
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 
 class NotificationsSettingsPage extends StatefulWidget {
-  final UserModel.User user;
+  final usermodel.User user;
 
   const NotificationsSettingsPage({super.key, required this.user});
 
@@ -66,13 +63,9 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
   updateProfileWithNotificationsPreferences() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 13.sp, color: Colors.white),
-      ),
-    );
+    //
+    showFullPageLoader(context: context, color: Colors.white);
+    //
 
     // UPDATE USER
     if (widget.user != null) {
@@ -85,14 +78,13 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
       };
 
       // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateUserWithSpecificFields(context, widget.user.id, userFieldToUpdate);
+      result = await FirestoreMethods.updateUserWithSpecificFields(context, widget.user.id, userFieldToUpdate);
       log('Profile updated (with Notifications Preferences)');
     }
 
-    UserModel.User? user =
+    usermodel.User? user =
         // ignore: use_build_context_synchronously
-        await Provider.of<UserProvider>(context, listen: false)
-            .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+        await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
 
     // ignore: use_build_context_synchronously
     Navigator.pop(
@@ -281,7 +273,7 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
               setState(() {
                 isLoading = true;
               });
-              var isConnected = await InternetConnection().isConnected(context);
+              var isConnected = await InternetConnection.isConnected(context);
               if (mounted) {
                 setState(() {
                   isLoading = false;

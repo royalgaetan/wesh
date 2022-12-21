@@ -1,17 +1,8 @@
 import 'dart:developer';
-import 'dart:isolate';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:provider/provider.dart';
-import 'package:wesh/models/notification.dart' as NotificationModel;
-import 'package:wesh/providers/user.provider.dart';
-import 'package:wesh/services/internet_connection_checker.dart';
-import '../main.dart';
 import '../models/discussion.dart';
 import '../models/event.dart';
 import '../models/forever.dart';
@@ -19,13 +10,12 @@ import '../models/message.dart';
 import '../models/payment.dart';
 import '../models/reminder.dart';
 import '../models/story.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import '../utils/functions.dart';
-import '../utils/globals.dart' as globals;
 
 class FirestoreMethods {
   // Create a new user
-  Future createUser(context, uid, Map<String, Object?> user) async {
+  static Future createUser(context, uid, Map<String, Object?> user) async {
     log('CREATING NEW USER...');
     try {
       // Ref to doc
@@ -35,12 +25,13 @@ class FirestoreMethods {
       // Create document and write it to the database
       await docUser.set(user);
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+      log('Error: $e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
     }
   }
 
   // Update user with specific fields
-  Future<bool> updateUserWithSpecificFields(context, uid, Map<String, Object?> fieldsToUpload) async {
+  static Future<bool> updateUserWithSpecificFields(context, uid, Map<String, Object?> fieldsToUpload) async {
     log('UPDATING USER...');
     try {
       // Ref to doc
@@ -57,12 +48,90 @@ class FirestoreMethods {
     }
   }
 
+  // Follow a User
+  static Future<bool> followUser(BuildContext context, String userIdToFollow) async {
+    log('FOLLOWING A USER...');
+    try {
+      // Ref to docUserToFollow
+      final docUserToFollow = FirebaseFirestore.instance.collection('users').doc(userIdToFollow);
+      // Add [Me] as Follower
+      await docUserToFollow.update({
+        'followers': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid])
+      });
+
+      // Ref to [My] doc
+      final docMe = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+      // Add [userToFollow] as [My] Following
+      await docMe.update({
+        'followings': FieldValue.arrayUnion([userIdToFollow])
+      });
+
+      return true;
+    } catch (e) {
+      log('Error: $e');
+      showSnackbar(context, 'Impossible de suivre cette personne !', null);
+      return false;
+    }
+  }
+
+  // Unfollow a User
+  static Future<bool> unfollowUser(BuildContext context, String userIdToUnfollow) async {
+    log('UNFOLLOWING A USER...');
+    try {
+      // Ref to docUserToUnfollow
+      final docUserToUnfollow = FirebaseFirestore.instance.collection('users').doc(userIdToUnfollow);
+      // Remove [Me] as Follower
+      await docUserToUnfollow.update({
+        'followers': FieldValue.arrayRemove([FirebaseAuth.instance.currentUser!.uid])
+      });
+
+      // Ref to [My] doc
+      final docMe = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+      // Remove [userToUnfollow] as [My] Following
+      await docMe.update({
+        'followings': FieldValue.arrayRemove([userIdToUnfollow])
+      });
+
+      return true;
+    } catch (e) {
+      log('Error: $e');
+      showSnackbar(context, 'Impossible d\'arrêter de suivre cette personne !', null);
+      return false;
+    }
+  }
+
+  // Remove a User as [My] Follower
+  static Future<bool> removeUserAsFollower(BuildContext context, String userIdToRemove) async {
+    log('REMOVE A USER AS [MY] FOLLOWER...');
+    try {
+      // Ref to docMe
+      final docMe = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+      // Remove [userToRemove] as [My] Follower
+      await docMe.update({
+        'followers': FieldValue.arrayRemove([userIdToRemove])
+      });
+
+      // Ref to [userToRemove] doc
+      final docUserToRemove = FirebaseFirestore.instance.collection('users').doc(userIdToRemove);
+      // Remove [Me] as [userToRemove] Following
+      await docUserToRemove.update({
+        'followings': FieldValue.arrayRemove([FirebaseAuth.instance.currentUser!.uid])
+      });
+
+      return true;
+    } catch (e) {
+      log('Error: $e');
+      showSnackbar(context, 'Impossible de retirer cette personne !', null);
+      return false;
+    }
+  }
+
   //////////////////  EVENT
   //////////////////
   //////////////////
 
   // Create a new event
-  Future<bool> createEvent(context, uid, Map<String, Object?> event) async
+  static Future<bool> createEvent(context, uid, Map<String, Object?> event) async
   //
   {
     log('CREATING NEW EVENT...');
@@ -95,7 +164,7 @@ class FirestoreMethods {
   }
 
   // Update an existing event
-  Future<bool> updateEvent(context, eventId, Map<String, Object?> eventToUpdate) async
+  static Future<bool> updateEvent(context, eventId, Map<String, Object?> eventToUpdate) async
   //
   {
     log('UPDATING EXISTING EVENT...');
@@ -105,7 +174,6 @@ class FirestoreMethods {
       await refEvent.update(eventToUpdate);
 
       // UPDATE ALL RELATED REMINDERS: if event is not user birthday
-      // TODO
 
       // Create a new notification : updated
       await createNotification(context, FirebaseAuth.instance.currentUser!.uid, eventId, 'eventUpdated');
@@ -117,7 +185,7 @@ class FirestoreMethods {
   }
 
   // Delete event
-  Future<bool> deleteEvent(context, eventId, userPosterId) async {
+  static Future<bool> deleteEvent(context, eventId, userPosterId) async {
     log('DELETING EVENT...');
     try {
       // Delete Event : in Events Table
@@ -141,7 +209,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create a new reminder
-  Future createReminder(context, uid, Map<String, Object?> reminder) async
+  static Future createReminder(context, uid, Map<String, Object?> reminder) async
   //
   {
     log('CREATING NEW REMINDER...');
@@ -176,7 +244,7 @@ class FirestoreMethods {
   }
 
   // Update an existing event
-  Future<bool> updateReminder(context, reminderId, Map<String, Object?> reminderToUpdate) async
+  static Future<bool> updateReminder(context, reminderId, Map<String, Object?> reminderToUpdate) async
   //
   {
     log('UPDATING EXISTING REMINDER...');
@@ -198,7 +266,7 @@ class FirestoreMethods {
   }
 
   // Delete reminder
-  Future<bool> deleteReminder(context, reminderId, userPosterId) async {
+  static Future<bool> deleteReminder(context, reminderId, userPosterId) async {
     log('DELETING REMINDER...');
     try {
       // Delete Reminder : in Reminders Table
@@ -222,7 +290,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create a new story
-  Future<bool> createStory(context, uid, Map<String, Object?> story) async {
+  static Future<bool> createStory(context, uid, Map<String, Object?> story) async {
     log('CREATING NEW STORY...');
     try {
       // Create story and write it to the database : Stories Table
@@ -259,7 +327,7 @@ class FirestoreMethods {
   }
 
   // Update Story Viewers List
-  Future updateStoryViewersList(context, uid, storyId) async {
+  static Future updateStoryViewersList(context, uid, storyId) async {
     log('UPDATING STORY VIEWERS LIST...');
     try {
       log('Updating "Story viewers array"...');
@@ -278,21 +346,20 @@ class FirestoreMethods {
   }
 
   // Delete story
-  Future<bool> deleteStory(context, storyId, userPosterId) async {
+  static Future<bool> deleteStory(BuildContext context, Story story, String userPosterId) async {
     log('DELETING STORY...');
     try {
       // Delete story : in Stories Table
-      final refStory = FirebaseFirestore.instance.collection('stories').doc(storyId);
+      final refStory = FirebaseFirestore.instance.collection('stories').doc(story.storyId);
       await refStory.delete();
 
       // Delete story : in UserPoster Stories array
       var refUser = FirebaseFirestore.instance.collection('users').doc(userPosterId);
       await refUser.update({
-        'stories': FieldValue.arrayRemove([storyId])
+        'stories': FieldValue.arrayRemove([story.storyId])
       });
 
       // Delete story : in all containing forevers
-
       final ref = FirebaseFirestore.instance.collection('forevers');
       final snapshot = await ref.get();
       if (snapshot.docs.isNotEmpty) {
@@ -307,10 +374,10 @@ class FirestoreMethods {
               //
               foreverStories = value.data()!["stories"];
 
-              // Check if the storyId already exists, then Add
-              if (foreverStories.contains(storyId)) {
+              // Check if the storyId already exists, then Delete
+              if (foreverStories.contains(story.storyId)) {
                 await refForever.update({
-                  'stories': FieldValue.arrayRemove([storyId])
+                  'stories': FieldValue.arrayRemove([story.storyId])
                 });
                 log('Story removed to the Forever !');
               }
@@ -319,6 +386,19 @@ class FirestoreMethods {
             }
           });
         }).toList();
+      }
+
+      // Delete Story's attached file /+ Thumbnail in Firestorage
+      if (story.storyType != 'text') {
+        var refFile = FirebaseStorage.instance.refFromURL(story.content);
+
+        await refFile.delete();
+        // Delete thumbnail
+        if (story.storyType == 'video') {
+          var refThumbnail = FirebaseStorage.instance.refFromURL(story.videoThumbnail);
+
+          await refThumbnail.delete();
+        }
       }
 
       return true;
@@ -332,8 +412,33 @@ class FirestoreMethods {
   //////////////////
   //////////////////
 
+  // Get Forever Cover /to build Cover+Title
+  static Future<Widget?> getForeverCoverByFirstStoryId(storyId) async {
+    final ref = FirebaseFirestore.instance.collection('stories').where('storyId', isEqualTo: storyId);
+    final snapshot = await ref.get();
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.map((doc) {
+        Story story = Story.fromJson(doc.data());
+        return getStoryGridPreviewThumbnail(isForever: true, storySelected: story);
+      }).first;
+    }
+    return null;
+  }
+
+  // Get user by id : As Future
+  static Future<Forever?> getForeverByIdAsFuture(foreverId) async {
+    log('Fetching forever with foreverId...');
+
+    var ref = FirebaseFirestore.instance.collection('forevers').doc(foreverId);
+    var snapshot = await ref.get();
+    if (snapshot.exists) {
+      return Forever.fromJson(snapshot.data()!);
+    }
+    return null;
+  }
+
   // Create forever
-  Future createForever(context, uid, Map<String, Object?> forever) async {
+  static Future createForever(context, uid, Map<String, Object?> forever) async {
     log('CREATING NEW FOREVER...');
     try {
       // Create forever and write it to the database : Forevers Table
@@ -366,7 +471,7 @@ class FirestoreMethods {
   }
 
   // Update forever
-  Future<bool> updateForever(context, foreverId, Map<String, Object?> foreverToUpdate) async
+  static Future<bool> updateForever(context, foreverId, Map<String, Object?> foreverToUpdate) async
   //
   {
     log('UPDATING EXISTING FOREVER...');
@@ -389,7 +494,7 @@ class FirestoreMethods {
   }
 
   // Add/Delete story inside Forever
-  Future AddOrDeleteStoryInsideForever(context, storyId, foreverId) async {
+  static Future AddOrDeleteStoryInsideForever(context, storyId, foreverId) async {
     log('UPDATING FOREVER.STORIES LIST...');
     try {
       log('Updating "Forever Stories array"...');
@@ -432,7 +537,7 @@ class FirestoreMethods {
   }
 
   // Delete forever
-  Future<bool> deleteForever(context, foreverId, userPosterId) async {
+  static Future<bool> deleteForever(context, foreverId, userPosterId) async {
     log('DELETING FOREVER...');
     try {
       // Delete forever : in Forevers Table
@@ -456,7 +561,7 @@ class FirestoreMethods {
   //////////////////
 
   // Get any Discussion by Id
-  Stream<Discussion>? getDiscussionById(String discussionId) {
+  static Stream<Discussion>? getDiscussionById(String discussionId) {
     if (discussionId == '') return null;
     return FirebaseFirestore.instance
         .collection('discussions')
@@ -470,7 +575,7 @@ class FirestoreMethods {
   //////////////////
 
   // Get [Future] any Message by Id
-  Future<Message?> getMessageByIdAsFuture(messageId) async {
+  static Future<Message?> getMessageByIdAsFuture(messageId) async {
     final ref = FirebaseFirestore.instance.collection('messages').doc(messageId);
     final snapshot = await ref.get();
     if (snapshot.exists) {
@@ -480,12 +585,25 @@ class FirestoreMethods {
   }
 
   // Get list of Existing Discussions
-  Future<List<Discussion>> getListOfExistingDiscussions(
+  static Future<List<Discussion>> getListOfExistingDiscussions(
       {required String userSenderId, required String userReceiverId}) async {
     List<Discussion> listOfExistingDiscussions = [];
-    final refDiscussions = FirebaseFirestore.instance.collection('discussions').where('participants', whereIn: [
-      [userSenderId, userReceiverId, '${userSenderId}_$userReceiverId', '${userReceiverId}_$userSenderId']
-    ]);
+
+    List<String> participantMatch1 = [
+      userSenderId,
+      userReceiverId,
+      '${userSenderId}_$userReceiverId',
+      '${userReceiverId}_$userSenderId'
+    ];
+    List<String> participantMatch2 = [
+      userReceiverId,
+      userSenderId,
+      '${userReceiverId}_$userSenderId',
+      '${userSenderId}_$userReceiverId'
+    ];
+    final refDiscussions = FirebaseFirestore.instance
+        .collection('discussions')
+        .where('participants', whereIn: [participantMatch1, participantMatch2]);
     final snapshot = await refDiscussions.get();
     if (snapshot.size > 0) {
       for (var element in snapshot.docs) {
@@ -499,7 +617,7 @@ class FirestoreMethods {
   }
 
   // Get Messages by discussionId
-  Stream<List<Message>?> getMessagesByDiscussionId(String discussionId) {
+  static Stream<List<Message>?> getMessagesByDiscussionId(String discussionId) {
     return FirebaseFirestore.instance
         .collection('messages')
         .where('discussionId', isEqualTo: discussionId)
@@ -517,7 +635,7 @@ class FirestoreMethods {
   }
 
   // Get Messages by discussionId
-  Stream<List<Map<String, Object>>> getMessagesFromListOfDiscussion(List<Discussion> discussionList) {
+  static Stream<List<Map<String, Object>>> getMessagesFromListOfDiscussion(List<Discussion> discussionList) {
     return FirebaseFirestore.instance
         .collection('messages')
         .where('discussionId', whereIn: discussionList.map((d) => d.discussionId).toList())
@@ -538,7 +656,8 @@ class FirestoreMethods {
   }
 
   // Get Messages by discussionId
-  Future<List<Map<String, Object>>> getMessagesFromListOfDiscussionAsFuture(List<Discussion> discussionList) async {
+  static Future<List<Map<String, Object>>> getMessagesFromListOfDiscussionAsFuture(
+      List<Discussion> discussionList) async {
     final ref = FirebaseFirestore.instance
         .collection('messages')
         .where('discussionId', whereIn: discussionList.map((d) => d.discussionId).toList());
@@ -557,7 +676,7 @@ class FirestoreMethods {
   }
 
   // Create a new message
-  Future<List> createMessage({
+  static Future<List> createMessage({
     required context,
     required userSenderId,
     required userReceiverId,
@@ -687,7 +806,7 @@ class FirestoreMethods {
     }
   }
 
-  Future<bool> createPaymentMessage({
+  static Future<bool> createPaymentMessage({
     required context,
     required String messageId,
     required String userSenderId,
@@ -739,7 +858,7 @@ class FirestoreMethods {
     }
   }
 
-  Future updateUserSenderAndUserReceiverDiscussionsArray(
+  static Future updateUserSenderAndUserReceiverDiscussionsArray(
       {context, userSenderId, userReceiverId, discussionIdtoAdd}) async
   //
   {
@@ -764,7 +883,7 @@ class FirestoreMethods {
     }
   }
 
-  Future deleteMessages(
+  static Future deleteMessages(
       context, Map<String, Message> messagesSelectedList, bool souldAlsoDeleteAssociatedMessageFiles) async
   //
   {
@@ -805,11 +924,6 @@ class FirestoreMethods {
         }
       });
 
-      //
-      // TODO:
-      //
-      // Set back LastValidMessage && LastInvalidMessage
-
       return;
     } catch (e) {
       showSnackbar(context, 'Une erreur s\'est produite de la suppression', null);
@@ -818,15 +932,15 @@ class FirestoreMethods {
   }
 
   //
-  void updateMessagesToStatus2(List<String> messagesIds) async {
+  static updateMessagesToStatus2(List<String> messagesIds) async {
     try {
       List<Message> messagesList = [];
 
       // Get messages by messageById
 
       for (String messageId in messagesIds) {
-        // print("Msg: $messageId");
-        Message? message = await FirestoreMethods().getMessageByIdAsFuture(messageId);
+        // debugPrint("Msg: $messageId");
+        Message? message = await FirestoreMethods.getMessageByIdAsFuture(messageId);
 
         if (message != null) messagesList.add(message);
       }
@@ -834,7 +948,7 @@ class FirestoreMethods {
       // Update message Status to 2
       for (Message message in messagesList) {
         if (message.status == 1 && message.receiverId == FirebaseAuth.instance.currentUser!.uid) {
-          print('Message targetted: ${message.data}');
+          debugPrint('Message targetted: ${message.data}');
           // Update message status to 1
           final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
           await refMessage.update({
@@ -843,19 +957,19 @@ class FirestoreMethods {
         }
       }
     } catch (e) {
-      print('Error in background: $e');
+      debugPrint('Error in background: $e');
     }
   }
 
-  void updateMessagesToStatus3(List<String> messagesIds) async {
+  static updateMessagesToStatus3(List<String> messagesIds) async {
     try {
       List<Message> messagesList = [];
 
       // Get messages by messageById
 
       for (String messageId in messagesIds) {
-        // print("Msg: $messageId");
-        Message? message = await FirestoreMethods().getMessageByIdAsFuture(messageId);
+        // debugPrint("Msg: $messageId");
+        Message? message = await FirestoreMethods.getMessageByIdAsFuture(messageId);
 
         if (message != null) messagesList.add(message);
       }
@@ -864,7 +978,7 @@ class FirestoreMethods {
       for (Message message in messagesList) {
         if (message.status == 2 ||
             message.status == 1 && message.receiverId == FirebaseAuth.instance.currentUser!.uid) {
-          print('Message targetted: ${message.data}');
+          debugPrint('Message targetted: ${message.data}');
           // Update message status to 2
           final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
           await refMessage.update({
@@ -873,11 +987,11 @@ class FirestoreMethods {
         }
       }
     } catch (e) {
-      print('Error in background: $e');
+      debugPrint('Error in background: $e');
     }
   }
 
-  Future updateIsTypingOrIsRecordingVoiceNoteList(
+  static Future updateIsTypingOrIsRecordingVoiceNoteList(
       {required String discussionId, required String type, required String action}) async {
     // Is TYPING
     // if (type == 'isTyping') {
@@ -929,7 +1043,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create Notification and Update Followers Notification Fields
-  Future createNotification(context, uid, contentId, type) async {
+  static Future createNotification(context, uid, contentId, type) async {
     // try {
     //   // Modeling a new notification
     //   NotificationModel.Notification newNotification = NotificationModel.Notification(
@@ -951,7 +1065,7 @@ class FirestoreMethods {
     //   log('Notification id is: $notificationId');
 
     //   // Update Followers Notifications Table
-    //   // TODO:
+    //   //
     //   //
     //   //
 
@@ -967,7 +1081,7 @@ class FirestoreMethods {
   //////////////////
 
   // Get Payment by paymentId
-  Stream<Payment> getPaymentByPaymentId(String paymentId) {
+  static Stream<Payment> getPaymentByPaymentId(String paymentId) {
     return FirebaseFirestore.instance
         .collection('payments')
         .where('paymentId', isEqualTo: paymentId)
@@ -979,12 +1093,12 @@ class FirestoreMethods {
             }).first);
   }
 
-  ////////////////// BUG REPORT, QUESTION, FEEDBACK
+  ////////////////// REPORT, QUESTION, FEEDBACK
   //////////////////
   //////////////////
 
   // Send bug report
-  Future sendBugReport(context, Map<String, Object?> reportToSend) async {
+  static Future sendBugReport(context, Map<String, Object?> reportToSend) async {
     log('SENDING BUG REPORT...');
     try {
       // Create a bug report and write it down to the database : BugReports Table
@@ -1007,7 +1121,7 @@ class FirestoreMethods {
   }
 
   // Send question
-  Future sendQuestion(context, Map<String, Object?> questionToSend) async {
+  static Future sendQuestion(context, Map<String, Object?> questionToSend) async {
     log('SENDING QUESTION...');
     try {
       // Create a question and write it down to the database : Questions Table
@@ -1030,7 +1144,7 @@ class FirestoreMethods {
   }
 
   // Send feedback
-  Future sendFeedback(context, Map<String, Object?> feedbackToSend) async {
+  static Future sendFeedback(context, Map<String, Object?> feedbackToSend) async {
     log('SENDING FEEDBACK...');
     try {
       // Create a feedback and write it down to the database : Feedbacks Table
@@ -1057,37 +1171,101 @@ class FirestoreMethods {
   //////////////////
 
   // Get user info | Check if User exist
-  Future<UserModel.User?> getUser(uid) async {
+  static Future<usermodel.User?> getUser(uid) async {
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
     final snapshot = await ref.get();
     if (snapshot.exists) {
-      UserModel.User user = UserModel.User.fromJson(snapshot.data()!);
+      usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
       return user;
     }
     return null;
   }
 
   // Get User By Id
-  Stream<UserModel.User> getUserById(String userId) {
+  static Stream<usermodel.User> getUserById(String userId) {
     return FirebaseFirestore.instance
         .collection('users')
-        .where('userId', isEqualTo: userId)
+        .where('id', isEqualTo: userId)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => UserModel.User.fromJson(doc.data())).first);
+        .map((snapshot) => snapshot.docs.map((doc) => usermodel.User.fromJson(doc.data())).first);
+  }
+
+  // Get user by id : As Future
+  static Future<usermodel.User?> getUserByIdAsFuture(userId) async {
+    log('Fetching user with userId...');
+
+    var ref = FirebaseFirestore.instance.collection('users').doc(userId);
+    var snapshot = await ref.get();
+    if (snapshot.exists) {
+      return usermodel.User.fromJson(snapshot.data()!);
+    }
+    return null;
   }
 
   // Get All User
-  Stream<List<UserModel.User>> getAllUsers() {
+  static Stream<List<usermodel.User>> getAllUsers() {
     log('Fetching all users...');
 
     return FirebaseFirestore.instance
         .collection('users')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => UserModel.User.fromJson(doc.data())).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => usermodel.User.fromJson(doc.data())).toList());
+  }
+
+  // Get All User : As Future
+  static Future<List<usermodel.User>> getAllUsersAsFuture() async {
+    log('Fetching all users...');
+
+    List<usermodel.User> listOfUsers = [];
+    final refUsers = FirebaseFirestore.instance.collection('users');
+    //
+    final snapshot = await refUsers.get();
+    if (snapshot.size > 0) {
+      for (var element in snapshot.docs) {
+        if (element.exists) {
+          usermodel.User user = usermodel.User.fromJson(element.data());
+          listOfUsers.add(user);
+        }
+      }
+    }
+    return listOfUsers;
+  }
+
+  // Get User events
+  static Stream<List<Event>> getUserEvents(String userId) {
+    log('Fetching user events...');
+
+    return FirebaseFirestore.instance
+        .collection('events')
+        .where('uid', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Event.fromJson(doc.data())).toList());
+  }
+
+  // Get User Reminders
+  static Stream<List<Reminder>> getUserReminders(String userId) {
+    log('Fetching user reminders...');
+
+    return FirebaseFirestore.instance
+        .collection('reminders')
+        .where('uid', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Reminder.fromJson(doc.data())).toList());
+  }
+
+  // Get User Forevers
+  static Stream<List<Forever>> getUserForevers(String userId) {
+    log('Fetching user forevers...');
+
+    return FirebaseFirestore.instance
+        .collection('forevers')
+        .where('uid', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Forever.fromJson(doc.data())).toList());
   }
 
   // Get all events
-  Stream<List<Event>> getAllEvents() {
+  static Stream<List<Event>> getAllEvents() {
     log('Fetching all events...');
 
     return FirebaseFirestore.instance
@@ -1096,8 +1274,53 @@ class FirestoreMethods {
         .map((snapshot) => snapshot.docs.map((doc) => Event.fromJson(doc.data())).toList());
   }
 
+  // Get user by userPosterId in List
+  static Stream<List<usermodel.User>> getUserByIdInList(List<String> userIdList) {
+    log('Fetching [Reminders] by userPosterId in List...');
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where('id', whereIn: userIdList)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => usermodel.User.fromJson(doc.data())).toList());
+  }
+
+  // Get event by userPosterId in List
+  static Stream<List<Event>> getEventsByUserPosterIdInList(List<String> userPosterIdList) {
+    log('Fetching [Events] by by userPosterId in List...');
+
+    return FirebaseFirestore.instance
+        .collection('events')
+        .where('uid', whereIn: userPosterIdList)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Event.fromJson(doc.data())).toList());
+  }
+
+  // Get reminder by userPosterId in List
+  static Stream<List<Reminder>> getRemindersByUserPosterIdInList(List<String> userPosterIdList) {
+    log('Fetching [Reminders] by userPosterId in List...');
+
+    return FirebaseFirestore.instance
+        .collection('reminders')
+        .where('uid', whereIn: userPosterIdList)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Reminder.fromJson(doc.data())).toList());
+  }
+
+  // Get story by [Non-expired] userPosterId in List
+  static Stream<List<Story>> getNonExpiredStoriesByUserPosterIdInList(List<String> userPosterIdList) {
+    log('Fetching [Non-Expired Stories] by userPosterId in List...');
+
+    return FirebaseFirestore.instance.collection('stories').where('uid', whereIn: userPosterIdList).snapshots().map(
+        (snapshot) => snapshot.docs
+            .map((doc) => Story.fromJson(doc.data()))
+            .toList()
+            .where((story) => !hasStoryExpired(story.endAt))
+            .toList());
+  }
+
   // Get event by id
-  Stream<Event> getEventById(String eventId) {
+  static Stream<Event> getEventById(String eventId) {
     return FirebaseFirestore.instance
         .collection('events')
         .where('eventId', isEqualTo: eventId)
@@ -1106,7 +1329,7 @@ class FirestoreMethods {
   }
 
   // Get event by EventId : As Future
-  Future<Event?> getEventByIdAsFuture(eventId) async {
+  static Future<Event?> getEventByIdAsFuture(eventId) async {
     log('Fetching event with EventId...');
 
     var ref = FirebaseFirestore.instance.collection('events').doc(eventId);
@@ -1119,7 +1342,7 @@ class FirestoreMethods {
   }
 
   // Get event reminders by id
-  Stream<List<Reminder>> getEventRemindersById(String eventId, String userId) {
+  static Stream<List<Reminder>> getEventRemindersById(String eventId, String userId) {
     return FirebaseFirestore.instance
         .collection('reminders')
         .where('eventId', isEqualTo: eventId)
@@ -1129,7 +1352,7 @@ class FirestoreMethods {
   }
 
   // Get event by id
-  Stream<Reminder> getReminderById(String reminderId) {
+  static Stream<Reminder> getReminderById(String reminderId) {
     return FirebaseFirestore.instance
         .collection('reminders')
         .where('reminderId', isEqualTo: reminderId)
@@ -1138,7 +1361,7 @@ class FirestoreMethods {
   }
 
 // Get Reminder by Id : As Future
-  Future<Reminder?> getReminderByIdAsFuture(reminderId) async {
+  static Future<Reminder?> getReminderByIdAsFuture(reminderId) async {
     log('Fetching reminder with ReminderId...');
 
     var ref = FirebaseFirestore.instance.collection('reminders').doc(reminderId);
@@ -1150,8 +1373,37 @@ class FirestoreMethods {
     return null;
   }
 
+  // Get any User Stories : As Future
+  static Future<List<Story>> getUserNonExpiredStoriesAsFuture(uid) async {
+    List<Story> listOfNonExpiredStories = [];
+    final refNonExpiredStories = FirebaseFirestore.instance.collection('stories').where('uid', isEqualTo: uid);
+    //
+    final snapshot = await refNonExpiredStories.get();
+    if (snapshot.size > 0) {
+      for (var element in snapshot.docs) {
+        if (element.exists) {
+          Story story = Story.fromJson(element.data());
+
+          if (!hasStoryExpired(story.endAt)) {
+            listOfNonExpiredStories.add(story);
+          }
+        }
+      }
+    }
+    return listOfNonExpiredStories;
+  }
+
+  // Get any User Stories []
+  static Stream<List<Story>> getUserAllStories(uid) {
+    return FirebaseFirestore.instance
+        .collection('stories')
+        .where('uid', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Story.fromJson(doc.data())).toList());
+  }
+
   // Get Story by id
-  Stream<Story> getStoryById(String storyId) {
+  static Stream<Story> getStoryById(String storyId) {
     return FirebaseFirestore.instance
         .collection('stories')
         .where('storyId', isEqualTo: storyId)
@@ -1160,7 +1412,7 @@ class FirestoreMethods {
   }
 
   // Get Story by Id : As Future
-  Future<Story?> getStoryByIdAsFuture(String storyId) async {
+  static Future<Story?> getStoryByIdAsFuture(String storyId) async {
     final ref = FirebaseFirestore.instance.collection('stories').where('storyId', isEqualTo: storyId);
     final snapshot = await ref.get();
     if (snapshot.docs.isNotEmpty) {
@@ -1172,7 +1424,7 @@ class FirestoreMethods {
   }
 
   // Get Payment by senderId
-  Stream<List<Payment>> getPaymentBySenderId(String userId) {
+  static Stream<List<Payment>> getPaymentBySenderId(String userId) {
     return FirebaseFirestore.instance
         .collection('payments')
         .where('userSenderId', isEqualTo: userId)
@@ -1181,7 +1433,7 @@ class FirestoreMethods {
   }
 
   // Get Payment by receiverId
-  Stream<List<Payment>> getPaymentByReceiverId(String userId) {
+  static Stream<List<Payment>> getPaymentByReceiverId(String userId) {
     return FirebaseFirestore.instance
         .collection('payments')
         .where('userReceiverId', isEqualTo: userId)
@@ -1199,7 +1451,8 @@ class FirestoreMethods {
       await ref.update({'name': name});
       return name;
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+      log('Error: $e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
     }
   }
 
@@ -1212,12 +1465,13 @@ class FirestoreMethods {
       await ref.update({'birthday': date.toIso8601String()});
       return date;
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+      log('Error: $e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
     }
   }
 
   // Update Current User Profile Picture to DB
-  Future updateCurrentUserProfilePictureToDB(context, dowloadurl) async {
+  static Future updateCurrentUserProfilePictureToDB(context, dowloadurl) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
 
@@ -1225,7 +1479,8 @@ class FirestoreMethods {
       await ref.update({'profilePicture': dowloadurl});
       return dowloadurl;
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+      log('Error: $e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
     }
   }
 }

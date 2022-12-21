@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/models/event_duration_type.dart';
@@ -17,7 +16,6 @@ import 'package:wesh/widgets/eventselector.dart';
 import 'package:wesh/widgets/modal.dart';
 import 'package:wesh/widgets/recurrenceselector.dart';
 import 'package:wesh/widgets/reminderselector.dart';
-import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/textformfield.dart';
@@ -27,7 +25,7 @@ class CreateOrUpdateReminderPage extends StatefulWidget {
   final Reminder? reminder;
   final Event? eventAttached;
 
-  CreateOrUpdateReminderPage({this.reminder, this.eventAttached});
+  const CreateOrUpdateReminderPage({Key? key, this.reminder, this.eventAttached}) : super(key: key);
 
   @override
   State<CreateOrUpdateReminderPage> createState() => _CreateOrUpdateReminderPageState();
@@ -49,7 +47,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     // Init Controller
@@ -69,7 +67,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
       isLoading = true;
     });
     if (widget.reminder != null && widget.reminder!.eventId.isNotEmpty) {
-      Event? eventAttached = await FirestoreMethods().getEventByIdAsFuture(widget.reminder!.eventId);
+      Event? eventAttached = await FirestoreMethods.getEventByIdAsFuture(widget.reminder!.eventId);
       eventController = eventAttached;
       // reminderFrom = eventAttached!.eventDurations[0]['date'];
       reminderDateController = widget.reminder!.remindAt;
@@ -103,7 +101,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     nameReminderController.dispose();
     emptyController.dispose();
@@ -113,7 +111,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
     EventDurationType eventDurationGet = EventDurationType.fromJson(eventController!.eventDurations[0]);
 
     return DateTime(
-      eventController?.type == 'birthday' ? DateTime.now().year : eventDurationGet.date.year,
+      isEventWithRecurrence(eventController) ? DateTime.now().year : eventDurationGet.date.year,
       eventDurationGet.date.month,
       eventDurationGet.date.day,
       eventDurationGet.startTime.hour,
@@ -133,13 +131,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
       reminderDelay = getDurationLabel(customDateTime!, reminderDateController!);
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // CREATE A NEW ONE
     if (widget.reminder == null) {
@@ -162,7 +154,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
       debugPrint('Reminder is: $newReminder');
 
       //  Update Firestore Reminder Table
-      result = await FirestoreMethods().createReminder(context, FirebaseAuth.instance.currentUser!.uid, newReminder);
+      result = await FirestoreMethods.createReminder(context, FirebaseAuth.instance.currentUser!.uid, newReminder);
     }
 
     // UPDATE AN EXISTING ONE
@@ -185,7 +177,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
       ).toJson();
 
       // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateReminder(context, widget.reminder!.reminderId, reminderToUpdate);
+      result = await FirestoreMethods.updateReminder(context, widget.reminder!.reminderId, reminderToUpdate);
     }
 
     // Pop the Screen once reminder created/updated
@@ -267,7 +259,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                           if (deleteDecision[0] == true) {
                             // Delete reminder...
                             // ignore: use_build_context_synchronously
-                            bool result = await FirestoreMethods().deleteReminder(
+                            bool result = await FirestoreMethods.deleteReminder(
                                 context, widget.reminder!.reminderId, FirebaseAuth.instance.currentUser!.uid);
 
                             if (result) {
@@ -303,13 +295,13 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
               // Field
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 20, bottom: 5, left: 15, right: 15),
+                  padding: const EdgeInsets.only(top: 20, bottom: 5, left: 10, right: 10),
                   children: [
                     // Add Reminder Name
                     buildTextFormField(
                       controller: nameReminderController,
                       hintText: 'Ajouter un titre au rappel',
-                      icon: Icon(Icons.edit_note_rounded, size: 22.sp),
+                      icon: Icon(FontAwesomeIcons.alignLeft, size: 17.sp),
                       validateFn: (eventName) {
                         return null;
                       },
@@ -360,11 +352,11 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                               }
                             },
                             child: Padding(
-                              padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 4),
+                              padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 14),
                               child: Row(
                                 children: [
                                   Icon(FontAwesomeIcons.splotch, size: 17.sp, color: Colors.grey.shade600),
-                                  SizedBox(width: 0.07.sw),
+                                  SizedBox(width: 0.05.sw),
                                   Expanded(
                                     child: Text(
                                       (() {
@@ -600,7 +592,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                   setState(() {
                                     recurrenceController = recurrencesList[selectedRecurrence].data!;
                                   });
-                                  debugPrint('Recurrence is setted at: $recurrenceController');
+                                  dev.log('Recurrence is setted at: $recurrenceController');
                                 }
                               } else {
                                 showSnackbar(context, 'Veuillez d\'abord attacher un évenement ou une date', null);

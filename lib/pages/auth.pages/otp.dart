@@ -11,10 +11,7 @@ import '../../utils/constants.dart';
 class OTPverificationPage extends StatefulWidget {
   final String authType;
 
-  OTPverificationPage({
-    Key? key,
-    required this.authType,
-  }) : super(key: key);
+  const OTPverificationPage({Key? key, required this.authType}) : super(key: key);
 
   @override
   State<OTPverificationPage> createState() => _OTPverificationPageState();
@@ -22,13 +19,12 @@ class OTPverificationPage extends StatefulWidget {
 
 class _OTPverificationPageState extends State<OTPverificationPage> {
   String phoneNumber = '';
-  late String _verificationCode;
-
-  final TextEditingController _pinPutController = TextEditingController();
+  // late String _verificationCode;
+  // final TextEditingController _pinPutController = TextEditingController();
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     phoneNumber = UserSimplePreferences.getPhone()!;

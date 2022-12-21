@@ -1,36 +1,31 @@
-import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:day_night_time_picker/lib/daynight_timepicker.dart';
-import 'package:dismissible_page/dismissible_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import 'package:screenshot/screenshot.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:story_view/controller/story_controller.dart';
-import 'package:story_view/widgets/story_view.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/discussion.dart';
 import 'package:wesh/models/payment.dart';
+import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/payment_viewer_modal.dart';
-import 'package:wesh/widgets/story_more_options_modal.dart';
 import 'package:widget_size/widget_size.dart';
 import '../models/event.dart';
 import '../models/forever.dart';
 import '../models/message.dart';
+import '../models/stories_handler.dart';
 import '../models/story.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import 'package:timeago/timeago.dart' as timeago;
-import '../pages/in.pages/inbox.dart';
-import '../pages/in.pages/storyviewer_single_story.dart';
 import '../pages/profile.dart';
 import '../pages/settings.pages/bug_report_page.dart';
 import '../providers/user.provider.dart';
@@ -41,7 +36,65 @@ import 'datetimebutton.dart';
 import 'eventview.dart';
 import 'modal.dart';
 import 'package:flutter/foundation.dart' as foundation;
-import 'story_all_viewers_modal.dart';
+
+// BUILD CACHED_NETWORK_IMAGE WIDGET
+
+class buildCachedNetworkImage extends StatelessWidget {
+  final String url;
+  final double? radius;
+  final Color backgroundColor;
+  final double paddingOfProgressIndicator;
+  final double? strokeWidthOfProgressIndicator;
+  final Color? colorOfProgressIndicator;
+  final BlendMode? blendMode;
+
+  const buildCachedNetworkImage({
+    Key? key,
+    required this.url,
+    this.radius,
+    required this.backgroundColor,
+    required this.paddingOfProgressIndicator,
+    this.strokeWidthOfProgressIndicator,
+    this.colorOfProgressIndicator,
+    this.blendMode,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      colorBlendMode: blendMode,
+      imageUrl: url,
+      imageBuilder: (context, imageProvider) => radius == null
+          ? Image(image: imageProvider)
+          : CircleAvatar(
+              radius: radius,
+              backgroundColor: backgroundColor,
+              backgroundImage: imageProvider,
+            ),
+      //
+      useOldImageOnUrlChange: true,
+      //
+      placeholder: (context, url) => CircleAvatar(
+        radius: radius,
+        backgroundColor: backgroundColor,
+        child: Padding(
+          padding: EdgeInsets.all(paddingOfProgressIndicator),
+          child: CircularProgressIndicator(
+            strokeWidth: strokeWidthOfProgressIndicator ?? 2,
+            color: colorOfProgressIndicator ?? Colors.black54,
+          ),
+        ),
+      ),
+      //
+      errorWidget: (context, url, error) => radius == null
+          ? const Image(image: AssetImage(darkBackground))
+          : CircleAvatar(
+              radius: radius,
+              backgroundColor: backgroundColor,
+            ),
+    );
+  }
+}
 
 // BUILD ERROR WIDGET
 class buildErrorWidget extends StatelessWidget {
@@ -107,12 +160,277 @@ class buildErrorWidget extends StatelessWidget {
 
 //
 //
+// BUILD FOLLOW/UNFOLLOW OR REMOVE BUTTON
+class buildFollowUnfollowOrRemoveButton extends StatefulWidget {
+  final usermodel.User user;
+  final String status;
+  const buildFollowUnfollowOrRemoveButton({super.key, required this.user, required this.status});
+
+  @override
+  State<buildFollowUnfollowOrRemoveButton> createState() => _buildFollowUnfollowOrRemoveButtonState();
+}
+
+class _buildFollowUnfollowOrRemoveButtonState extends State<buildFollowUnfollowOrRemoveButton> {
+  bool isButtonLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Btn is loading
+        isButtonLoading
+            ? Button(
+                text: '',
+                height: 0.122.sw,
+                width: 0.4.sw,
+                fontsize: 14.sp,
+                fontColor: Colors.white,
+                prefixIsLoading: true,
+                color: kSecondColor,
+                prefixIcon: Icons.timer_outlined,
+                prefixIconColor: Colors.white,
+                prefixIconSize: 15.sp,
+                onTap: () {},
+              )
+            :
+
+            // HANDLE FOLLOW/UNFOLLOW/REMOVE
+            widget.status == 'followUnfollow' && widget.user.id != FirebaseAuth.instance.currentUser!.uid
+                ? StreamBuilder(
+                    stream: CombineLatestStream.list([
+                      FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
+                      FirestoreMethods.getUserById(widget.user.id)
+                    ]),
+                    builder: (context, snapshot) {
+                      // Handle error
+                      if (snapshot.hasError) {
+                        log('error: ${snapshot.error}');
+                        return Button(
+                          text: 'Erreur...',
+                          height: 0.12.sw,
+                          width: 0.27.sw,
+                          fontsize: 14.sp,
+                          fontColor: Colors.black,
+                          color: const Color(0xFFF0F0F0),
+                          isBordered: false,
+                          onTap: () {},
+                        );
+                      }
+
+                      // handle data
+                      if (snapshot.hasData && snapshot.data != null) {
+                        List<usermodel.User?> data = snapshot.data as List<usermodel.User>;
+                        usermodel.User? currentUser = data[0];
+                        usermodel.User? userGet = data[1];
+
+                        if (currentUser != null &&
+                            userGet != null &&
+                            currentUser.followers != null &&
+                            currentUser.followings != null &&
+                            userGet.followers != null &&
+                            userGet.followings != null) {
+                          // CurrentUser Followers && Followings
+                          List<String> currentUserFollowers =
+                              currentUser.followers!.map((followerId) => followerId.toString()).toList();
+                          List<String> currentUserFollowings =
+                              currentUser.followings!.map((followingId) => followingId.toString()).toList();
+
+                          // Get User Followers && Followings
+                          List<String> getUserFollowers =
+                              userGet.followers!.map((followerId) => followerId.toString()).toList();
+                          List<String> getUserFollowings =
+                              userGet.followings!.map((followingId) => followingId.toString()).toList();
+
+                          // Case 1: Unfollow
+                          if (currentUserFollowings.contains(userGet.id) && getUserFollowers.contains(currentUser.id)) {
+                            return Button(
+                              text: 'Se désabonner',
+                              height: 0.12.sw,
+                              width: 0.27.sw,
+                              fontsize: 14.sp,
+                              fontColor: Colors.black,
+                              color: const Color(0xFFF0F0F0),
+                              isBordered: false,
+                              onTap: () async {
+                                //
+                                setState(() {
+                                  isButtonLoading = true;
+                                });
+                                await FirestoreMethods.unfollowUser(context, userGet.id);
+// Dismiss loader
+                                setState(() {
+                                  isButtonLoading = false;
+                                });
+                              },
+                            );
+                          }
+
+                          // Case 2: Follow
+                          return Button(
+                            text: 'S\'abonner',
+                            height: 0.12.sw,
+                            width: 0.27.sw,
+                            fontsize: 14.sp,
+                            fontColor: Colors.white,
+                            color: kSecondColor,
+                            onTap: () async {
+                              //
+                              setState(() {
+                                isButtonLoading = true;
+                              });
+                              await FirestoreMethods.followUser(context, userGet.id);
+                              // Dismiss loader
+                              setState(() {
+                                isButtonLoading = false;
+                              });
+                            },
+                          );
+                        }
+
+                        return Button(
+                          text: '...',
+                          height: 0.12.sw,
+                          width: 0.27.sw,
+                          fontsize: 14.sp,
+                          fontColor: Colors.black,
+                          color: const Color(0xFFF0F0F0),
+                          isBordered: false,
+                          onTap: () {},
+                        );
+                      }
+
+                      // Diplay Loader
+                      return Button(
+                        text: '',
+                        height: 0.122.sw,
+                        width: 0.4.sw,
+                        fontsize: 14.sp,
+                        fontColor: Colors.white,
+                        prefixIsLoading: true,
+                        color: kSecondColor,
+                        prefixIcon: Icons.timer_outlined,
+                        prefixIconColor: Colors.white,
+                        prefixIconSize: 15.sp,
+                        onTap: () {},
+                      );
+                    },
+                  )
+                : Container(),
+
+        // HANDLE REMOVE A FOLLOWER
+        widget.status == 'remove' && widget.user.id != FirebaseAuth.instance.currentUser!.uid
+            ? StreamBuilder(
+                stream: CombineLatestStream.list([
+                  FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
+                  FirestoreMethods.getUserById(widget.user.id)
+                ]),
+                builder: (context, snapshot) {
+                  // Handle error
+                  if (snapshot.hasError) {
+                    log('error: ${snapshot.error}');
+                    return Button(
+                      text: 'Erreur...',
+                      height: 0.12.sw,
+                      width: 0.27.sw,
+                      fontsize: 14.sp,
+                      fontColor: Colors.black,
+                      color: const Color(0xFFF0F0F0),
+                      isBordered: false,
+                      onTap: () {},
+                    );
+                  }
+
+                  // handle data
+                  if (snapshot.hasData && snapshot.data != null) {
+                    List<usermodel.User?> data = snapshot.data as List<usermodel.User>;
+                    usermodel.User? currentUser = data[0];
+                    usermodel.User? userGet = data[1];
+
+                    if (currentUser != null &&
+                        userGet != null &&
+                        currentUser.followers != null &&
+                        currentUser.followings != null &&
+                        userGet.followers != null &&
+                        userGet.followings != null) {
+                      // CurrentUser Followers && Followings
+                      List<String> currentUserFollowers =
+                          currentUser.followers!.map((followerId) => followerId.toString()).toList();
+                      List<String> currentUserFollowings =
+                          currentUser.followings!.map((followingId) => followingId.toString()).toList();
+
+                      // Get User Followers && Followings
+                      List<String> getUserFollowers =
+                          userGet.followers!.map((followerId) => followerId.toString()).toList();
+                      List<String> getUserFollowings =
+                          userGet.followings!.map((followingId) => followingId.toString()).toList();
+
+                      // Case : Remove
+                      if (currentUserFollowers.contains(userGet.id) && getUserFollowings.contains(currentUser.id)) {
+                        return Button(
+                          text: 'Retirer',
+                          height: 0.12.sw,
+                          width: 0.27.sw,
+                          fontsize: 14.sp,
+                          fontColor: Colors.black,
+                          color: const Color(0xFFF0F0F0),
+                          isBordered: false,
+                          onTap: () async {
+                            //
+                            await FirestoreMethods.removeUserAsFollower(context, userGet.id);
+                          },
+                        );
+                      }
+
+                      //
+                      Container();
+                    }
+
+                    return Button(
+                      text: '...',
+                      height: 0.12.sw,
+                      width: 0.27.sw,
+                      fontsize: 14.sp,
+                      fontColor: Colors.black,
+                      color: const Color(0xFFF0F0F0),
+                      isBordered: false,
+                      onTap: () {},
+                    );
+                  }
+
+                  // Diplay Loader
+                  return Button(
+                    text: '',
+                    height: 0.122.sw,
+                    width: 0.4.sw,
+                    fontsize: 14.sp,
+                    fontColor: Colors.white,
+                    prefixIsLoading: true,
+                    color: kSecondColor,
+                    prefixIcon: Icons.timer_outlined,
+                    prefixIconColor: Colors.white,
+                    prefixIconSize: 15.sp,
+                    onTap: () {},
+                  );
+                },
+              )
+            : Container(),
+      ],
+    );
+  }
+}
+
+//
+//
 // BUILD AVATAR AND USERNAME
 class buildAvatarAndUsername extends StatefulWidget {
   final String uidPoster;
+  final Color? fontColor;
+  final double? fontSize;
   final double? radius;
+  final double? loaderRadius;
 
-  const buildAvatarAndUsername({super.key, required this.uidPoster, this.radius});
+  const buildAvatarAndUsername(
+      {super.key, required this.uidPoster, this.radius, this.fontColor, this.fontSize, this.loaderRadius});
 
   @override
   State<buildAvatarAndUsername> createState() => _buildAvatarAndUsernameState();
@@ -121,26 +439,31 @@ class buildAvatarAndUsername extends StatefulWidget {
 class _buildAvatarAndUsernameState extends State<buildAvatarAndUsername> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<UserModel.User?>(
+    return StreamBuilder<usermodel.User?>(
       stream: getUserById(context, widget.uidPoster),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CupertinoActivityIndicator(radius: 9.sp),
+              Container(
+                margin: const EdgeInsets.only(right: 30),
+                height: widget.loaderRadius ?? 0.05.sw,
+                width: widget.loaderRadius ?? 0.05.sw,
+                child: CircularProgressIndicator(strokeWidth: 2, color: widget.fontColor),
+              ),
             ],
           );
         }
 
         if (snapshot.hasData) {
-          UserModel.User currentUser = snapshot.data as UserModel.User;
+          usermodel.User currentUser = snapshot.data as usermodel.User;
 
           return GestureDetector(
             onTap: () {
@@ -153,11 +476,13 @@ class _buildAvatarAndUsernameState extends State<buildAvatarAndUsername> {
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
+                buildCachedNetworkImage(
+                  url: currentUser.profilePicture,
                   radius: widget.radius ?? 13,
                   backgroundColor: kGreyColor,
-                  backgroundImage: NetworkImage(currentUser.profilePicture),
+                  paddingOfProgressIndicator: 10,
                 ),
                 const SizedBox(
                   width: 6,
@@ -170,8 +495,11 @@ class _buildAvatarAndUsernameState extends State<buildAvatarAndUsername> {
                         Text(
                           FirebaseAuth.instance.currentUser!.uid == currentUser.id ? 'Moi' : currentUser.name,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              TextStyle(overflow: TextOverflow.ellipsis, fontSize: 14.sp, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: widget.fontColor,
+                              overflow: TextOverflow.ellipsis,
+                              fontSize: widget.fontSize ?? 14.sp,
+                              fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -207,29 +535,31 @@ class _buildAttachedEventRowState extends State<buildAttachedEventRow> {
             future: Provider.of<UserProvider>(context).getEventByIdAsFuture(widget.eventId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Shimmer.fromColors(
-                  baseColor: Colors.grey.shade200,
-                  highlightColor: Colors.grey.shade400,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        FontAwesomeIcons.splotch,
-                        color: kSecondColor,
-                        size: 18.sp,
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.splotch,
+                      color: kSecondColor,
+                      size: 17.sp,
+                    ),
+                    const SizedBox(
+                      width: 7,
+                    ),
+                    Flexible(
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 30),
+                        height: 10,
+                        width: double.infinity,
+                        child: const Text(
+                          '...',
+                          style: TextStyle(
+                            color: Colors.white60,
+                          ),
+                        ),
                       ),
-                      const SizedBox(
-                        width: 7,
-                      ),
-                      Flexible(
-                        child: Container(
-                            margin: const EdgeInsets.only(right: 30),
-                            height: 10,
-                            width: double.infinity,
-                            color: Colors.white60),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               }
 
@@ -261,7 +591,7 @@ class _buildAttachedEventRowState extends State<buildAttachedEventRow> {
                       Icon(
                         FontAwesomeIcons.splotch,
                         color: kSecondColor,
-                        size: 18.sp,
+                        size: 17.sp,
                       ),
                       const SizedBox(
                         width: 7,
@@ -269,8 +599,11 @@ class _buildAttachedEventRowState extends State<buildAttachedEventRow> {
                       Flexible(
                         child: Text(
                           currentEvent.title,
-                          style: const TextStyle(
-                              color: Colors.white60, overflow: TextOverflow.ellipsis, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 13.sp,
+                              color: Colors.white60,
+                              overflow: TextOverflow.ellipsis,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -300,7 +633,7 @@ class _buildPaymentRowState extends State<buildPaymentRow> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Payment>(
-      stream: FirestoreMethods().getPaymentByPaymentId(widget.paymentId),
+      stream: FirestoreMethods.getPaymentByPaymentId(widget.paymentId),
       builder: (context, snapshot) {
         // Handle error
         if (snapshot.hasError) {
@@ -443,7 +776,7 @@ class buildUserNameToDisplay extends StatefulWidget {
 class _buildUserNameStateToDisplay extends State<buildUserNameToDisplay> {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<UserModel.User?>(
+    return StreamBuilder<usermodel.User?>(
       stream: Provider.of<UserProvider>(context).getUserById(widget.userId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -451,7 +784,7 @@ class _buildUserNameStateToDisplay extends State<buildUserNameToDisplay> {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          UserModel.User currentUser = snapshot.data as UserModel.User;
+          usermodel.User currentUser = snapshot.data as usermodel.User;
 
           return Row(
             mainAxisSize: MainAxisSize.min,
@@ -533,7 +866,7 @@ class _buildEventNameStateToDisplay extends State<buildEventNameToDisplay> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Event>(
-      stream: FirestoreMethods().getEventById(widget.eventId),
+      stream: FirestoreMethods.getEventById(widget.eventId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text('...');
@@ -607,14 +940,14 @@ class buildNumberOfUnreadMessages extends StatefulWidget {
 class buildNumberOfUnreadMessagesState extends State<buildNumberOfUnreadMessages> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: FirestoreMethods().getMessagesByDiscussionId(widget.discussion.discussionId),
+      stream: FirestoreMethods.getMessagesByDiscussionId(widget.discussion.discussionId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Container();
@@ -690,20 +1023,20 @@ class buildLastMessageInDiscussionCard extends StatefulWidget {
 class _buildLastMessageInDiscussionCardState extends State<buildLastMessageInDiscussionCard> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: FirestoreMethods().getMessagesByDiscussionId(widget.discussion.discussionId),
+      stream: FirestoreMethods.getMessagesByDiscussionId(widget.discussion.discussionId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Container();
@@ -812,36 +1145,37 @@ class buildUserProfilePicture extends StatefulWidget {
 class _buildUserProfilePictureState extends State<buildUserProfilePicture> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<UserModel.User?>(
+    return StreamBuilder<usermodel.User?>(
       stream: Provider.of<UserProvider>(context).getUserById(widget.userId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return CircleAvatar(
-            radius: widget.radius ?? 22,
+            radius: widget.radius ?? 0.07.sw,
             backgroundColor: kGreyColor,
           );
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          UserModel.User currentUser = snapshot.data as UserModel.User;
+          usermodel.User currentUser = snapshot.data as usermodel.User;
 
-          return CircleAvatar(
-            radius: widget.radius ?? 22,
+          return buildCachedNetworkImage(
+            url: currentUser.profilePicture,
+            radius: widget.radius ?? 0.07.sw,
             backgroundColor: kGreyColor,
-            backgroundImage: NetworkImage(currentUser.profilePicture),
+            paddingOfProgressIndicator: 10,
           );
         }
         return Shimmer.fromColors(
           baseColor: Colors.grey.shade200,
           highlightColor: Colors.grey.shade400,
           child: CircleAvatar(
-            radius: widget.radius ?? 22,
+            radius: widget.radius ?? 0.07.sw,
           ),
         );
       },
@@ -853,54 +1187,74 @@ class _buildUserProfilePictureState extends State<buildUserProfilePicture> {
 //
 // BUILD FOREVER COVER
 class buildForeverCover extends StatefulWidget {
-  final Forever forever;
+  final String foreverId;
 
-  const buildForeverCover({super.key, required this.forever});
+  const buildForeverCover({super.key, required this.foreverId});
 
   @override
   State<buildForeverCover> createState() => _buildForeverCoverState();
 }
 
 class _buildForeverCoverState extends State<buildForeverCover> {
+  bool isLoading = false;
+  Forever? forever;
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
-    debugPrint('Forever entry is: ${widget.forever.stories}');
+
+    getForeverData();
+  }
+
+  Future getForeverData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    forever = await FirestoreMethods.getForeverByIdAsFuture(widget.foreverId);
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.forever.stories.isNotEmpty
+    return forever != null && !isLoading
         ? FutureBuilder<Widget?>(
-            future: Provider.of<UserProvider>(context).getForeverCoverByFirstStoryId(widget.forever.stories.first),
+            future: FirestoreMethods.getForeverCoverByFirstStoryId(forever!.stories.first),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const CircleAvatar(
-                  radius: 22,
+                return CircleAvatar(
+                  radius: 0.07.sw,
                   backgroundColor: kGreyColor,
                 );
-                ;
               }
 
               if (snapshot.hasData && snapshot.data != null) {
                 Widget cover = snapshot.data as Widget;
 
                 return CircleAvatar(
-                  radius: 22,
+                  radius: 0.07.sw,
                   backgroundColor: kGreyColor,
                   child: cover,
                 );
               }
-              return const CircleAvatar(
-                radius: 22,
-                backgroundColor: kGreyColor,
-                child: CupertinoActivityIndicator(),
-              );
+              return CircleAvatar(
+                  radius: 0.07.sw,
+                  backgroundColor: kGreyColor,
+                  child: const SizedBox(
+                    height: 13,
+                    width: 13,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black87,
+                    ),
+                  ));
             },
           )
-        : const CircleAvatar(
-            radius: 22,
+        : CircleAvatar(
+            radius: 0.07.sw,
             backgroundColor: kGreyColor,
           );
   }
@@ -908,328 +1262,6 @@ class _buildForeverCoverState extends State<buildForeverCover> {
 
 //
 //
-// BUILD STORY VIEWER HEADER AND FOOTER
-class buildStoryViewerHeaderAndFooter extends StatefulWidget {
-  final Forever? forever;
-  final UserModel.User? user;
-  final String uid;
-  final String type;
-  final StoryController storyController;
-  final List<Story> allStories;
-  final ValueNotifier<int> currentStoryDisplayed;
-  final ValueNotifier<bool> isAllowedToJump;
-  final ValueNotifier<List<StoryItem?>> storiesItemList;
-
-  final ScreenshotController storySreenshotController;
-
-  const buildStoryViewerHeaderAndFooter(
-      {super.key,
-      this.user,
-      this.forever,
-      required this.storyController,
-      required this.currentStoryDisplayed,
-      required this.isAllowedToJump,
-      required this.storiesItemList,
-      required this.allStories,
-      required this.storySreenshotController,
-      required this.type,
-      required this.uid});
-
-  @override
-  State<buildStoryViewerHeaderAndFooter> createState() => _buildStoryViewerHeaderAndFooterState();
-}
-
-class _buildStoryViewerHeaderAndFooterState extends State<buildStoryViewerHeaderAndFooter> {
-  gotToProfilePage({required BuildContext context, required String uid}) {
-    Navigator.push(
-        context,
-        SwipeablePageRoute(
-          builder: (context) => ProfilePage(uid: uid, showBackButton: true),
-        ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // HEADER
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
-          child: Row(
-            children: [
-              //
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Hero avatar
-                    widget.type == 'userStories' && widget.user != null
-                        ? GestureDetector(
-                            onTap: () {
-                              gotToProfilePage(context: context, uid: widget.user!.id);
-                            },
-                            child: CircleAvatar(
-                              radius: 22,
-                              backgroundImage: NetworkImage(widget.user!.profilePicture),
-                            ),
-                          )
-                        : Container(),
-
-                    // Hero Forever Cover
-                    widget.type == 'foreverStories' && widget.forever != null
-                        ? Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50),
-                              border: Border.all(width: 2, color: Colors.white70),
-                            ),
-                            child: buildForeverCover(
-                              forever: widget.forever!,
-                            ),
-                          )
-                        : Container(),
-
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    // Forever title && Story info
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          // 1st ROW : Forever title + Story time
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  '${(() {
-                                    if (widget.type == 'foreverStories' && widget.forever != null) {
-                                      return widget.forever!.title;
-                                    } else if (widget.type == 'userStories' && widget.user != null) {
-                                      return widget.user!.name;
-                                    }
-                                  }())}',
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    overflow: TextOverflow.ellipsis,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 7,
-                              ),
-                              ValueListenableBuilder(
-                                valueListenable: widget.currentStoryDisplayed,
-                                builder: (context, value, child) {
-                                  return Text(
-                                    getTimeAgoShortForm(
-                                        widget.allStories[widget.currentStoryDisplayed.value].createdAt),
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white.withOpacity(.6),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          // 2nd ROW : Event Attached
-                          ValueListenableBuilder(
-                            valueListenable: widget.currentStoryDisplayed,
-                            builder: (context, value, child) {
-                              return buildAttachedEventRow(
-                                  storyController: widget.storyController,
-                                  eventId: widget.allStories[widget.currentStoryDisplayed.value].eventId);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 7,
-                    ),
-                    // More options
-                    IconButton(
-                      splashRadius: 22,
-                      onPressed: () async {
-                        widget.storyController.pause();
-
-                        //  show more story options
-                        bool? result = await showModalBottomSheet(
-                          enableDrag: true,
-                          isScrollControlled: true,
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          builder: ((context) => Scaffold(
-                                backgroundColor: Colors.transparent,
-                                body: Modal(
-                                  maxHeightSize: MediaQuery.of(context).size.height / 2,
-                                  child: StoryMoreOptionsModal(
-                                    story: widget.allStories[widget.currentStoryDisplayed.value],
-                                    storySreenshotController: widget.storySreenshotController,
-                                    isSuppressionBtnAllowed: widget.type == 'foreverStories' ? false : true,
-                                  ),
-                                ),
-                              )),
-                        );
-
-                        if (result == null) {
-                          widget.storyController.play();
-                        }
-                      },
-                      icon: const Icon(Icons.more_vert_outlined, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // FOOTER
-        Column(
-          children: [
-            // CAPTION
-            ValueListenableBuilder(
-              valueListenable: widget.currentStoryDisplayed,
-              builder: (context, value, child) {
-                return Visibility(
-                  visible: widget.allStories[widget.currentStoryDisplayed.value].caption.isNotEmpty ? true : false,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(.5),
-                    ),
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      children: [
-                        Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Text(
-                              widget.allStories[widget.currentStoryDisplayed.value].caption,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                              ),
-                            )),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            //ACTIONS BUTTONS
-
-            ValueListenableBuilder(
-              valueListenable: widget.currentStoryDisplayed,
-              builder: (context, value, child) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                  child: Row(
-                    children: [
-                      // LEFT BUTTONS
-
-                      // ChipButton: Show stories viewers modal
-                      Visibility(
-                        visible: widget.uid == FirebaseAuth.instance.currentUser?.uid,
-                        child: ActionChip(
-                            onPressed: () async {
-                              widget.storyController.pause();
-                              // Show Modal : Story Viewers
-                              bool? result = await showModalBottomSheet(
-                                enableDrag: true,
-                                isScrollControlled: true,
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                builder: ((context) => Scaffold(
-                                      backgroundColor: Colors.transparent,
-                                      body: Modal(
-                                        maxHeightSize: 400,
-                                        child: StoryAllViewerModal(
-                                            story: widget.allStories[widget.currentStoryDisplayed.value]),
-                                      ),
-                                    )),
-                              );
-
-                              if (result == null) {
-                                widget.storyController.play();
-                              }
-                            },
-                            label: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                '${widget.allStories[widget.currentStoryDisplayed.value].viewers.length} ${getSatTheEnd(widget.allStories[widget.currentStoryDisplayed.value].viewers.length, 'vue')}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                            backgroundColor: Colors.white),
-                      ),
-
-                      //
-                      const Spacer(),
-                      // RIGHT BUTTONS
-                      // Add to Forevers OR Answer to the story
-
-                      Visibility(
-                        visible: widget.uid != FirebaseAuth.instance.currentUser!.uid,
-                        child: InkWell(
-                          onTap: () {
-                            // Redirect to InboxPage +StoryAttached
-                            Navigator.push(
-                                context,
-                                SwipeablePageRoute(
-                                  builder: (context) => InboxPage(
-                                      userReceiverId: widget.uid,
-                                      storyAttached: widget.allStories[widget.currentStoryDisplayed.value]),
-                                ));
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: const [
-                                // Label
-                                Text(
-                                  'Répondre',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-
-                                // Spacer
-                                SizedBox(
-                                  width: 6,
-                                ),
-                                // Icon
-                                Icon(
-                                  FontAwesomeIcons.angleRight,
-                                  color: Colors.white,
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                      //
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
 
 //
 //
@@ -1457,6 +1489,7 @@ class buttonPicker extends StatelessWidget {
               ),
               Text(
                 label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: Colors.black54,
@@ -1471,12 +1504,50 @@ class buttonPicker extends StatelessWidget {
 
 //
 //
+// BUILD CIRCLE AVATAR STORIES WRAPPER GRIDPREVIEW
+class buildCircleAvatarStoriesWrapper extends StatelessWidget {
+  final double? radius;
+  final double? padding;
+  final Widget child;
+  const buildCircleAvatarStoriesWrapper({
+    Key? key,
+    required this.storiesHandler,
+    this.radius,
+    this.padding,
+    required this.child,
+  }) : super(key: key);
+
+  final StoriesHandler storiesHandler;
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      backgroundColor: hasSeenAllStories(storiesHandler.stories) ? Colors.grey.shade500 : kSecondColor,
+      radius: radius ?? 0.07.sw,
+      child: Padding(
+        padding: EdgeInsets.all(padding ?? 2),
+        child: CircleAvatar(
+          backgroundColor: Colors.white,
+          radius: radius ?? 0.07.sw,
+          child: Padding(
+            padding: EdgeInsets.all(padding ?? 2),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//
+//
 // BUILD STORY GRIDPREVIEW
 class buildStoryGridPreview extends StatefulWidget {
-  final Widget footer;
+  final Widget? header;
+  final Widget? footer;
   final Story story;
 
-  const buildStoryGridPreview({super.key, required this.footer, required this.story});
+  const buildStoryGridPreview({super.key, this.footer, required this.story, this.header});
 
   @override
   State<buildStoryGridPreview> createState() => _buildStoryGridPreviewState();
@@ -1494,52 +1565,35 @@ class _buildStoryGridPreviewState extends State<buildStoryGridPreview> {
         });
       },
       child: GridTile(
+        header: widget.header,
         footer: widget.footer,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () async {
-            // Preview Story
-            context.pushTransparentRoute(SingleStoryPageViewer(
-              storyTodiplay: widget.story,
-            ));
-          },
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              // Loader / Content
-
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  const CupertinoActivityIndicator(
-                    color: Colors.black54,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: getStoryGridPreviewThumbnail(
-                        storySelected: widget.story, height: gridSize.height, width: gridSize.width),
-                  ),
-                ],
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            // Content
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
               ),
-              // Bg Shadow
-              Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      begin: Alignment.bottomRight,
-                      colors: [
-                        Colors.black38,
-                        Colors.black26,
-                        Colors.black12,
-                        Colors.transparent,
-                      ],
-                    ),
-                  )),
-            ],
-          ),
+              child: getStoryGridPreviewThumbnail(
+                  storySelected: widget.story, height: gridSize.height, width: gridSize.width),
+            ),
+            // Bg Shadow
+            Container(
+                height: gridSize.height / 2,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  gradient: const LinearGradient(
+                    begin: Alignment.bottomRight,
+                    colors: [
+                      Colors.black38,
+                      Colors.black26,
+                      Colors.black12,
+                      Colors.transparent,
+                    ],
+                  ),
+                )),
+          ],
         ),
       ),
     );
@@ -1575,12 +1629,10 @@ class emojiPickerOffstage extends StatelessWidget {
             textEditingController: textController,
             config: Config(
               columns: 7,
-              replaceEmojiOnLimitExceed: true,
               emojiSizeMax: 0.07.sw * (!foundation.kIsWeb && Platform.isIOS ? 1.10 : 1.0),
               verticalSpacing: 0,
               horizontalSpacing: 0,
               gridPadding: EdgeInsets.zero,
-              initCategory: Category.RECENT,
               bgColor: const Color(0xFFF2F2F2),
               indicatorColor: kSecondColor,
               iconColor: Colors.grey,
@@ -1589,7 +1641,6 @@ class emojiPickerOffstage extends StatelessWidget {
               skinToneDialogBgColor: Colors.white,
               skinToneIndicatorColor: Colors.grey,
               enableSkinTones: true,
-              showRecentsTab: true,
               recentsLimit: 28,
               noRecents: Text(
                 'Aucun emoji utilisé recemment',

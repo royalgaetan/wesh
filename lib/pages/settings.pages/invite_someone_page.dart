@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_share_me/flutter_share_me.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
@@ -80,7 +79,7 @@ class _InviteSomeOnePageState extends State<InviteSomeonePage> {
               SettingCard(
                 onTap: () async {
                   //
-                  onButtonTap(context, Share.share_telegram);
+                  onButtonTap(context, Share.shareTelegram);
                 },
                 trailing: Container(),
                 leading: CircleAvatar(
@@ -128,7 +127,7 @@ class _InviteSomeOnePageState extends State<InviteSomeonePage> {
               SettingCard(
                 onTap: () async {
                   //
-                  onButtonTap(context, Share.share_system);
+                  onButtonTap(context, Share.shareSystem);
                 },
                 trailing: Container(),
                 leading: CircleAvatar(
@@ -149,10 +148,10 @@ class _InviteSomeOnePageState extends State<InviteSomeonePage> {
 enum Share {
   facebook,
   whatsapp,
-  share_telegram,
+  shareTelegram,
   sms,
   email,
-  share_system,
+  shareSystem,
 }
 
 Future<void> onButtonTap(context, Share share) async {
@@ -171,7 +170,7 @@ Future<void> onButtonTap(context, Share share) async {
       response = await flutterShareMe.shareToFacebook(url: url, msg: msg);
       break;
 
-    case Share.share_telegram:
+    case Share.shareTelegram:
       response = await flutterShareMe.shareToTelegram(msg: msg);
       break;
 
@@ -190,7 +189,7 @@ Future<void> onButtonTap(context, Share share) async {
         throw 'Could not launch emailto';
       }
       break;
-    case Share.share_system:
+    case Share.shareSystem:
       response = await flutterShareMe.shareToSystem(msg: msg);
       break;
   }

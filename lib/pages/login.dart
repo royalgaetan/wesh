@@ -21,7 +21,7 @@ class LoginPage extends StatefulWidget {
   final bool redirectToAddEmailPage;
   final bool redirectToUpdatePasswordPage;
 
-  LoginPage(
+  const LoginPage(
       {Key? key,
       required this.redirectToAddEmailandPasswordPage,
       required this.redirectToUpdatePasswordPage,
@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     emailController.dispose();
     passwordController.dispose();
@@ -71,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });
@@ -130,7 +130,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    // ignore: use_build_context_synchronously
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });
@@ -190,7 +191,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       isPageLoading = true;
     });
-    var isConnected = await InternetConnection().isConnected(context);
+    // ignore: use_build_context_synchronously
+    var isConnected = await InternetConnection.isConnected(context);
     setState(() {
       isPageLoading = false;
     });
@@ -360,20 +362,23 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    InkWell(
-                      onTap: () {
-                        // Redirect to Sign Up Page : CheckUsernanePage
-                        Navigator.push(
-                            context,
-                            SwipeablePageRoute(
-                              builder: (context) => AddUsernamePage(),
-                            ));
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.all(0.04.sw),
-                        child: Text(
-                          'Créer un compte',
-                          style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.bold),
+                    Padding(
+                      padding: EdgeInsets.only(top: 0.04, bottom: 0.07.sw),
+                      child: InkWell(
+                        onTap: () {
+                          // Redirect to Sign Up Page : CheckUsernanePage
+                          Navigator.push(
+                              context,
+                              SwipeablePageRoute(
+                                builder: (context) => const AddUsernamePage(),
+                              ));
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Text(
+                            'Créer un compte',
+                            style: TextStyle(fontSize: 14.sp, color: Colors.black, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     )
@@ -404,7 +409,7 @@ class buildforgotpswBTN extends StatelessWidget {
             Navigator.push(
                 context,
                 SwipeablePageRoute(
-                  builder: (context) => ForgotPasswordPage(),
+                  builder: (context) => const ForgotPasswordPage(),
                 ));
           },
           child: Padding(
@@ -467,9 +472,9 @@ class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
               await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
             }
 
-            print('From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
-            print('From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
-            print('From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
+            debugPrint('From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
+            debugPrint('From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
+            debugPrint('From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
 
             // ignore: use_build_context_synchronously
             Navigator.push(

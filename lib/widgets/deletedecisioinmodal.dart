@@ -12,7 +12,6 @@ class DeleteDecision extends StatefulWidget {
 
 class _DeleteDecisionState extends State<DeleteDecision> {
   late XFile? file;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {

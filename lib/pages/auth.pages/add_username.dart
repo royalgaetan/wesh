@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wesh/pages/auth.pages/add_name_and_birthday.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
 import '../../services/internet_connection_checker.dart';
@@ -11,7 +13,7 @@ import '../../widgets/button.dart';
 import '../../widgets/textfieldcontainer.dart';
 
 class AddUsernamePage extends StatefulWidget {
-  AddUsernamePage({Key? key}) : super(key: key);
+  const AddUsernamePage({Key? key}) : super(key: key);
 
   @override
   State<AddUsernamePage> createState() => _CheckUsernameState();
@@ -24,7 +26,7 @@ class _CheckUsernameState extends State<AddUsernamePage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     usernameController.dispose();
@@ -32,7 +34,7 @@ class _CheckUsernameState extends State<AddUsernamePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
@@ -137,7 +139,7 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                     setState(() {
                       isPageLoading = true;
                     });
-                    var isConnected = await InternetConnection().isConnected(context);
+                    var isConnected = await InternetConnection.isConnected(context);
                     if (mounted) {
                       setState(() {
                         isPageLoading = false;
@@ -154,6 +156,40 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                     }
                   },
                 ),
+
+                Wrap(
+                  children: [
+                    Padding(
+                        padding: EdgeInsets.only(top: 0.19.sw, bottom: 0.07.sw),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            text: 'En créant un compte, vous acceptez nos conditions d\'utilisation et ',
+                            style: TextStyle(color: Colors.black87, fontSize: 11.sp),
+                            children: <TextSpan>[
+                              TextSpan(
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () async {
+                                    //
+                                    // Go to Privacy Policy Link [ONLINE]
+                                    Uri urlToLaunch = Uri.parse(privacyPolicyUrl);
+
+                                    if (!await launchUrl(urlToLaunch)) {
+                                      showSnackbar(context, 'Impossible de lancer cette url', null);
+                                      throw 'Could not launch $urlToLaunch';
+                                    }
+                                  },
+                                text: 'notre politique de confidentialité',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.lightBlue.shade600,
+                                ),
+                              )
+                            ],
+                          ),
+                        )),
+                  ],
+                )
               ].reversed.toList(),
             ),
           ),
@@ -175,7 +211,7 @@ checkUsername(context, String username) async {
       // Go to Sign Up Methods Page
       Navigator.push(
         context,
-        SwipeablePageRoute(builder: (_) => AddNameAndBirthdayPage()),
+        SwipeablePageRoute(builder: (_) => const AddNameAndBirthdayPage()),
       );
     } else {
       showSnackbar(context, 'Ce nom d\'utilisateur est déjà pris', null);

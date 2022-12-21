@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rxdart/rxdart.dart';
@@ -17,7 +16,6 @@ import 'package:rxdart/subjects.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:vibration/vibration.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/models/message.dart';
 import 'package:wesh/pages/in.pages/forward_to.dart';
@@ -33,7 +31,6 @@ import '../../services/sharedpreferences.service.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/modal.dart';
-import '../../models/user.dart' as UserModel;
 import '../profile.dart';
 import '../settings.pages/bug_report_page.dart';
 
@@ -43,8 +40,13 @@ class InboxPage extends StatefulWidget {
   late Event? eventAttached;
   late Story? storyAttached;
 
-  InboxPage({Key? key, this.discussion, this.eventAttached, required this.userReceiverId, this.storyAttached})
-      : super(key: key);
+  InboxPage({
+    Key? key,
+    this.discussion,
+    this.eventAttached,
+    required this.userReceiverId,
+    this.storyAttached,
+  }) : super(key: key);
 
   @override
   State<InboxPage> createState() => _InboxState();
@@ -108,31 +110,35 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
         messagesSelectedList.addAll(message);
       });
     }
-    print('Selection mode : $isSelectionMode');
-    print('Messages selected list: $messagesSelectedList');
+    debugPrint('Selection mode : $isSelectionMode');
+    debugPrint('Messages selected list: $messagesSelectedList');
+  }
+
+  Future refreshDiscussion() async {
+    if (widget.discussion == null) {
+      // Get Discussion of [anotherUserId] and [Me]
+      List<Discussion> listOfExistingDiscussions = await FirestoreMethods.getListOfExistingDiscussions(
+          userSenderId: FirebaseAuth.instance.currentUser!.uid, userReceiverId: widget.userReceiverId);
+
+      dev.log('listOfExistingDiscussions: ${listOfExistingDiscussions.map((d) => d.discussionId)}');
+      if (listOfExistingDiscussions.isNotEmpty) {
+        setState(() {
+          widget.discussion = listOfExistingDiscussions.first;
+        });
+        dev.log('widget.discussion: ${widget.discussion!.participants}');
+      }
+    }
   }
 
   @override
   void initState() {
     super.initState();
     //
+    refreshDiscussion();
+    //
     recorderController = RecorderController();
     //
-    FirestoreMethods().updateMessagesToStatus3(widget.discussion?.messages.map((m) => m as String).toList() ?? []);
-    //
-    internetSubscription = InternetConnectionChecker().onStatusChange.listen((status) {
-      final hasConnection = status == InternetConnectionStatus.connected;
-      if (!mounted) return;
-      setState(() {
-        isConnected = hasConnection;
-      });
-      if (isConnected) {
-        //
-        // TODO: Update all message text to status 1
-        //
-      }
-      print('isConnected: $isConnected');
-    });
+    FirestoreMethods.updateMessagesToStatus3(widget.discussion?.messages.map((m) => m as String).toList() ?? []);
   }
 
   @override
@@ -203,7 +209,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
       // Delete message.s...
 
       // ignore: use_build_context_synchronously
-      await FirestoreMethods().deleteMessages(context, listOfMessages, deleteDecision[1]);
+      await FirestoreMethods.deleteMessages(context, listOfMessages, deleteDecision[1]);
       disableSelectionMode();
     }
   }
@@ -459,7 +465,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                       children: [
                         // Username + Date OR IsTyping OR IsRecordingVoiceNote
                         StreamBuilder(
-                          stream: FirestoreMethods().getDiscussionById(widget.discussion?.discussionId ?? ''),
+                          stream: FirestoreMethods.getDiscussionById(widget.discussion?.discussionId ?? ''),
                           builder: (context, snapshot) {
                             // Handle error
                             if (snapshot.hasError) {
@@ -474,7 +480,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                       userId != FirebaseAuth.instance.currentUser!.uid &&
                                       !(userId as String).contains('_'))
                                   .toList();
-                              print('otherParticipants: $otherParticipants');
+                              debugPrint('otherParticipants: $otherParticipants');
 
                               // // IF [ANOTHER USER IS] TYPING : only display if Internet Connection is active
                               if (isConnected && streamDiscussion.isTypingList.contains(otherParticipants.first)) {
@@ -501,7 +507,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                   children: [
                                     Lottie.asset(
                                       height: 20,
-                                      'assets/animations/73778-wave-solo.json',
+                                      waves,
                                       // width: double.infinity,
                                     ),
                                   ],
@@ -737,7 +743,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                   :
                   // Chat body
                   StreamBuilder(
-                      stream: FirestoreMethods().getMessagesByDiscussionId(widget.discussion?.discussionId ?? ''),
+                      stream: FirestoreMethods.getMessagesByDiscussionId(widget.discussion?.discussionId ?? ''),
                       builder: (context, snapshot) {
                         // Handle error
                         if (snapshot.hasError) {
@@ -808,7 +814,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                   if (metrics.atEdge) {
                                     bool isBottom = metrics.pixels == 0;
                                     if (isBottom) {
-                                      print('At the bottom');
+                                      debugPrint('At the bottom');
                                       showScrollDownButton.value = false;
                                     }
                                   }
@@ -856,13 +862,17 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                       child: VisibilityDetector(
                                         key: Key(message.messageId),
                                         onVisibilityChanged: (VisibilityInfo info) {
-                                          if (info.visibleFraction == 0 &&
+                                          if (listMsg != null &&
+                                              listMsg!.isNotEmpty &&
+                                              info.visibleFraction == 0 &&
                                               listMsg!.first.messageId == message.messageId) {
                                             if (!mounted) return;
                                             setState(() {
                                               isLastMessageVisible = false;
                                             });
-                                          } else if (info.visibleFraction == 1.0 &&
+                                          } else if (listMsg != null &&
+                                              listMsg!.isNotEmpty &&
+                                              info.visibleFraction == 1.0 &&
                                               listMsg!.first.messageId == message.messageId) {
                                             if (!mounted) return;
                                             setState(() {
@@ -1136,17 +1146,17 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                               setState(() {
                                                 messageTextValue = value.trimLeft().trimRight().trim();
                                               });
-                                              print('Is typing');
+                                              debugPrint('Is typing');
                                               // Add [Me] in IsTypingList
-                                              FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                              FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                                 discussionId: widget.discussion?.discussionId ?? '',
                                                 type: 'isTyping',
                                                 action: 'add',
                                               );
                                               Debouncer(milliseconds: 2000).run(() {
-                                                print('Stop typing');
+                                                debugPrint('Stop typing');
                                                 // Remove [Me] in IsTypingList
-                                                FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                                FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                                   discussionId: widget.discussion?.discussionId ?? '',
                                                   type: 'isTyping',
                                                   action: 'remove',
@@ -1256,7 +1266,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                   voiceNotePath = '';
                                                 });
                                                 // Remove [Me] from IsRecordingVoiceNoteList
-                                                FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                                FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                                   discussionId: widget.discussion?.discussionId ?? '',
                                                   type: 'isRecordingVoiceNote',
                                                   action: 'remove',
@@ -1318,8 +1328,10 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                       await triggerVibration();
 
                                                       // Get last message : NB: last is 1st
-                                                      Message lastMessage = listMsg!.first;
-                                                      scrollTo(listMsg!, lastMessage.messageId);
+                                                      if (listMsg != null && listMsg!.isNotEmpty) {
+                                                        Message lastMessage = listMsg!.first;
+                                                        scrollTo(listMsg!, lastMessage.messageId);
+                                                      }
 
                                                       // Send Voicenote Message
                                                       //
@@ -1330,7 +1342,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                           showVoicenoteBottomBar = false;
                                                         });
                                                         // Remove [Me] from IsRecordingVoiceNoteList
-                                                        FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                                        FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                                           discussionId: widget.discussion?.discussionId ?? '',
                                                           type: 'isRecordingVoiceNote',
                                                           action: 'remove',
@@ -1346,7 +1358,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                           });
                                                           detachEventOrStoryOrMessage();
                                                           //
-                                                          sendMessage(
+                                                          await sendMessage(
                                                             context: context,
                                                             userReceiverId: widget.userReceiverId,
                                                             messageType: 'voicenote',
@@ -1390,6 +1402,9 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                                 ? messageToReply?.thumbnail ?? ''
                                                                 : '',
                                                           );
+
+                                                          //
+                                                          await refreshDiscussion();
                                                         } else {
                                                           // ignore: use_build_context_synchronously
                                                           showSnackbar(context, 'Une erreur s\'est produite', null);
@@ -1430,7 +1445,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                           voiceNotePath = '';
                                                         });
                                                         // Add [Me] to IsRecordingVoiceNoteList
-                                                        FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                                        FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                                           discussionId: widget.discussion?.discussionId ?? '',
                                                           type: 'isRecordingVoiceNote',
                                                           action: 'add',
@@ -1494,7 +1509,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
 
                                       recorderController.record();
                                       // Add [Me] to IsRecordingVoiceNoteList
-                                      FirestoreMethods().updateIsTypingOrIsRecordingVoiceNoteList(
+                                      FirestoreMethods.updateIsTypingOrIsRecordingVoiceNoteList(
                                         discussionId: widget.discussion?.discussionId ?? '',
                                         type: 'isRecordingVoiceNote',
                                         action: 'add',
@@ -1526,11 +1541,13 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                 await triggerVibration();
 
                                 // Get last message : NB: last is 1st
-                                Message lastMessage = listMsg!.first;
-                                scrollTo(listMsg!, lastMessage.messageId);
+                                if (listMsg != null && listMsg!.isNotEmpty) {
+                                  Message lastMessage = listMsg!.first;
+                                  scrollTo(listMsg!, lastMessage.messageId);
+                                }
 
                                 // Send Text Message !
-                                sendMessage(
+                                await sendMessage(
                                   context: context,
                                   userReceiverId: widget.userReceiverId,
                                   messageType: 'text',
@@ -1565,6 +1582,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                 });
                                 //
                                 detachEventOrStoryOrMessage();
+                                await refreshDiscussion();
                               },
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 7),
@@ -1601,7 +1619,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
               onBackspacePressed: () {
                 if (!mounted) return;
                 setState(() {
-                  if (messageTextValue != null && messageTextValue.length > 0) {
+                  if (messageTextValue != null && messageTextValue.isNotEmpty) {
                     messageTextValue = messageTextValue.substring(0, messageTextValue.length - 1);
                   }
                 });
@@ -1609,7 +1627,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
               onEmojiSelected: (category, emoji) {
                 if (!mounted) return;
                 setState(() {
-                  messageTextValue = '${messageTextValue}emoji';
+                  messageTextValue = '$messageTextValue${emoji.emoji}';
                 });
               },
             ),

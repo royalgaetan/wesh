@@ -1,4 +1,4 @@
-final String storiesTable = 'stories';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // FIELDS
 class StoryFields {
@@ -72,8 +72,8 @@ class Story {
         StoryFields.caption: caption,
         StoryFields.videoThumbnail: videoThumbnail,
         StoryFields.eventId: eventId,
-        StoryFields.createdAt: createdAt.toIso8601String(),
-        StoryFields.endAt: endAt.toIso8601String(),
+        StoryFields.createdAt: createdAt,
+        StoryFields.endAt: endAt,
         StoryFields.viewers: viewers,
       };
 
@@ -89,13 +89,11 @@ class Story {
         videoThumbnail: json[StoryFields.videoThumbnail] ?? '',
         eventId: json[StoryFields.eventId] ?? '',
         //
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'])
-            : DateTime.now(),
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate()
+            : DateTime(0),
         //
-        endAt: json['endAt'] != null
-            ? DateTime.parse(json['endAt'])
-            : DateTime.now(),
+        endAt: json['endAt'] != null && json['endAt'] != '' ? (json['endAt'] as Timestamp).toDate() : DateTime(0),
 
         //
         viewers: json[StoryFields.viewers] ?? [],

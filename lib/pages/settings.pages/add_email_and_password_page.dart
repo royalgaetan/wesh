@@ -1,10 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:wesh/pages/settings.pages/account_security_settings.dart';
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../services/sharedpreferences.service.dart';
@@ -26,13 +24,13 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
   late TextEditingController passwordController = TextEditingController();
   late TextEditingController passwordConfirmationController = TextEditingController();
   bool showVisibilityIcon = false;
-  bool showPasswordConfirmation_VisibilityIcon = false;
+  bool showPasswordConfirmationVisibilityIcon = false;
   bool isPswVisible = true;
   bool isPswConfirmationVisible = true;
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     setState(() {
       user = FirebaseAuth.instance.currentUser;
@@ -50,7 +48,7 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     emailController.dispose();
     passwordController.dispose();
@@ -58,15 +56,9 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
   }
 
   checkEmailandPasswordandLinkProvider(context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
     if (isConnected) {
@@ -228,13 +220,13 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                                   if (value != '')
                                     {
                                       setState(() {
-                                        showPasswordConfirmation_VisibilityIcon = true;
+                                        showPasswordConfirmationVisibilityIcon = true;
                                       })
                                     }
                                   else
                                     {
                                       setState(() {
-                                        showPasswordConfirmation_VisibilityIcon = false;
+                                        showPasswordConfirmationVisibilityIcon = false;
                                       })
                                     }
                                 }),

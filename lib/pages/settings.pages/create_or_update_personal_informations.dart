@@ -5,23 +5,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/event.dart';
-import '../../models/user.dart' as UserModel;
-import '../../providers/user.provider.dart';
+import '../../models/user.dart' as usermodel;
 import '../../services/firestorage.methods.dart';
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/addtextmodal.dart';
+import '../../widgets/buildWidgets.dart';
 import '../../widgets/imagepickermodal.dart';
 import '../../widgets/modal.dart';
 import '../../widgets/textfieldcontainer.dart';
 
 class CreateOrUpdatePersonalInformations extends StatefulWidget {
-  final UserModel.User user;
+  final usermodel.User user;
   const CreateOrUpdatePersonalInformations({super.key, required this.user});
 
   @override
@@ -39,7 +38,7 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
 
     // init user personal informations
@@ -52,7 +51,7 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     usernameController.dispose();
@@ -64,79 +63,86 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
   updateProfileWithPersonalInformations() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Upload Profile Picture to Firestorage and getDownloadURL
     String downloadUrl = '';
     if (!profilePicture.contains('https://')) {
-      downloadUrl = await FireStorageMethods().uploadimageToProfilePic(context, profilePicture);
+      downloadUrl = await FireStorageMethods.uploadimageToProfilePic(context, profilePicture);
+      result = true;
     } else {
       downloadUrl = widget.user.profilePicture;
+      result = true;
     }
 
-    // Get user birthday and update that
-    bool resultAboutUserBirthdayUpdate = false;
-    Event? birthday = await FirestoreMethods().getEventByIdAsFuture(widget.user.events![0]);
-    Map<String, Object?> eventToUpdate = Event(
-      eventId: birthday!.eventId,
-      uid: FirebaseAuth.instance.currentUser!.uid,
-      title: 'Anniversaire de ${nameController.text}',
-      caption: birthday.caption,
-      type: birthday.type,
-      link: birthday.link,
-      location: birthday.location,
-      trailing: birthday.trailing,
-      createdAt: birthday.createdAt,
-      modifiedAt: DateTime.now(),
-      eventDurationType: '1DatEvent',
-      eventDurations: [birthday.eventDurations[0]],
-      color: birthday.color,
-      status: '',
-    ).toJson();
+    // ONLY IF PROFILE PICTURE HAS BEEN CORRECTLY UPLOADED
+    if (downloadUrl.isNotEmpty) {
+      if (widget.user.events != null && widget.user.events!.isNotEmpty) {
+        // Get user birthday and update that
+        bool resultAboutUserBirthdayUpdate = false;
 
-    // ignore: use_build_context_synchronously
-    resultAboutUserBirthdayUpdate = await FirestoreMethods().updateEvent(context, birthday.eventId, eventToUpdate);
-    log('Birthday Event updated');
+        Event? birthday = await FirestoreMethods.getEventByIdAsFuture(widget.user.events!.first);
 
-    // UPDATE AN EXISTING ONE
-    if (widget.user != null && downloadUrl.isNotEmpty && resultAboutUserBirthdayUpdate) {
-      // Modeling an user with personal informations
-      Map<String, Object?> userFieldToUpdate = {
-        'profilePicture': downloadUrl,
-        'username': usernameController.text,
-        'name': nameController.text,
-        'bio': bioController.text,
-        'linkinbio': linkController.text,
-      };
+        if (birthday != null) {
+          Map<String, Object?> eventToUpdate = Event(
+            eventId: birthday.eventId,
+            uid: FirebaseAuth.instance.currentUser!.uid,
+            title: 'Anniversaire de ${nameController.text}',
+            caption: birthday.caption,
+            type: birthday.type,
+            link: birthday.link,
+            location: birthday.location,
+            trailing: birthday.trailing,
+            createdAt: birthday.createdAt,
+            modifiedAt: DateTime.now(),
+            eventDurationType: '1DatEvent',
+            eventDurations: [birthday.eventDurations[0]],
+            color: birthday.color,
+            status: '',
+          ).toJson();
 
-      // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateUserWithSpecificFields(context, widget.user.id, userFieldToUpdate);
-      log('Profile updated (with Personal informations)');
-    }
+          log('CC: $result');
+          // ignore: use_build_context_synchronously
+          resultAboutUserBirthdayUpdate = await FirestoreMethods.updateEvent(context, birthday.eventId, eventToUpdate);
+          log('Birthday Event updated');
+        }
+      }
 
-    UserModel.User? user =
+      // UPDATE AN EXISTING ONE
+      if (widget.user != null && downloadUrl.isNotEmpty) {
+        // Modeling an user with personal informations
+        Map<String, Object?> userFieldToUpdate = {
+          'profilePicture': downloadUrl,
+          'username': usernameController.text,
+          'name': nameController.text,
+          'bio': bioController.text,
+          'linkinbio': linkController.text,
+        };
         // ignore: use_build_context_synchronously
-        await Provider.of<UserProvider>(context, listen: false)
-            .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
-    // ignore: use_build_context_synchronously
+        result = await FirestoreMethods.updateUserWithSpecificFields(context, widget.user.id, userFieldToUpdate);
 
-    // ignore: use_build_context_synchronously
-    Navigator.pop(
-      context,
-    );
-    // Pop the Screen once profile updated
-    if (result) {
+        log('Profile updated (with Personal informations)');
+      }
+
+      usermodel.User? user = await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
+
       // ignore: use_build_context_synchronously
       Navigator.pop(context, user);
+      setState(() {
+        isLoading = false;
+      });
 
+      // Pop the Screen once profile updated
+      if (result) {
+        // ignore: use_build_context_synchronously
+        Navigator.pop(context, user);
+
+        // ignore: use_build_context_synchronously
+        showSnackbar(context, 'Votre profil à bien été modifié !', kSuccessColor);
+      }
+    } else {
       // ignore: use_build_context_synchronously
-      showSnackbar(context, 'Votre profil à bien été modifié !', kSuccessColor);
+      Navigator.pop(context);
     }
   }
 
@@ -206,9 +212,6 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                           InkWell(
                               onTap: () async {
                                 // Pick image
-                                // TODO: check image format, size,...
-                                //
-                                //
 
                                 dynamic file = await showModalBottomSheet(
                                   enableDrag: true,
@@ -237,12 +240,11 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                     tag: 'setting_profile_picture_tag_${widget.user.id}',
                                     child: (() {
                                       if (profilePicture.contains('https://')) {
-                                        return CircleAvatar(
+                                        return buildCachedNetworkImage(
+                                          url: profilePicture,
                                           radius: 0.25.sw,
                                           backgroundColor: kGreyColor,
-                                          backgroundImage: NetworkImage(
-                                            profilePicture,
-                                          ),
+                                          paddingOfProgressIndicator: 20,
                                         );
                                       } else if (profilePicture.contains('/data/user/')) {
                                         return CircleAvatar(
@@ -254,19 +256,29 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                       return CircleAvatar(
                                         radius: 0.25.sw,
                                         backgroundColor: kGreyColor,
-                                        backgroundImage: const AssetImage('assets/images/default_profile_picture.jpg'),
+                                        backgroundImage: const AssetImage(defaultProfilePicture),
                                       );
                                     }()),
                                   ),
                                   Transform.translate(
                                     offset: const Offset(-5, -5),
                                     child: CircleAvatar(
+                                      backgroundColor: Colors.white,
                                       radius: 0.06.sw,
-                                      backgroundColor: kSecondColor,
-                                      child: Icon(
-                                        Icons.edit,
-                                        color: Colors.white,
-                                        size: 16.sp,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(3),
+                                        child: CircleAvatar(
+                                          backgroundColor: kSecondColor,
+                                          radius: 0.06.sw,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(3),
+                                            child: Icon(
+                                              Icons.edit,
+                                              color: Colors.white,
+                                              size: 17.sp,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   )
@@ -514,7 +526,7 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                 setState(() {
                   isLoading = true;
                 });
-                var isConnected = await InternetConnection().isConnected(context);
+                var isConnected = await InternetConnection.isConnected(context);
                 if (mounted) {
                   setState(() {
                     isLoading = false;
@@ -553,8 +565,8 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                   width: double.infinity,
                   height: double.infinity,
                   color: Colors.black.withOpacity(0.4),
-                  child: const Center(
-                    child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
+                  child: Center(
+                    child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
                   ),
                 )
               : Container(),

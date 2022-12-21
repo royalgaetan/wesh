@@ -8,7 +8,7 @@ import 'modal.dart';
 class ReminderCard extends StatefulWidget {
   final Reminder reminder;
 
-  ReminderCard({required this.reminder});
+  const ReminderCard({Key? key, required this.reminder}) : super(key: key);
 
   @override
   State<ReminderCard> createState() => _EventCardState();
@@ -17,13 +17,14 @@ class ReminderCard extends StatefulWidget {
 class _EventCardState extends State<ReminderCard> {
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.translucent,
       onTap: () {
         // Show ReminderView Modal
         showModalBottomSheet(
@@ -52,7 +53,7 @@ class _EventCardState extends State<ReminderCard> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: CircleAvatar(
-                    radius: 22,
+                    radius: 0.07.sw,
                     child: widget.reminder.eventId.isEmpty
                         ? const Icon(
                             FontAwesomeIcons.calendar,

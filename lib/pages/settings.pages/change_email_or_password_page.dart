@@ -6,7 +6,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/add_email.dart';
 import 'package:wesh/pages/auth.pages/createpassword_and_confirm.dart';
-
 import '../../services/sharedpreferences.service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/setting_card.dart';
@@ -22,7 +21,7 @@ class _ChangeEmailOrPasswordPageState extends State<ChangeEmailOrPasswordPage> {
   User? user;
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     setState(() {
       user = FirebaseAuth.instance.currentUser;

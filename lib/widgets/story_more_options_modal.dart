@@ -1,19 +1,18 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:external_path/external_path.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:uuid/uuid.dart';
 import '../models/story.dart';
-import '../providers/user.provider.dart';
+import '../pages/settings.pages/bug_report_page.dart';
 import '../services/dynamiclink.service.dart';
 import '../services/firestore.methods.dart';
 import '../services/internet_connection_checker.dart';
@@ -37,237 +36,221 @@ class _StoryAllViewerModalState extends State<StoryMoreOptionsModal> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.only(top: 20, bottom: 10, left: 20, right: 20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // HEADER
-          const Text(
-            'Plus d\'options',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-              fontSize: 19,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // HEADER
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Plus d\'options',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 17.sp,
+              ),
             ),
-          ),
-          // BODY
-          const SizedBox(
-            height: 25,
-          ),
-          Row(
-            children: [
-              // Delete story
+          ],
+        ),
+        // BODY
+        const SizedBox(
+          height: 25,
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Delete story
 
-              widget.isSuppressionBtnAllowed && widget.story.uid == FirebaseAuth.instance.currentUser!.uid
-                  ? Expanded(
-                      child: buttonPicker(
-                        icon: const Icon(FontAwesomeIcons.trash, color: Colors.white, size: 21),
-                        label: 'Supprimer',
-                        widgetColor: Colors.red,
-                        function: () async {
-                          // Delete Story
+            widget.isSuppressionBtnAllowed && widget.story.uid == FirebaseAuth.instance.currentUser!.uid
+                ? Expanded(
+                    child: buttonPicker(
+                      icon: Icon(Icons.bug_report_outlined, color: Colors.white, size: 21.sp),
+                      label: 'Un problème ?',
+                      widgetColor: Colors.red,
+                      function: () async {
+                        // Redirect Bug Report Page
+                        Navigator.push(context, SwipeablePageRoute(builder: (context) => const BugReportPage()));
+                      },
+                    ),
+                  )
+                : Container(),
 
-                          // Show Delete Decision Modal
-                          List deleteDecision = await showModalDecision(
-                            context: context,
-                            header: 'Supprimer',
-                            content: 'Voulez-vous supprimer définitivement cette story ?',
-                            firstButton: 'Annuler',
-                            secondButton: 'Supprimer',
-                          );
+            // Take a Story Screenshot: if StoryType == 'text' or 'image'
+            widget.story.storyType == 'text' || widget.story.storyType == 'image'
+                ? Expanded(
+                    child: buttonPicker(
+                      icon: Icon(CupertinoIcons.viewfinder, color: Colors.white, size: 21.sp),
+                      label: 'Capturer',
+                      widgetColor: Colors.grey.shade500,
+                      function: () async {
+                        // Take Story screenshot
 
-                          if (deleteDecision[0] == true) {
-                            // Delete event...
+                        // Check WRITE_EXTERNAL_STORAGE permission
+                        if (await Permission.storage.request().isGranted) {
+                          //
+                          showFullPageLoader(context: context, color: Colors.white);
+                          //
+                          List directories = await getDirectories();
+
+                          final filename = '${appName}_story_${getUniqueId()}.jpg';
+                          widget.storySreenshotController
+                              .captureAndSave('${directories[0]}/$appName/${getSpecificDirByType('story')}',
+                                  fileName: filename)
+                              .then((value) {
+                            // Dismiss loader
                             // ignore: use_build_context_synchronously
-                            bool result = await FirestoreMethods()
-                                .deleteStory(context, widget.story.storyId, FirebaseAuth.instance.currentUser!.uid);
-                            if (result) {
-                              debugPrint('Story deleted !');
-
+                            Navigator.of(context).pop();
+                            log('Screenshot: $value');
+                            if (value!.contains('${appName}_story_')) {
                               // ignore: use_build_context_synchronously
                               Navigator.pop(
                                 context,
                               );
+                              showSnackbar(context, 'La story a bien été enregistrée !', kSuccessColor);
+                            } else {
                               // ignore: use_build_context_synchronously
-                              showSnackbar(context, 'Votre story à bien été supprimée !', kSecondColor);
+                              Navigator.pop(
+                                context,
+                              );
+                              showSnackbar(context, 'Une erreur s\'est produite !', null);
                             }
-                          }
-                        },
-                      ),
-                    )
-                  : Container(),
+                          });
+                        } else {
+                          //
+                          log('Permission isn\'t  granted !');
 
-              // Take a Story Screenshot: if StoryType == 'text' or 'image'
-              widget.story.storyType == 'text' || widget.story.storyType == 'image'
-                  ? Expanded(
-                      child: buttonPicker(
-                        icon: const Icon(FontAwesomeIcons.expand, color: Colors.white, size: 21),
-                        label: 'Capturer',
-                        widgetColor: Colors.grey.shade500,
-                        function: () async {
-                          // Take Story screenshot
+                          // ignore: use_build_context_synchronously
+                          Navigator.pop(
+                            context,
+                          );
+                          showSnackbar(context,
+                              'Nous avons besoin d\'une permission pour enregistrer des captures d\'écran !', null);
+                        }
+                      },
+                    ),
+                  )
+                : Container(),
 
-                          // Check WRITE_EXTERNAL_STORAGE permission
-                          if (await Permission.storage.request().isGranted) {
-                            List directories = await getDirectories();
+            // Share : Show Share Modal
+            Expanded(
+              child: buttonPicker(
+                icon: Icon(Icons.share_rounded, color: Colors.white, size: 21.sp),
+                label: 'Partager',
+                widgetColor: Colors.lightBlue.shade500,
+                function: () async {
+                  // Share story
+                  bool result = false;
 
-                            final filename = '${appName}_story_${const Uuid().v4()}.jpg';
-                            widget.storySreenshotController
-                                .captureAndSave('${directories[0]}/$appName/${getSpecificDirByType('story')}',
-                                    fileName: filename)
-                                .then((value) {
-                              debugPrint('Screenshot: $value');
-                              if (value!.contains('${appName}_story_')) {
-                                // ignore: use_build_context_synchronously
-                                Navigator.pop(
-                                  context,
-                                );
-                                showSnackbar(context, 'La story a bien été enregistrée !', kSuccessColor);
-                              } else {
-                                // ignore: use_build_context_synchronously
-                                Navigator.pop(
-                                  context,
-                                );
-                                showSnackbar(context, 'Une erreur s\'est produite !', null);
-                              }
-                            });
-                          } else {
-                            //
-                            debugPrint('Permission isn\'t  granted !');
+                  // Case 1: text || image
+                  if (widget.story.storyType == 'text' || widget.story.storyType == 'image') {
+                    await widget.storySreenshotController
+                        .capture(delay: const Duration(milliseconds: 10))
+                        .then((Uint8List? image) async {
+                      if (image != null) {
+                        try {
+                          // Create Wesh Story file [ApplicationDocumentsDirectory]
+                          final directory = await getApplicationDocumentsDirectory();
 
-                            // ignore: use_build_context_synchronously
-                            Navigator.pop(
-                              context,
-                            );
-                            showSnackbar(context,
-                                'Nous avons besoin d\'une permission pour enregistrer des captures d\'écran !', null);
-                          }
-                        },
-                      ),
-                    )
-                  : Container(),
+                          var filename = '${appName}_story_${getUniqueId()}.jpg';
+                          File('${directory.path}/${getSpecificDirByType('story')}/$filename')
+                              .createSync(recursive: true);
 
-              // Share : Show Share Modal
-              Expanded(
-                child: buttonPicker(
-                  icon: const Icon(FontAwesomeIcons.share, color: Colors.white, size: 21),
-                  label: 'Partager',
-                  widgetColor: Colors.lightBlue.shade500,
-                  function: () async {
-                    // Share story
-                    bool result = false;
+                          final imagePath = await File('${directory.path}/${getSpecificDirByType('story')}/$filename')
+                              .writeAsBytes(image);
+                          log('Story to share: ${imagePath.path}');
 
-                    // Case 1: text || image
-                    if (widget.story.storyType == 'text' || widget.story.storyType == 'image') {
-                      await widget.storySreenshotController
-                          .capture(delay: const Duration(milliseconds: 10))
-                          .then((Uint8List? image) async {
-                        if (image != null) {
-                          try {
-                            // Create Wesh Story file [ApplicationDocumentsDirectory]
-                            final directory = await getApplicationDocumentsDirectory();
-
-                            var filename = '${appName}_story_${const Uuid().v4()}.jpg';
-                            File('${directory.path}/${getSpecificDirByType('story')}/$filename')
-                                .createSync(recursive: true);
-
-                            final imagePath = await File('${directory.path}/${getSpecificDirByType('story')}/$filename')
-                                .writeAsBytes(image);
-                            debugPrint('Story to share: ${imagePath.path}');
-
-                            /// Share Plugin
-                            await Share.shareFiles([imagePath.path]).onError((error, stackTrace) {
-                              debugPrint('Erreur : $error');
-                              setState(() {
-                                result = false;
-                              });
-                            }).then((value) {
-                              debugPrint('Share succeeded');
-                              setState(() {
-                                result = true;
-                              });
-                            });
-                          } catch (e) {
-                            debugPrint('Erreur : $e');
+                          /// Share Plugin
+                          await Share.shareFiles([imagePath.path]).onError((error, stackTrace) {
+                            log('Erreur : $error');
                             setState(() {
                               result = false;
                             });
-                          }
-                        } else {
-                          debugPrint('An error occured !');
+                          }).then((value) {
+                            log('Share succeeded');
+                            setState(() {
+                              result = true;
+                            });
+                          });
+                        } catch (e) {
+                          log('Erreur : $e');
                           setState(() {
                             result = false;
                           });
                         }
-                      });
-                    }
-                    // Case 2: video
-                    else if (widget.story.storyType == 'video') {
-                      // Check internet connection
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => Center(
-                          child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-                        ),
-                      );
-                      var isConnected = await InternetConnection().isConnected(context);
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(
-                        context,
-                      );
-                      if (isConnected) {
-                        debugPrint("Has connection : $isConnected");
-                        // CONTINUE
-                        /// Get PsterUser name
-                        var userPosterName =
-                            await Provider.of<UserProvider>(context, listen: false).getFutureUserById(widget.story.uid);
-
-                        String _shortenURL = '';
-
-                        /// Shorten video link
-                        _shortenURL = await DynamicLinksService.createDynamicLink(widget.story.content);
-
-                        /// Share Plugin
-                        if (userPosterName != null) {
-                          await Share.share('$appName Story de ${userPosterName.name}: 🔗 $_shortenURL')
-                              .onError((error, stackTrace) {
-                            debugPrint('Erreur : $error');
-                            result = false;
-                          }).then((value) {
-                            debugPrint('Share succeeded');
-                            debugPrint('Video text msg is: $appName Story de ${userPosterName.name}: 🔗$_shortenURL');
-                            result = true;
-                          });
-                        } else {
-                          result = false;
-                        }
-
-                        // Check result
-                        if (result) {
-                          // ignore: use_build_context_synchronously
-                          Navigator.pop(
-                            context,
-                          );
-                        } else {
-                          // ignore: use_build_context_synchronously
-                          Navigator.pop(
-                            context,
-                          );
-                          // ignore: use_build_context_synchronously
-                          showSnackbar(context, 'Une erreur s\'est produite !', null);
-                        }
                       } else {
-                        debugPrint("Has connection : $isConnected");
-                        // ignore: use_build_context_synchronously
-                        showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
+                        log('An error occured !');
+                        setState(() {
+                          result = false;
+                        });
                       }
+                    });
+                  }
+                  // Case 2: video
+                  else if (widget.story.storyType == 'video') {
+                    // Check internet connection
+
+                    //
+                    showFullPageLoader(context: context, color: Colors.white);
+                    //
+
+                    var isConnected = await InternetConnection.isConnected(context);
+                    // ignore: use_build_context_synchronously
+                    Navigator.pop(
+                      context,
+                    );
+                    if (isConnected) {
+                      log("Has connection : $isConnected");
+                      // CONTINUE
+                      /// Get PsterUser name
+                      var userPosterName = await FirestoreMethods.getUserByIdAsFuture(widget.story.uid);
+
+                      String _shortenURL = '';
+
+                      /// Shorten video link
+                      _shortenURL = await DynamicLinksService.createDynamicLink(widget.story.content);
+
+                      /// Share Plugin
+                      if (userPosterName != null) {
+                        await Share.share('$appName Story de ${userPosterName.name}: 🔗 $_shortenURL')
+                            .onError((error, stackTrace) {
+                          log('Erreur : $error');
+                          result = false;
+                        }).then((value) {
+                          log('Share succeeded');
+                          log('Video text msg is: $appName Story de ${userPosterName.name}: 🔗$_shortenURL');
+                          result = true;
+                        });
+                      } else {
+                        result = false;
+                      }
+
+                      // Check result
+                      if (result) {
+                        // ignore: use_build_context_synchronously
+                        Navigator.pop(
+                          context,
+                        );
+                      } else {
+                        // ignore: use_build_context_synchronously
+                        Navigator.pop(
+                          context,
+                        );
+                        // ignore: use_build_context_synchronously
+                        showSnackbar(context, 'Une erreur s\'est produite !', null);
+                      }
+                    } else {
+                      log("Has connection : $isConnected");
+                      // ignore: use_build_context_synchronously
+                      showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
                     }
-                  },
-                ),
+                  }
+                },
               ),
-            ],
-          )
-        ]));
+            ),
+          ],
+        )
+      ]),
+    );
   }
 }

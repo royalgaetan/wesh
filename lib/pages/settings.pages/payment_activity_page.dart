@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/widgets/payment_card.dart';
-
 import '../../models/payment.dart';
 import '../../services/firestore.methods.dart';
+import '../../utils/constants.dart';
 import '../../widgets/buildWidgets.dart';
 
 class PaymentActivityPage extends StatefulWidget {
@@ -77,7 +75,7 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
           children: [
             // PAYMENT SENT
             StreamBuilder<List<Payment>>(
-              stream: FirestoreMethods().getPaymentBySenderId(FirebaseAuth.instance.currentUser!.uid),
+              stream: FirestoreMethods.getPaymentBySenderId(FirebaseAuth.instance.currentUser!.uid),
               builder: (context, snapshot) {
                 // Handle error
                 if (snapshot.hasError) {
@@ -97,7 +95,7 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
                 // handle data
                 if (snapshot.hasData && snapshot.data != null) {
                   List<Payment> listPayment = snapshot.data as List<Payment>;
-                  log('listReminder: $listPayment');
+
                   listPayment.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                   if (listPayment.isEmpty) {
@@ -110,7 +108,7 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
                         children: [
                           Lottie.asset(
                             height: 150,
-                            'assets/animations/112136-empty-red.json',
+                            empty,
                             width: double.infinity,
                           ),
                           const SizedBox(
@@ -152,7 +150,7 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
 
             // PAYMENT RECEIVED
             StreamBuilder<List<Payment>>(
-              stream: FirestoreMethods().getPaymentByReceiverId(FirebaseAuth.instance.currentUser!.uid),
+              stream: FirestoreMethods.getPaymentByReceiverId(FirebaseAuth.instance.currentUser!.uid),
               builder: (context, snapshot) {
                 // Handle error
                 if (snapshot.hasError) {
@@ -172,7 +170,7 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
                 // handle data
                 if (snapshot.hasData && snapshot.data != null) {
                   List<Payment> listPayment = snapshot.data as List<Payment>;
-                  log('listReminder: $listPayment');
+
                   listPayment.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                   if (listPayment.isEmpty) {
@@ -184,8 +182,8 @@ class _PaymentActivityPageState extends State<PaymentActivityPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Lottie.asset(
+                            empty,
                             height: 150,
-                            'assets/animations/112136-empty-red.json',
                             width: double.infinity,
                           ),
                           const SizedBox(

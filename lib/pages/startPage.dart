@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_information/device_information.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,21 +10,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:telephony/telephony.dart';
 import 'package:wesh/pages/addpage.dart';
 import 'package:wesh/pages/homePage.dart';
 import 'package:wesh/pages/discussions.dart';
+import 'package:wesh/pages/in.pages/happy_birthday_page.dart';
 import 'package:wesh/pages/in.pages/introductionpages.dart';
 import 'package:wesh/pages/in.pages/settings.dart';
 import 'package:wesh/pages/profile.dart';
 import 'package:wesh/pages/stories.dart';
 import 'package:wesh/utils/constants.dart';
+import '../models/feedback.dart';
 import '../models/message.dart';
-import '../models/user.dart' as UserModel;
-import '../providers/user.provider.dart';
+import '../models/user.dart' as usermodel;
 import '../services/firestore.methods.dart';
 import '../services/notifications_api.dart';
 import '../services/sharedpreferences.service.dart';
@@ -50,10 +49,10 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
   final Telephony telephony = Telephony.instance;
 
   final List<Widget> _pages = [
-    HomePage(),
-    MessagesPage(),
+    const HomePage(),
+    const MessagesPage(),
     const AddPage(),
-    StoriesPage(),
+    const StoriesPage(),
     ProfilePage(uid: FirebaseAuth.instance.currentUser!.uid, showBackButton: false),
   ];
 
@@ -91,12 +90,12 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
         // Trigger Notification for that message
         // Get Current User | + Infos, settings
-        UserModel.User? currentUser = await FirestoreMethods().getUser(FirebaseAuth.instance.currentUser!.uid);
+        usermodel.User? currentUser = await FirestoreMethods.getUser(FirebaseAuth.instance.currentUser!.uid);
 
         // Filter Message received
         if (currentUser != null && currentUser.settingShowMessagesNotifications == true) {
           // Get User Sender Name
-          UserModel.User? userSender = await FirestoreMethods().getUser(lastMessage.senderId);
+          usermodel.User? userSender = await FirestoreMethods.getUser(lastMessage.senderId);
 
           if (userSender != null &&
               lastMessage.status == 1 &&
@@ -126,8 +125,11 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
+
     super.initState();
+    //
+    wishHappyBirthday();
 
     listenToIncomingMessages();
     //
@@ -135,7 +137,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     listenNotification();
 
     //
-    pageController = PageController(initialPage: 4);
+    pageController = PageController(initialPage: widget.initTabIndex ?? 4);
     widget.initTabIndex != null ? navigateThroughTab(widget.initTabIndex!) : null;
     //
     WidgetsBinding.instance.addObserver(this);
@@ -151,7 +153,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         Navigator.push(
           context,
           SwipeablePageRoute(
-            builder: (context) => IntroductionScreensPage(),
+            builder: (context) => const IntroductionScreensPage(),
           ),
         );
       });
@@ -168,11 +170,59 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     _intentDataStreamSubscription.cancel();
     WidgetsBinding.instance.removeObserver(this);
+  }
+
+  Future wishHappyBirthday() async {
+    // log('DDD: ${UserSimplePreferences.getHappyBirthdayDateTimeWish()}');
+
+    usermodel.User? currentUser = await FirestoreMethods.getUser(FirebaseAuth.instance.currentUser!.uid);
+    // Check UserPreferences
+    int? happyBirthdayDateTimeSaved = UserSimplePreferences.getHappyBirthdayDateTimeWish();
+    log('Birthday DateTime Saved: $happyBirthdayDateTimeSaved');
+
+    // Check if the today is the birthday of the current user
+    if (currentUser != null &&
+        currentUser.birthday.month == DateTime.now().month &&
+        currentUser.birthday.day == DateTime.now().day) {
+      //
+      if (happyBirthdayDateTimeSaved != null && happyBirthdayDateTimeSaved == DateTime.now().year) {
+        log('Has already received Birthday Wishes');
+      } else {
+        //  Redirect to HappyBirthday Page
+        // ignore: use_build_context_synchronously
+        bool? result = await Navigator.push(
+            context,
+            SwipeablePageRoute(
+              builder: (context) => HappyBirthdayPage(currentUser: currentUser),
+            ));
+        log('Finished');
+        //
+
+        if (result == true) {
+          // Send 'THANK YOU AS FEEDBACK'
+
+          // Modeling a new feedback model
+          Map<String, Object?> feedbackToSend = FeedBack(
+            feedbackId: '',
+            uid: FirebaseAuth.instance.currentUser!.uid,
+            name: currentUser.name,
+            content: 'Merci beaucoup d\'avoir pensé à moi le jour de mon anniversaire',
+            reactionTitle: 'Excellent',
+            reactionEmoji: '🥰',
+            createdAt: DateTime.now(),
+          ).toJson();
+
+          // ignore: use_build_context_synchronously
+          result = await FirestoreMethods.sendFeedback(context, feedbackToSend);
+          log('Feedback [FOR MY BIRTHDAY] sent : $feedbackToSend');
+        }
+      }
+    }
   }
 
   redirectToForwardPage() {
@@ -182,7 +232,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
       List<Map<String, Object>> mediaSharedList =
           _sharedFiles.map((file) => {'data': file.path, 'type': file.type}).toList();
-      print('get shared files [WHILE THE APP IS OPEN] : $mediaSharedList');
+      debugPrint('get shared files [WHILE THE APP IS OPEN] : $mediaSharedList');
 
       if (mediaSharedList.isNotEmpty) {
         // Redirect to ForwardToPage
@@ -194,7 +244,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         ), (route) => false);
       }
     }, onError: (err) {
-      print("getIntentDataStream error: $err");
+      debugPrint("getIntentDataStream error: $err");
     });
 
     // For sharing files coming from outside the app while the app is closed
@@ -203,7 +253,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
       List<Map<String, Object>> mediaSharedList =
           _sharedFiles.map((file) => {'data': file.path, 'type': file.type}).toList();
-      print('get shared files [APP INITIALLY CLOSED] : $mediaSharedList');
+      debugPrint('get shared files [APP INITIALLY CLOSED] : $mediaSharedList');
 
       if (mediaSharedList.isNotEmpty) {
         // Redirect to ForwardToPage
@@ -220,7 +270,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     _intentDataStreamSubscription = ReceiveSharingIntent.getTextStream().listen((String value) {
       _sharedText = value;
       String textShared = _sharedText;
-      print('get shared text : $textShared');
+      debugPrint('get shared text : $textShared');
 
       // Redirect to ForwardToPage
       if (textShared.isNotEmpty) {
@@ -235,14 +285,14 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         ), (route) => false);
       }
     }, onError: (err) {
-      print("getLinkStream error: $err");
+      debugPrint("getLinkStream error: $err");
     });
 
     // For sharing or opening urls/text coming from outside the app while the app is closed
     ReceiveSharingIntent.getInitialText().then((String? value) {
       _sharedText = value ?? '';
       String textShared = _sharedText;
-      print('get shared text [APP INITIALLY CLOSED] : $textShared');
+      debugPrint('get shared text [APP INITIALLY CLOSED] : $textShared');
       if (textShared.isNotEmpty && value != null) {
         // Redirect to ForwardToPage
         Navigator.pushAndRemoveUntil(widget.context, SwipeablePageRoute(
@@ -262,9 +312,9 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     // this will be loop after back from openAppSettings()
     // and when calling requestPermission();
-    print('#didChangeApplifeCycleState $state');
+    debugPrint('#didChangeApplifeCycleState $state');
     if (state == AppLifecycleState.resumed) {
-      print('#didChangeApplifeCycleState state is resume');
+      debugPrint('#didChangeApplifeCycleState state is resume');
       if (_shouldRequestPermission) {
         _shouldRequestPermission = false;
         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -284,7 +334,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
           String platformVersion = await DeviceInformation.platformVersion;
           dynamic apiLevel = await DeviceInformation.apiLevel;
 
-          print('Device platformVersion: $platformVersion');
+          debugPrint('Device platformVersion: $platformVersion');
 
           if (int.parse((platformVersion.split(' ')[1]).split('.').first) >= 11) {
             if (await Permission.manageExternalStorage.request().isGranted) {
@@ -358,8 +408,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     var valueToRedirect1 = UserSimplePreferences.getRedirectToAddEmailandPasswordPageValue() ?? false;
     debugPrint("Redirect to Setting Page [START PAGE]: $valueToRedirect1 ");
     if (valueToRedirect1) {
-      UserModel.User? user = await Provider.of<UserProvider>(context, listen: false)
-          .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+      usermodel.User? user = await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
@@ -374,10 +423,9 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     var valueToRedirect2 = UserSimplePreferences.getRedirectToAddEmailPageValue() ?? false;
     debugPrint("Redirect2 to Setting Page [START PAGE]: $valueToRedirect2 ");
     if (valueToRedirect2) {
-      UserModel.User? user =
+      usermodel.User? user =
           // ignore: use_build_context_synchronously
-          await Provider.of<UserProvider>(context, listen: false)
-              .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+          await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,
@@ -392,10 +440,9 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     var valueToRedirect3 = UserSimplePreferences.getRedirectToUpdatePasswordPageValue() ?? false;
     debugPrint("Redirect3 to Setting Page [START PAGE]: $valueToRedirect3 ");
     if (valueToRedirect3) {
-      UserModel.User? user =
+      usermodel.User? user =
           // ignore: use_build_context_synchronously
-          await Provider.of<UserProvider>(context, listen: false)
-              .getFutureUserById(FirebaseAuth.instance.currentUser!.uid);
+          await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         Navigator.push(
           context,

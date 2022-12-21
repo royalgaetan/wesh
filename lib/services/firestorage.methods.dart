@@ -1,15 +1,11 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wesh/services/firestore.methods.dart';
@@ -18,21 +14,14 @@ import '../utils/constants.dart';
 import '../utils/functions.dart';
 
 class FireStorageMethods {
-  Future<String> uploadimageToProfilePic(context, String filepath) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
-
-    if (filepath == '') {
+  static Future<String> uploadimageToProfilePic(context, String filepath) async {
+    if (filepath.isEmpty) {
       var ref = FirebaseStorage.instance.ref('profilepictures/default_profile_picture.jpg');
       //  Update Firestore
       String downloadUrl = await ref.getDownloadURL();
-      await FirestoreMethods().updateCurrentUserProfilePictureToDB(context, downloadUrl);
-      Navigator.of(context).pop();
+
+      await FirestoreMethods.updateCurrentUserProfilePictureToDB(context, downloadUrl);
+
       return downloadUrl;
 
       //
@@ -40,11 +29,18 @@ class FireStorageMethods {
       File file = File(filepath);
       String finalName = 'profilepic_${FirebaseAuth.instance.currentUser!.uid}.jpg';
       try {
-        // Compress File
-        // TODO: Compress file function here
+        // Check file size : limit to 15MB
+        if (file.lengthSync() > fileLimitSize15MB) {
+          showSnackbar(context, 'Votre image ne doit pas dépasser 15MB', null);
+          log('FILE SIZE ${file.lengthSync() / 1000000}');
+          return '';
+        }
         //
-        //
-        //
+        // Compress File : size > 2MB
+        else if (file.lengthSync() > fileLimitSize2MB) {
+          // Resize file
+          file = await resizeImageFile(filePath: file.path);
+        }
 
         // Upload to FireStorage
         var ref = FirebaseStorage.instance.ref('profilepictures/$finalName');
@@ -53,14 +49,13 @@ class FireStorageMethods {
 
         //  Update Firestore
         String downloadUrl = await ref.getDownloadURL();
-        await FirestoreMethods().updateCurrentUserProfilePictureToDB(context, downloadUrl);
-        Navigator.of(context).pop();
+
+        await FirestoreMethods.updateCurrentUserProfilePictureToDB(context, downloadUrl);
 
         //
         return downloadUrl;
       } catch (e) {
         log("Error : $e");
-
         showSnackbar(context, 'Une erreur s\'est produite', null);
         return '';
       }
@@ -68,27 +63,32 @@ class FireStorageMethods {
     return '';
   }
 
-  Future<String> uploadimageToEventCover(context, String filepath) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+  static Future<List> uploadimageToEventCover(context, String filepath) async {
+    showFullPageLoader(context: context);
     String downloadUrl = '';
     if (filepath == '') {
       Navigator.of(context).pop();
-      return downloadUrl;
-    } else if (filepath.isNotEmpty) {
+      return [true, downloadUrl];
+    }
+    //
+    else if (filepath.isNotEmpty) {
       File file = File(filepath);
-      String finalName = 'eventcover_${const Uuid().v4()}.jpg';
+      String finalName = 'eventcover_${getUniqueId()}.jpg';
       try {
         // Compress File
-        // TODO: Compress file function here
+        // Check file size : limit to 15MB
+        if (file.lengthSync() > fileLimitSize15MB) {
+          Navigator.of(context).pop();
+          showSnackbar(context, 'Votre image de couverture ne doit pas dépasser 15MB', null);
+          log('FILE SIZE ${file.lengthSync() / 1000000}');
+          return [false, ''];
+        }
         //
-        //
-        //
+        // Compress File : size > 2MB
+        else if (file.lengthSync() > fileLimitSize2MB) {
+          // Resize file
+          file = await resizeImageFile(filePath: file.path);
+        }
 
         // Upload to FireStorage
         var ref = FirebaseStorage.instance.ref('eventcovers/$finalName');
@@ -98,21 +98,25 @@ class FireStorageMethods {
 
         downloadUrl = await ref.getDownloadURL();
 
-        return downloadUrl;
+        return [true, downloadUrl];
       } catch (e) {
-        showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+        log('Error:$e');
+        showSnackbar(context, 'Une erreur s\'est produite', null);
         downloadUrl = '';
-        return downloadUrl;
+
+        Navigator.of(context).pop();
+        return [false, ''];
       }
     }
-    return downloadUrl;
+    Navigator.of(context).pop();
+    return [false, ''];
   }
 
   ////////////////// MESSAGE
   //////////////////
   //////////////////
 
-  Stream<num> uploadMessageFile({
+  static Stream<num> uploadMessageFile({
     required BuildContext context,
     required String filepath,
     required String messageId,
@@ -138,20 +142,20 @@ class FireStorageMethods {
     // Get file info
     File file = File(filepath);
     String fileNameAndExtension = basename(filepath);
-    print('File: $file');
-    print('File & ext. : $fileNameAndExtension');
+    debugPrint('File: $file');
+    debugPrint('File & ext. : $fileNameAndExtension');
 
     // Get thumbnail info
     File thumbailFile = File(thumbnailPath);
     String thumbnailFileNameAndExtension = basename(thumbnailPath);
-    print('Thumbnail: $thumbnailPath');
-    print('Thumbnail & ext. : $thumbnailFileNameAndExtension');
+    debugPrint('Thumbnail: $thumbnailPath');
+    debugPrint('Thumbnail & ext. : $thumbnailFileNameAndExtension');
 
     String downloadUrl = '';
     String thumbnailDownloadUrl = '';
 
     // Check Internet Connection
-    var isConnected = await InternetConnection().isConnected(context);
+    var isConnected = await InternetConnection.isConnected(context);
     if (!isConnected) {
       // ignore: use_build_context_synchronously
       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
@@ -184,7 +188,7 @@ class FireStorageMethods {
     }
 
     // Check file size : limit to 15MB
-    if (file.lengthSync() > fileLimitSize) {
+    if (file.lengthSync() > fileLimitSize15MB) {
       // ignore: use_build_context_synchronously
       showSnackbar(context, 'Votre fichier ne doit pas dépasser 15MB', null);
       log('FILE SIZE ${file.lengthSync() / 1000000}');
@@ -205,18 +209,18 @@ class FireStorageMethods {
         try {
           bool valuePutFileTask = await putFileTask.cancel();
           // bool valuePutThumbnailFileTask = await putThumbnailFileTask.cancel();
-          print('Put File Task: $putFileTask');
-          // print('Put Thumbnail File Task: $valuePutThumbnailFileTask');
+          debugPrint('Put File Task: $putFileTask');
+          // debugPrint('Put Thumbnail File Task: $valuePutThumbnailFileTask');
           return;
         } catch (e) {
-          print('Error while uploading file: $e');
+          debugPrint('Error while uploading file: $e');
         }
       }
     });
 
     // Continue uploading
     putFileTask.snapshotEvents.listen((event) async {
-      print("Bytes: ${event.bytesTransferred}");
+      debugPrint("Bytes: ${event.bytesTransferred}");
       // Increase progressValue : up to 70x
       progressStreamController.add(event.bytesTransferred.toDouble() / event.totalBytes.toDouble() * 70);
 
@@ -230,13 +234,13 @@ class FireStorageMethods {
           Task putThumbnailFileTask = refThumbnail.putFile(thumbailFile);
 
           putThumbnailFileTask.snapshotEvents.listen((event) async {
-            print('Thumbnail Bytes tranfered : ${event.bytesTransferred}');
+            debugPrint('Thumbnail Bytes tranfered : ${event.bytesTransferred}');
             // Increase progressValue : up to 22x
             progressStreamController.add((event.bytesTransferred.toDouble() / event.totalBytes.toDouble() * 22) + 70);
 
             if (thumbailFile.lengthSync() == event.bytesTransferred) {
               thumbnailDownloadUrl = await refThumbnail.getDownloadURL();
-              print('Thumbnail Download URL : $thumbnailDownloadUrl');
+              debugPrint('Thumbnail Download URL : $thumbnailDownloadUrl');
             }
           });
         }
@@ -286,16 +290,10 @@ class FireStorageMethods {
   //////////////////
   //////////////////
 
-  Future<String> uploadStoryContent(context, dynamic filepath, String type) async
+  static Future<List> uploadStoryContent(context, dynamic filepath, String type) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     File file = File(filepath);
     String finalName = '';
@@ -304,48 +302,60 @@ class FireStorageMethods {
 
     if (filepath == '') {
       Navigator.of(context).pop();
-      return downloadUrl;
+      return [false, ''];
     }
     //
     else if (filepath.isNotEmpty) {
       if (type == 'video') {
         extension = 'mp4';
-        finalName = 'story_video_${const Uuid().v4()}.$extension';
+        finalName = 'story_video_${getUniqueId()}.$extension';
       }
       //
       else if (type == 'image') {
         extension = 'jpg';
-        finalName = 'story_image_${const Uuid().v4()}.$extension';
+        finalName = 'story_image_${getUniqueId()}.$extension';
       }
       //
       else if (type == 'vidThumbnail') {
         extension = 'png';
-        finalName = 'story_videoThumbnail_${const Uuid().v4()}.$extension';
+        finalName = 'story_videoThumbnail_${getUniqueId()}.$extension';
       }
 
       try {
-        // Compress File
-        // TODO: Compress file function here
-        //
-        //
-        //
+        // Check file size : limit to 15MB fileLimitSize15MB
+        if (type != 'vidThumbnail' && file.lengthSync() > fileLimitSize15MB) {
+          Navigator.of(context).pop();
+          showSnackbar(context, 'Votre fichier ne doit pas dépasser 15MB', null);
+          log('FILE SIZE ${file.lengthSync() / 1000000}');
+          return [false, ''];
+        }
+
+        // Compress File : Only for Image Stories
+        // Compress File : size > 2MB
+        else if (type == 'image' && file.lengthSync() > fileLimitSize2MB) {
+          // Resize file
+          file = await resizeImageFile(filePath: file.path);
+        }
 
         // Upload to FireStorage
         var ref = FirebaseStorage.instance.ref('stories/$finalName');
         await ref.putFile(file);
-        log("ref is: $ref");
-        Navigator.of(context).pop();
 
+        log("ref is: $ref");
         downloadUrl = await ref.getDownloadURL();
 
-        return downloadUrl;
+        Navigator.of(context).pop();
+        return [true, downloadUrl];
       } catch (e) {
         log('Erreur: $e');
         showSnackbar(context, 'Une erreur s\'est produite', null);
-        downloadUrl = '';
-        return downloadUrl;
+
+        Navigator.of(context).pop();
+        return [false, ''];
       }
     }
-    return downloadUrl;
+
+    Navigator.of(context).pop();
+    return [false, ''];
   }
 }

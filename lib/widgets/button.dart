@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class Button extends StatefulWidget {
-  final String text;
+  final String? text;
   final double height;
   final double width;
   final double? fontsize;
@@ -20,7 +20,8 @@ class Button extends StatefulWidget {
   final VoidCallback onTap;
 
   const Button({
-    required this.text,
+    Key? key,
+    this.text,
     required this.height,
     required this.width,
     required this.color,
@@ -35,7 +36,7 @@ class Button extends StatefulWidget {
     this.prefixIconSize,
     this.suffixIconSize,
     this.prefixIsLoading,
-  });
+  }) : super(key: key);
 
   @override
   State<Button> createState() => _ButtonState();
@@ -94,6 +95,7 @@ class _ButtonState extends State<Button> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     textBaseline: TextBaseline.ideographic,
                     children: [
+                      // PREFIX
                       widget.prefixIsLoading != null && widget.prefixIsLoading == true
                           ? FittedBox(
                               child: SizedBox(
@@ -112,16 +114,22 @@ class _ButtonState extends State<Button> {
                                   color: widget.prefixIconColor ?? Colors.white,
                                 )
                               : Container(),
-                      const SizedBox(
-                        width: 5,
+
+                      // TEXT
+                      SizedBox(
+                        width: widget.text != null ? 5 : 0,
                       ),
-                      Text(
-                        widget.text,
-                        style: TextStyle(
-                            color: widget.fontColor ?? Colors.white,
-                            fontSize: widget.fontsize ?? 14.sp,
-                            fontWeight: FontWeight.w500),
-                      ),
+                      widget.text != null
+                          ? Text(
+                              widget.text ?? '',
+                              style: TextStyle(
+                                  color: widget.fontColor ?? Colors.white,
+                                  fontSize: widget.fontsize ?? 14.sp,
+                                  fontWeight: FontWeight.w500),
+                            )
+                          : Container(),
+
+                      // SUFFIX
                       widget.suffixIcon != null
                           ? const SizedBox(
                               width: 5,

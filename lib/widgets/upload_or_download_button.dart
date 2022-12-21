@@ -1,21 +1,17 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'package:dismissible_page/dismissible_page.dart';
-import 'package:external_path/external_path.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:wesh/services/firestorage.methods.dart';
 import '../pages/in.pages/fileviewer.dart';
 import '../services/internet_connection_checker.dart';
 import '../utils/constants.dart';
 import '../utils/functions.dart';
-
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -138,7 +134,7 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
     if (widget.uidPoster == FirebaseAuth.instance.currentUser!.uid && widget.status == 0) {
       // Upload content
 
-      progressStream = await FireStorageMethods().uploadMessageFile(
+      progressStream = await FireStorageMethods.uploadMessageFile(
           context: context,
           type: widget.messageType,
           discussionId: widget.discussionId,
@@ -148,7 +144,7 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
           messageId: widget.messageId,
           cancelStreamController: cancelUploadingOrDownloadingController);
       progressStream!.listen((event) {
-        print('Progress value: $progressValue');
+        debugPrint('Progress value: $progressValue');
         setState(() {
           progressValue = event;
         });
@@ -163,7 +159,7 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
             isUploadingOrDownloading = false;
             fileExistence = true;
 
-            print('Data progress SUCC: $progressValue');
+            debugPrint('Data progress SUCC: $progressValue');
           });
         }
       });
@@ -173,7 +169,8 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
     // Download Content
     else {
       // Check Internet Connection
-      var isConnected = await InternetConnection().isConnected(context);
+      // ignore: use_build_context_synchronously
+      var isConnected = await InternetConnection.isConnected(context);
       if (!isConnected) {
         // ignore: use_build_context_synchronously
         showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
@@ -218,13 +215,13 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
       });
 
       dowloadProgressStreamController.stream.asBroadcastStream().listen((event) {
-        print('download values: $event');
-        print('download values ID: ${event[0]}');
+        debugPrint('download values: $event');
+        debugPrint('download values ID: ${event[0]}');
         if (event.isNotEmpty && taskId == event[0]) {
           setState(() {
             isUploadingOrDownloading = true;
             progressValue = event[2];
-            print('Data progress: $progressValue');
+            debugPrint('Data progress: $progressValue');
           });
 
           // Download end with error or success
@@ -240,7 +237,7 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
             setState(() {
               progressValue = -1;
               isUploadingOrDownloading = false;
-              print('Data progress ERR: $progressValue');
+              debugPrint('Data progress ERR: $progressValue');
               rebuildWidget();
             });
           }
@@ -251,7 +248,7 @@ class _UploadOrDowloadButtonState extends State<UploadOrDowloadButton> {
               progressValue = 0;
               isUploadingOrDownloading = false;
               fileExistence = true;
-              print('Data progress SUCC: $progressValue');
+              debugPrint('Data progress SUCC: $progressValue');
               rebuildWidget();
             });
           }

@@ -6,7 +6,7 @@ import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import 'package:wesh/widgets/payment_viewer_modal.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import '../models/payment.dart';
 import '../utils/functions.dart';
 import 'modal.dart';
@@ -36,15 +36,15 @@ class _PaymentCardState extends State<PaymentCard> {
               )),
         );
       },
-      child: FutureBuilder<UserModel.User?>(
-          future: FirestoreMethods().getUser(widget.payment.userSenderId),
+      child: FutureBuilder<usermodel.User?>(
+          future: FirestoreMethods.getUser(widget.payment.userSenderId),
           builder: (context, snapshot) {
             // Handle error
             if (snapshot.hasError) {}
 
             // Handle data
             if (snapshot.hasData && snapshot.data != null) {
-              UserModel.User? userSender = snapshot.data;
+              usermodel.User? userSender = snapshot.data;
               return Container(
                 padding: const EdgeInsets.all(10.0),
                 margin: const EdgeInsets.only(top: 5, bottom: 5, right: 10),
@@ -62,10 +62,11 @@ class _PaymentCardState extends State<PaymentCard> {
                                   backgroundColor: Colors.green.shade300,
                                   child: Icon(FontAwesomeIcons.dollarSign, color: Colors.white, size: 19.sp),
                                 )
-                              : CircleAvatar(
+                              : buildCachedNetworkImage(
+                                  url: userSender!.profilePicture,
                                   radius: 0.06.sw,
                                   backgroundColor: kGreyColor,
-                                  backgroundImage: NetworkImage(userSender!.profilePicture),
+                                  paddingOfProgressIndicator: 10,
                                 ),
                         ),
                         const SizedBox(

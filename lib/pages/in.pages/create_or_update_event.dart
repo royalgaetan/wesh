@@ -3,7 +3,6 @@ import 'dart:developer' as dev;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -18,19 +17,17 @@ import 'package:wesh/services/firestorage.methods.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
-import 'package:wesh/widgets/datetimebutton.dart';
 import 'package:wesh/widgets/imagepickermodal.dart';
 import 'package:wesh/widgets/modal.dart';
 import 'package:wesh/widgets/textformfield.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
-import 'package:widget_size/widget_size.dart';
 import '../../services/firestore.methods.dart';
 import '../../widgets/button.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 
 class CreateOrUpdateEventPage extends StatefulWidget {
   Event? event;
-  final UserModel.User? userPoster;
+  final usermodel.User? userPoster;
 
   CreateOrUpdateEventPage({Key? key, this.event, this.userPoster}) : super(key: key);
 
@@ -47,7 +44,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
   late PageController eventDurationTypePageController;
   String eventType = '';
-  int eventColorIndexSelected = 1;
+  int eventColorIndexSelected = Random().nextInt(eventAvailableColorsList.length);
   String coverEventController = '';
 
   bool isOneDayEvent = true;
@@ -70,14 +67,25 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
+
     super.initState();
 
     if (widget.event != null) {
       eventDurationTypePageController =
           PageController(initialPage: widget.event!.eventDurationType == '1DayEvent' ? 0 : 1);
+      setState(() {
+        if (widget.event!.eventDurationType == '1DayEvent') {
+          isOneDayEvent = true;
+        } else {
+          isOneDayEvent = false;
+        }
+      });
     } else {
       eventDurationTypePageController = PageController(initialPage: 0);
+      setState(() {
+        isOneDayEvent = true;
+      });
     }
 
     // Init data on "UPDATE MODE"
@@ -95,7 +103,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
       }).toList();
 
       // Check EventDurationType : if == [MultiDaysEvent] && eventDurations.length == 1 then Add One Last Event Duration
-      if (widget.event?.eventDurationType == '1DayEvent' && eventDurations.length == 1) {
+      if (eventDurations.length == 1) {
         eventDurations.add(
           EventDurationType(
             date: eventDurations[0].date.add(const Duration(days: 1)),
@@ -110,7 +118,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     eventDurationTypePageController.dispose();
 
@@ -154,10 +162,10 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
           eventDurations[0].startTime.minute,
         );
 
-        if ((tempDateTime).isBefore(DateTime.now().add(const Duration(minutes: 30))) ||
+        if (widget.event == null && (tempDateTime).isBefore(DateTime.now().add(const Duration(minutes: 30))) ||
             tempDateTime.isAtSameMomentAs(DateTime.now().add(const Duration(minutes: 30)))) {
-          showSnackbar(
-              context, 'Votre date doit commencer au moins dans plus de 30 minutes de l\'heure actuelle', null);
+          showSnackbar(context,
+              'Votre date de début doit avoir au moins plus de 30 minutes d\'avance sur l\'heure actuelle', null);
 
           return;
         }
@@ -178,10 +186,10 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
               eventDurations[0].startTime.minute,
             );
 
-            if (temp1stDateTime.isBefore(DateTime.now().add(const Duration(minutes: 30))) ||
+            if (widget.event == null && temp1stDateTime.isBefore(DateTime.now().add(const Duration(minutes: 30))) ||
                 temp1stDateTime.isAtSameMomentAs(DateTime.now().add(const Duration(minutes: 30)))) {
-              showSnackbar(
-                  context, 'Votre date doit commencer au moins dans plus de 30 minutes de l\'heure actuelle', null);
+              showSnackbar(context,
+                  'Votre date de début doit avoir au moins plus de 30 minutes d\'avance sur l\'heure actuelle', null);
 
               return;
             }
@@ -221,96 +229,100 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
       }
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
+    bool isAllowToContinue = true;
+    String downloadUrl = coverEventController;
     // Upload event Cover to Firestorage and getDownloadURL
-    String downloadUrl = await FireStorageMethods().uploadimageToEventCover(context, coverEventController);
-
-    // CREATE A NEW ONE
-    if (widget.event == null) {
-      // Modeling an event
-      Map<String, Object?> event = Event(
-        eventId: '',
-        uid: FirebaseAuth.instance.currentUser!.uid,
-        title: nameEventController.text,
-        caption: captionEventController.text,
-        type: eventType,
-        link: linkEventController.text,
-        location: locationEventController.text,
-        trailing: downloadUrl,
-        createdAt: DateTime.now(),
-        modifiedAt: DateTime.now(),
-        eventDurationType: isOneDayEvent ? '1DayEvent' : 'MultiDaysEvent',
-        eventDurations: isOneDayEvent
-            ? [eventDurations[0].toJson()]
-            : eventDurations.map((eventDuration) => eventDuration.toJson()).toList(),
-        color: eventColorIndexSelected,
-        status: '',
-      ).toJson();
-
-      //  Update Firestore Event Table
-      // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().createEvent(context, FirebaseAuth.instance.currentUser!.uid, event);
-      debugPrint('Event created (+notification) !');
+    if (!coverEventController.contains('https://')) {
+      List resultFromEventCover = await FireStorageMethods.uploadimageToEventCover(context, coverEventController);
+      isAllowToContinue = resultFromEventCover[0];
+      downloadUrl = resultFromEventCover[1];
     }
 
-    // UPDATE AN EXISTING ONE
+    if (isAllowToContinue) {
+      // CREATE A NEW ONE
+      if (widget.event == null) {
+        // Modeling an event
+        Map<String, Object?> event = Event(
+          eventId: '',
+          uid: FirebaseAuth.instance.currentUser!.uid,
+          title: nameEventController.text,
+          caption: captionEventController.text,
+          type: eventType,
+          link: linkEventController.text,
+          location: locationEventController.text,
+          trailing: downloadUrl,
+          createdAt: DateTime.now(),
+          modifiedAt: DateTime.now(),
+          eventDurationType: isOneDayEvent ? '1DayEvent' : 'MultiDaysEvent',
+          eventDurations: isOneDayEvent
+              ? [eventDurations[0].toJson()]
+              : eventDurations.map((eventDuration) => eventDuration.toJson()).toList(),
+          color: eventColorIndexSelected,
+          status: '',
+        ).toJson();
 
-    if (widget.event != null) {
-      // Modeling an event
+        //  Update Firestore Event Table
+        // ignore: use_build_context_synchronously
+        result = await FirestoreMethods.createEvent(context, FirebaseAuth.instance.currentUser!.uid, event);
+        debugPrint('Event created (+notification) !');
+      }
 
-      Map<String, Object?> eventToUpdate = Event(
-        eventId: widget.event!.eventId,
-        uid: FirebaseAuth.instance.currentUser!.uid,
-        title: nameEventController.text,
-        caption: captionEventController.text,
-        type: eventType,
-        link: linkEventController.text,
-        location: locationEventController.text,
-        trailing: downloadUrl,
-        createdAt: widget.event!.createdAt,
-        modifiedAt: DateTime.now(),
-        eventDurationType: isOneDayEvent ? '1DayEvent' : 'MultiDaysEvent',
-        eventDurations: isOneDayEvent
-            ? [eventDurations[0].toJson()]
-            : eventDurations.map((eventDuration) => eventDuration.toJson()).toList(),
-        color: eventColorIndexSelected,
-        status: '',
-      ).toJson();
+      // UPDATE AN EXISTING ONE
+      if (widget.event != null) {
+        // Modeling an event
 
-      // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateEvent(context, widget.event!.eventId, eventToUpdate);
-      debugPrint('Event updated (+Related reminders)');
-    }
+        Map<String, Object?> eventToUpdate = Event(
+          eventId: widget.event!.eventId,
+          uid: FirebaseAuth.instance.currentUser!.uid,
+          title: nameEventController.text,
+          caption: captionEventController.text,
+          type: eventType,
+          link: linkEventController.text,
+          location: locationEventController.text,
+          trailing: downloadUrl,
+          createdAt: widget.event!.createdAt,
+          modifiedAt: DateTime.now(),
+          eventDurationType: isOneDayEvent ? '1DayEvent' : 'MultiDaysEvent',
+          eventDurations: isOneDayEvent
+              ? [eventDurations[0].toJson()]
+              : eventDurations.map((eventDuration) => eventDuration.toJson()).toList(),
+          color: eventColorIndexSelected,
+          status: '',
+        ).toJson();
 
-    // ignore: use_build_context_synchronously
-    Navigator.pop(
-      context,
-    );
-    // Pop the Screen once event created/updated
-    if (result) {
+        // ignore: use_build_context_synchronously
+        result = await FirestoreMethods.updateEvent(context, widget.event!.eventId, eventToUpdate);
+        debugPrint('Event updated (+Related reminders)');
+      }
+
       // ignore: use_build_context_synchronously
       Navigator.pop(
         context,
       );
-
-      // ignore: use_build_context_synchronously
-      showSnackbar(
+      // Pop the Screen once event created/updated
+      if (result) {
+        // ignore: use_build_context_synchronously
+        Navigator.pop(
           context,
-          widget.event == null ? 'Votre évenement à bien été crée !' : 'Votre évenement à bien été modifié !',
-          kSuccessColor);
+        );
+
+        // ignore: use_build_context_synchronously
+        showSnackbar(
+            context,
+            widget.event == null ? 'Votre évenement à bien été crée !' : 'Votre évenement à bien été modifié !',
+            kSuccessColor);
+      }
+    } else {
+      // ignore: use_build_context_synchronously
+      Navigator.pop(
+        context,
+      );
     }
   }
 
   bool isMyBirthday() {
-    // dev.log('Dato : ${(widget.event?.eventDurations[0].date as Timestamp).toDate()}');
-
     if (widget.event != null &&
         widget.userPoster != null &&
         widget.userPoster!.id == FirebaseAuth.instance.currentUser!.uid &&
@@ -390,8 +402,8 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                         if (deleteDecision[0] == true) {
                           // Delete event...
                           // ignore: use_build_context_synchronously
-                          bool result = await FirestoreMethods()
-                              .deleteEvent(context, widget.event!.eventId, FirebaseAuth.instance.currentUser!.uid);
+                          bool result = await FirestoreMethods.deleteEvent(
+                              context, widget.event!.eventId, FirebaseAuth.instance.currentUser!.uid);
                           if (result) {
                             debugPrint('Event deleted !');
 
@@ -589,14 +601,14 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                     isScrollControlled: true,
                     context: context,
                     backgroundColor: Colors.transparent,
-                    builder: ((context) => Modal(
-                          child: const ImagePickerModal(),
+                    builder: ((context) => const Modal(
+                          child: ImagePickerModal(),
                         )),
                   );
 
                   if (file != null && file != 'remove') {
                     final Directory directory = await getApplicationDocumentsDirectory();
-                    final filename = 'eventcover_${Uuid().v4()}';
+                    final filename = 'eventcover_${getUniqueId()}';
                     final path = '${directory.path}/$filename.jpg';
 
                     var res = file.saveTo(path).whenComplete(() => debugPrint('File was saved correctly at $path'));
@@ -627,9 +639,11 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
                       // Case 1
                       coverEventController.contains('https://')
-                          ? CircleAvatar(
+                          ? buildCachedNetworkImage(
+                              url: widget.event!.trailing,
                               radius: 0.07.sw,
-                              backgroundImage: NetworkImage(widget.event!.trailing),
+                              backgroundColor: kGreyColor,
+                              paddingOfProgressIndicator: 3,
                             )
                           : Container(),
 
@@ -639,6 +653,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                               !coverEventController.contains('/data/user/')
                           ? CircleAvatar(
                               radius: 0.07.sw,
+                              backgroundColor: kGreyColor,
                               backgroundImage: AssetImage(eventType.isNotEmpty
                                   ? 'assets/images/eventtype.icons/${eventAvailableTypeList.singleWhere((element) => element.key == eventType).key}.png'
                                   : 'assets/images/eventtype.icons/other.png'),
@@ -649,6 +664,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                       !coverEventController.contains('https://') && coverEventController.contains('/data/user/')
                           ? CircleAvatar(
                               radius: 0.07.sw,
+                              backgroundColor: kGreyColor,
                               backgroundImage: FileImage(
                                 File(coverEventController),
                               ),
@@ -796,8 +812,12 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
                               buildEventDurationCard(
                                 setDate: () async {
+                                  EventDurationType firstEventDuration = eventDurations[0];
                                   // Pick Date
-                                  DateTime? newDate = await pickDate(context: context);
+                                  DateTime? newDate = await pickDate(
+                                      context: context,
+                                      firstDate: widget.event == null ? DateTime.now() : DateTime(0),
+                                      initialDate: widget.event == null ? DateTime.now() : firstEventDuration.date);
 
                                   if (newDate != null) {
                                     setState(() {
@@ -953,8 +973,13 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                                       // Body
                                       buildEventDurationCard(
                                         setDate: () async {
+                                          EventDurationType firstEventDuration = eventDurations[0];
                                           // Pick Date
-                                          DateTime? newDate = await pickDate(context: context);
+                                          DateTime? newDate = await pickDate(
+                                              context: context,
+                                              firstDate: widget.event == null ? DateTime.now() : DateTime(0),
+                                              initialDate:
+                                                  widget.event == null ? DateTime.now() : firstEventDuration.date);
 
                                           if (newDate != null) {
                                             setState(() {

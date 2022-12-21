@@ -15,6 +15,7 @@ class DateTimeButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const DateTimeButton({
+    Key? key,
     this.date,
     this.timeOfDay,
     required this.type,
@@ -23,7 +24,7 @@ class DateTimeButton extends StatelessWidget {
     this.fontColor,
     this.fontSize,
     this.hasBorder,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +50,5 @@ class DateTimeButton extends StatelessWidget {
         ),
       ),
     );
-    ;
   }
 }

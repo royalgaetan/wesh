@@ -122,6 +122,11 @@ dependencies:
   http: ^0.13.5
   expandable_page_view: ^1.0.17
   sliding_up_panel: ^2.0.0+1
+  confetti: ^0.7.0
+  widget_and_text_animator: ^1.0.9
+  assets_audio_player: ^3.0.6
+  xid: ^1.0.12
+  flutter_native_splash: ^2.2.9
 
 dev_dependencies:
   flutter_test:
@@ -130,19 +135,33 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   build_runner: ^2.0.0
   json_serializable: ^6.3.1
+  flutter_launcher_icons: ^0.11.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/icon.png"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: "assets/icons/splash.png"
+  color_dark: "#383838"
+  android: true
+  ios: true
 
 flutter:
   uses-material-design: true
 
   assets:
+    - assets/audios/
     - assets/
     - assets/images/
     - assets/animations/
-    - assets/musics/
-    - assets/voicenotes/
-    - assets/videos/
-    - assets/images/months.calendarscreens/
+    - assets/images/core.assets/
+    - assets/images/emoji.reactions/
     - assets/images/eventtype.icons/
+    - assets/images/months.calendarscreens/
+    - assets/images/useful.logos/
 
   fonts:
     - family: Calibri

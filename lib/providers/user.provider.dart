@@ -10,9 +10,8 @@ import 'package:wesh/utils/functions.dart';
 import '../models/discussion.dart';
 import '../models/event.dart';
 import '../models/message.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import 'dart:async' show Stream;
-import 'package:async/async.dart' show StreamGroup;
 
 class UserProvider with ChangeNotifier {
   User? user = FirebaseAuth.instance.currentUser;
@@ -27,12 +26,12 @@ class UserProvider with ChangeNotifier {
   // Get current user
   // get getCurrentUser => currentUser;
 
-  Stream<UserModel.User?> getCurrentUser() {
+  Stream<usermodel.User?> getCurrentUser() {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .snapshots()
-        .map((snapshot) => UserModel.User.fromJson(snapshot.data()!));
+        .map((snapshot) => usermodel.User.fromJson(snapshot.data()!));
   }
 
   // Get current user events
@@ -85,23 +84,12 @@ class UserProvider with ChangeNotifier {
   //////////////////
 
 // Get any User by Id
-  Stream<UserModel.User?> getUserById(uid) {
+  Stream<usermodel.User?> getUserById(uid) {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .snapshots()
-        .map((snapshot) => UserModel.User.fromJson(snapshot.data()!));
-  }
-
-// Get [Future] User by id
-  Future<UserModel.User?> getFutureUserById(uid) async {
-    final ref = FirebaseFirestore.instance.collection('users').doc(uid);
-    final snapshot = await ref.get();
-    if (snapshot.exists) {
-      UserModel.User user = UserModel.User.fromJson(snapshot.data()!);
-      return user;
-    }
-    return null;
+        .map((snapshot) => usermodel.User.fromJson(snapshot.data()!));
   }
 
 // Get [Future] any User Birthday
@@ -109,7 +97,7 @@ class UserProvider with ChangeNotifier {
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
     final snapshot = await ref.get();
     if (snapshot.exists) {
-      UserModel.User user = UserModel.User.fromJson(snapshot.data()!);
+      usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
       return user.stories!.first;
     }
     return null;
@@ -145,15 +133,6 @@ class UserProvider with ChangeNotifier {
     return null;
   }
 
-  // Get any User Stories
-  Stream<List<Story>> getUserStories(uid) {
-    return FirebaseFirestore.instance
-        .collection('stories')
-        .where('uid', isEqualTo: uid)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Story.fromJson(doc.data())).toList());
-  }
-
   // Get any Forever Stories
   Future<List<Story>?> getFovererStories(Forever forever) async {
     List<Story>? foreverStories = [];
@@ -183,21 +162,8 @@ class UserProvider with ChangeNotifier {
             }).toList());
   }
 
-  // Get Forever Cover /to build Cover+Title
-  Future<Widget?> getForeverCoverByFirstStoryId(storyId) async {
-    final ref = FirebaseFirestore.instance.collection('stories').where('storyId', isEqualTo: storyId);
-    final snapshot = await ref.get();
-    if (snapshot.docs.isNotEmpty) {
-      return snapshot.docs.map((doc) {
-        Story story = Story.fromJson(doc.data());
-        return getStoryGridPreviewThumbnail(storySelected: story);
-      }).first;
-    }
-    return null;
-  }
-
   // Get All Users : without [ME]
-  Stream<List<UserModel.User>> getAllUsersWithoutMe() {
+  Stream<List<usermodel.User>> getAllUsersWithoutMe() {
     debugPrint('Fetching all users...');
     return FirebaseFirestore.instance
         .collection('users')
@@ -205,17 +171,17 @@ class UserProvider with ChangeNotifier {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
               // Get Users
-              return UserModel.User.fromJson(doc.data());
+              return usermodel.User.fromJson(doc.data());
             }).toList());
   }
 
   // Get [Future] all User from My Discussion
-  Future<List<UserModel.User>> getAllUsersFromMyDiscussions() async {
+  Future<List<usermodel.User>> getAllUsersFromMyDiscussions() async {
     List discussionsIDs = [];
     List<Discussion> listOfDiscussions = [];
     List<Message> messages = [];
     List<String> usersInsideMessagesList = [];
-    List<UserModel.User> users = [];
+    List<usermodel.User> users = [];
 
     List<Map<String, Object>> listOfUsersWithLastMessageDateTimeInDiscussion = [];
 
@@ -223,7 +189,7 @@ class UserProvider with ChangeNotifier {
     final ref = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
     final snapshot = await ref.get();
     if (snapshot.exists) {
-      UserModel.User user = UserModel.User.fromJson(snapshot.data()!);
+      usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
       discussionsIDs = user.discussions ?? [];
     }
     // Loop AllDiscussionId and retrieve Related Discussions Data
@@ -243,7 +209,7 @@ class UserProvider with ChangeNotifier {
 
     for (Discussion discussion in listOfDiscussions) {
       List<Map<String, Object>> discussionMessages =
-          await FirestoreMethods().getMessagesFromListOfDiscussionAsFuture(listOfDiscussions);
+          await FirestoreMethods.getMessagesFromListOfDiscussionAsFuture(listOfDiscussions);
 
       List<Message> discussionMessagesUsedToGetLastMessage = discussionMessages
           .where((map) => map['discussionId'] == discussion.discussionId)
@@ -276,7 +242,7 @@ class UserProvider with ChangeNotifier {
       final refUser = FirebaseFirestore.instance.collection('users').doc(userId);
       final snapshot = await refUser.get();
       if (snapshot.exists) {
-        UserModel.User user = UserModel.User.fromJson(snapshot.data()!);
+        usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
         users.add(user);
       }
     }
@@ -284,23 +250,4 @@ class UserProvider with ChangeNotifier {
 
     return users;
   }
-
-  // Get Users in the List
-  Stream<List<UserModel.User>> getUsersInTheGivenList(List usersId) {
-    return FirebaseFirestore.instance
-        .collection('users')
-        .where('id', whereIn: usersId)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              // Get Users
-              return UserModel.User.fromJson(doc.data());
-            }).toList());
-  }
-
-  // Get other any user info
-  // Get any user name
-  // Get any user birthday
-  // Get any user ...
-  // TODO:
-
 }

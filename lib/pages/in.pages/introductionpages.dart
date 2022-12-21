@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:wesh/pages/auth_controller_page.dart';
-import 'package:wesh/pages/startPage.dart';
-import 'package:wesh/services/auth.methods.dart';
 import 'package:wesh/utils/constants.dart';
-
 import '../../services/sharedpreferences.service.dart';
-import '../auth.pages/add_name_and_birthday.dart';
 import '../auth.pages/add_profile_picture.dart';
 
 class IntroductionScreensPage extends StatefulWidget {
-  IntroductionScreensPage({Key? key}) : super(key: key);
+  const IntroductionScreensPage({Key? key}) : super(key: key);
 
   @override
   State<IntroductionScreensPage> createState() => _LoginPageState();
@@ -25,7 +20,7 @@ nextPage(context) {
     Navigator.push(
       context,
       SwipeablePageRoute(
-        builder: (context) => AddProfilePicture(),
+        builder: (context) => const AddProfilePicture(),
       ),
     );
   });

@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
-  final data;
+  final dynamic data;
+  final StreamController<String>? togglePlayPause;
 
-  VideoPlayerWidget({required this.data});
+  const VideoPlayerWidget({Key? key, required this.data, this.togglePlayPause}) : super(key: key);
   @override
   VideoPlayerWidgetState createState() => VideoPlayerWidgetState();
 }
@@ -37,12 +39,24 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     _controller.initialize().then((_) => setState(() {}));
     _controller.play();
     setState(() {});
+
+    // Listen to Play or Pause
+    widget.togglePlayPause != null
+        ? widget.togglePlayPause!.stream.asBroadcastStream().listen((event) {
+            if (event == 'play') {
+              _controller.play();
+            } else if (event == 'pause') {
+              _controller.pause();
+            }
+          })
+        : null;
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+    //
   }
 
   @override
@@ -66,8 +80,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 }
 
 class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({Key? key, required this.controller})
-      : super(key: key);
+  const _ControlsOverlay({Key? key, required this.controller}) : super(key: key);
 
   static const List<Duration> _exampleCaptionOffsets = <Duration>[
     Duration(seconds: -10),

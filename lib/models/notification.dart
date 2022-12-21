@@ -1,5 +1,3 @@
-final String notificationsTable = 'notifications';
-
 // FIELDS
 class NotificationFields {
   static final List<String> values = [
@@ -10,11 +8,11 @@ class NotificationFields {
     'createdAt',
   ];
 
-  static final String notificationId = 'notificationId';
-  static final String uid = 'uid';
-  static final String contentId = 'contentId';
-  static final String type = 'type';
-  static final String createdAt = 'createdAt';
+  static const String notificationId = 'notificationId';
+  static const String uid = 'uid';
+  static const String contentId = 'contentId';
+  static const String type = 'type';
+  static const String createdAt = 'createdAt';
 }
 
 class Notification {

@@ -1,21 +1,22 @@
 import 'dart:math';
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/forever.dart';
+import 'package:wesh/pages/in.pages/storiesViewer.dart';
 import 'package:wesh/widgets/storyselector.dart';
+import '../../models/stories_handler.dart';
 import '../../models/story.dart';
-import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/textformfield.dart';
+import '../../models/user.dart' as usermodel;
 
 class CreateOrUpdateForeverPage extends StatefulWidget {
   final Forever? forever;
@@ -33,7 +34,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     titleForeverController.text = widget.forever == null ? '' : widget.forever!.title;
 
@@ -42,7 +43,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
 
     titleForeverController.dispose();
@@ -65,13 +66,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
   createOrUpdateForever() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // CREATE A NEW ONE
     if (widget.forever == null) {
@@ -86,7 +81,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
       ).toJson();
 
       //  Update Firestore Forevers Table
-      result = await FirestoreMethods().createForever(context, FirebaseAuth.instance.currentUser!.uid, forever);
+      result = await FirestoreMethods.createForever(context, FirebaseAuth.instance.currentUser!.uid, forever);
       debugPrint('Forever created (+notification) !');
     }
 
@@ -104,7 +99,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
         createdAt: widget.forever!.createdAt,
       ).toJson();
       // ignore: use_build_context_synchronously
-      result = await FirestoreMethods().updateForever(context, widget.forever!.foreverId, foreverToUpdate);
+      result = await FirestoreMethods.updateForever(context, widget.forever!.foreverId, foreverToUpdate);
       debugPrint('Forever updated');
     }
 
@@ -170,7 +165,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                         if (deleteDecision[0] == true) {
                           // Delete forever...
                           // ignore: use_build_context_synchronously
-                          bool result = await FirestoreMethods().deleteForever(
+                          bool result = await FirestoreMethods.deleteForever(
                               context, widget.forever!.foreverId, FirebaseAuth.instance.currentUser!.uid);
                           if (result) {
                             debugPrint('Forever deleted !');
@@ -215,7 +210,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                   buildTextFormField(
                     controller: titleForeverController,
                     hintText: 'Ajouter un titre à votre forever',
-                    icon: const Icon(FontAwesomeIcons.alignLeft),
+                    icon: Icon(FontAwesomeIcons.alignLeft, size: 19.sp),
                     validateFn: (title) {
                       return null;
                     },
@@ -231,37 +226,48 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                     padding: const EdgeInsets.fromLTRB(10, 15, 5, 15),
                     child: Row(
                       children: [
-                        Icon(FontAwesomeIcons.circleNotch, color: Colors.grey.shade600),
+                        Icon(FontAwesomeIcons.circleNotch, color: Colors.grey.shade600, size: 19.sp),
                         const SizedBox(
                           width: 15,
                         ),
                         Expanded(
-                          child: Text(
-                            'Stories',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 18),
-                          ),
+                          child: Text('Stories', style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp)),
                         ),
                         const Spacer(),
                         TextButton(
                           onPressed: () async {
-                            // Redirect to Story selector Page and get the selected story
-                            Story? selectedStory = await Navigator.push(
-                                context,
-                                SwipeablePageRoute(
-                                  builder: (context) => StorySelector(),
-                                ));
+                            //
+                            showFullPageLoader(context: context, color: Colors.white);
+                            //
+                            usermodel.User? userPoster =
+                                await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
 
-                            if (selectedStory != null) {
-                              if (!foreverStoriesListWithStoryIdOnly.contains(selectedStory.storyId)) {
-                                setState(() {
-                                  foreverStoriesListWithStoryIdOnly.add(selectedStory.storyId);
-                                });
-                                debugPrint('foreverStoriesList: ${foreverStoriesListWithStoryIdOnly.length}');
-                              } else {
-                                // Handle:  The selected story already exists
-                                showSnackbar(context, 'Cette story existe déjà dans ce forever', null);
+                            // Dismiss loader
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            if (userPoster != null) {
+                              // ignore: use_build_context_synchronously
+                              Story? selectedStory = await Navigator.push(
+                                  context,
+                                  SwipeablePageRoute(
+                                    builder: (context) => StorySelector(userPoster: userPoster),
+                                  ));
+
+                              if (selectedStory != null) {
+                                if (!foreverStoriesListWithStoryIdOnly.contains(selectedStory.storyId)) {
+                                  setState(() {
+                                    foreverStoriesListWithStoryIdOnly.add(selectedStory.storyId);
+                                  });
+                                  debugPrint('foreverStoriesList: ${foreverStoriesListWithStoryIdOnly.length}');
+                                } else {
+                                  // Handle:  The selected story already exists
+                                  // ignore: use_build_context_synchronously
+                                  showSnackbar(context, 'Cette story existe déjà dans ce forever', null);
+                                }
                               }
                             }
+
+                            // Redirect to Story selector Page and get the selected story
                           },
                           child: const Text('+ Ajouter'),
                         )
@@ -272,7 +278,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                   // Grid : all forever Stories
                   foreverStoriesListWithStoryIdOnly.isNotEmpty
                       ? GridView.builder(
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           padding: const EdgeInsets.all(0),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -284,43 +290,73 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                           itemCount: foreverStoriesListWithStoryIdOnly.length,
                           itemBuilder: (context, index) {
                             return FutureBuilder(
-                              future: FirestoreMethods().getStoryByIdAsFuture(foreverStoriesListWithStoryIdOnly[index]),
+                              future: FirestoreMethods.getStoryByIdAsFuture(foreverStoriesListWithStoryIdOnly[index]),
                               builder: (context, AsyncSnapshot snapshot) {
                                 if (snapshot.hasData && snapshot.data != null) {
                                   Story storyGotten = snapshot.data;
-                                  return buildStoryGridPreview(
-                                      footer: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            splashRadius: 0.06.sw,
-                                            onPressed: () async {
-                                              // Remove Story from Forever
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      //
+                                      showFullPageLoader(context: context, color: Colors.white);
+                                      //
 
-                                              // Show Delete Decision Modal
-                                              List deleteDecision = await showModalDecision(
-                                                context: context,
-                                                header: 'Retirer',
-                                                content: 'Voulez-vous retirer cette story de ce forever ?',
-                                                firstButton: 'Annuler',
-                                                secondButton: 'Retirer',
-                                              );
+                                      usermodel.User? userPoster = await FirestoreMethods.getUserByIdAsFuture(
+                                          FirebaseAuth.instance.currentUser!.uid);
 
-                                              if (deleteDecision[0] == true) {
-                                                debugPrint('Story to remove : $index');
-                                                setState(() {
-                                                  foreverStoriesListWithStoryIdOnly.removeAt(index);
-                                                });
-                                              }
-                                            },
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.white,
+                                      // Dismiss loader
+                                      // ignore: use_build_context_synchronously
+                                      Navigator.of(context).pop();
+
+                                      // Build Story Handler
+                                      StoriesHandler storiesHandler = StoriesHandler(
+                                        avatarPath: userPoster?.profilePicture ?? '',
+                                        posterId: userPoster?.id ?? '',
+                                        title: userPoster?.name ?? '',
+                                        origin: 'singleStory',
+                                        lastStoryDateTime: storyGotten.createdAt,
+                                        stories: [storyGotten],
+                                      );
+                                      // Preview Story
+                                      // ignore: use_build_context_synchronously
+                                      context.pushTransparentRoute(StoriesViewer(
+                                        indexInStoriesHandlerList: 0,
+                                        storiesHandlerList: [storiesHandler],
+                                      ));
+                                    },
+                                    child: buildStoryGridPreview(
+                                        footer: Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            IconButton(
+                                              splashRadius: 0.06.sw,
+                                              onPressed: () async {
+                                                // Remove Story from Forever
+
+                                                // Show Delete Decision Modal
+                                                List deleteDecision = await showModalDecision(
+                                                  context: context,
+                                                  header: 'Retirer',
+                                                  content: 'Voulez-vous retirer cette story de ce forever ?',
+                                                  firstButton: 'Annuler',
+                                                  secondButton: 'Retirer',
+                                                );
+
+                                                if (deleteDecision[0] == true) {
+                                                  debugPrint('Story to remove : $index');
+                                                  setState(() {
+                                                    foreverStoriesListWithStoryIdOnly.removeAt(index);
+                                                  });
+                                                }
+                                              },
+                                              icon: const Icon(
+                                                Icons.remove_circle_outlined,
+                                                color: Colors.white,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      story: storyGotten);
+                                          ],
+                                        ),
+                                        story: storyGotten),
+                                  );
                                 }
 
                                 if (snapshot.hasError) {
@@ -340,26 +376,30 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                           },
                         )
                       : Container(
-                          padding: const EdgeInsets.all(30),
-                          height: 300,
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          height: 200,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Lottie.asset(
-                                height: 150,
-                                'assets/animations/112136-empty-red.json',
+                              const SizedBox(
+                                height: 100,
                                 width: double.infinity,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.not_interested_rounded,
+                                    size: 50,
+                                    color: Colors.black54,
+                                  ),
+                                ),
                               ),
                               const SizedBox(
                                 height: 10,
                               ),
-                              const Text(
-                                'Aucune story retrouvée !',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black45,
-                                ),
+                              Text(
+                                'Votre Forever doit contenir au moins une Story !',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 14.sp, color: Colors.black45),
                               ),
                             ],
                           ),
@@ -402,7 +442,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
                   createOrUpdateForever();
                 } else {
                   // Stories List error handler
-                  showSnackbar(context, 'Votre forever doit au moins contenir une story', null);
+                  showSnackbar(context, 'Votre Forever doit contenir au moins une Story !', null);
                 }
               } else {
                 // Title error handler

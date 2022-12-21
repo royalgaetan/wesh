@@ -5,6 +5,7 @@ class UserSimplePreferences {
 
   static const _currentActivePageKey = 'currentActivePage';
   static const _showIntroductionPagesKey = 'showIntroductionPages';
+  static const _lastHappyBirthdayDateTimeWishKey = 'happyBirthdayDateTimeWish';
   static const _usernameKey = 'username';
   static const _emailKey = 'email';
   static const _facebookID = 'facabookID';
@@ -34,6 +35,13 @@ class UserSimplePreferences {
   }
 
   static bool? getShowIntroductionPagesHandler() => _preferences.getBool(_showIntroductionPagesKey);
+
+  // Birthday DateTime Wish : Handler
+  static Future setHappyBirthdayDateTimeWish(int yearWished) async {
+    _preferences.setInt(_lastHappyBirthdayDateTimeWishKey, yearWished);
+  }
+
+  static int? getHappyBirthdayDateTimeWish() => _preferences.getInt(_lastHappyBirthdayDateTimeWishKey);
 
   // Username
   static Future setUsername(String username) async {

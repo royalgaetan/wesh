@@ -1,17 +1,14 @@
+import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
-import '../models/user.dart' as UserModel;
+import '../models/user.dart' as usermodel;
 import '../pages/login.dart';
 import '../utils/constants.dart';
 import '../utils/functions.dart';
@@ -26,8 +23,6 @@ class AuthMethods {
 
   // Check is User exist in DB
   Future<bool> checkUserExistenceInDb(uid) async {
-    UserModel.User? isUserExisting = await FirestoreMethods().getUser(uid);
-
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
     final snapshot = await ref.get();
     if (snapshot.exists) {
@@ -40,14 +35,14 @@ class AuthMethods {
   // Check is User with email exist in DB
   Future<bool> checkUserWithEmailExistenceInDb(email) async {
     try {
-      var finalValue;
+      dynamic finalValue;
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
-      if (documents.length > 0) {
+      if (documents.isNotEmpty) {
         //exists
         finalValue = true;
       } else {
@@ -70,14 +65,14 @@ class AuthMethods {
   // Check is User with email exist in DB
   Future<bool> checkUserWithPhoneExistenceInDb(phone) async {
     try {
-      var finalValue;
+      dynamic finalValue;
       // Fetch all phone numbers in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('phone', isEqualTo: phone).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
-      if (documents.length > 0) {
+      if (documents.isNotEmpty) {
         //exists
         finalValue = true;
       } else {
@@ -100,14 +95,14 @@ class AuthMethods {
   // Check is User with GoogleID exist in DB
   Future<bool> checkUserWithGoogleIDExistenceInDb(googleID) async {
     try {
-      var finalValue;
+      dynamic finalValue;
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('googleID', isEqualTo: googleID).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
-      if (documents.length > 0) {
+      if (documents.isNotEmpty) {
         //exists
         finalValue = true;
       } else {
@@ -130,14 +125,14 @@ class AuthMethods {
   // Check is User with FacebookID exist in DB
   Future<bool> checkUserWithFacebookIDExistenceInDb(facebookID) async {
     try {
-      var finalValue;
+      dynamic finalValue;
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('facebookID', isEqualTo: facebookID).get();
 
       final List<DocumentSnapshot> documents = result.docs;
 
-      if (documents.length > 0) {
+      if (documents.isNotEmpty) {
         //exists
         finalValue = true;
       } else {
@@ -164,13 +159,7 @@ class AuthMethods {
   // Sign out
   Future signout(context) async {
     debugPrint('Signing out...');
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
     try {
       if (GoogleSignIn().currentUser != null) {
         GoogleSignIn().disconnect();
@@ -186,7 +175,7 @@ class AuthMethods {
       Navigator.pushAndRemoveUntil(
           context,
           SwipeablePageRoute(
-            builder: (context) => LoginPage(
+            builder: (context) => const LoginPage(
               redirectToAddEmailandPasswordPage: false,
               redirectToAddEmailPage: false,
               redirectToUpdatePasswordPage: false,
@@ -219,13 +208,7 @@ class AuthMethods {
 
   // UNLINK SPECIFIC PROVIDER
   Future<bool> unlinkSpecificProvider(context, String providerID) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check providersList length
     List providersList = FirebaseAuth.instance.currentUser!.providerData;
@@ -261,8 +244,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty Email)');
 
@@ -289,8 +272,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             debugPrint('Profile updated (with Empty Phone Number)');
 
             showSnackbar(context, 'Numéro de téléphone détaché', kSecondColor);
@@ -319,8 +302,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty googleID)');
 
@@ -347,8 +330,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             Navigator.of(context).pop();
             debugPrint('Profile updated (with Empty facebookID)');
 
@@ -395,11 +378,11 @@ class AuthMethods {
 
     String? country = UserSimplePreferences.getCountry();
     DateTime? birthday = DateTime.tryParse(UserSimplePreferences.getBirthday()!);
-    var ref = FirebaseStorage.instance.ref('profilepictures/default_profile_picture.jpg');
+    var ref = FirebaseStorage.instance.ref(defaultProfilePicture);
     String downloadUrl = await ref.getDownloadURL();
 
     // Create a new user
-    Map<String, Object?> newUser = UserModel.User(
+    Map<String, Object?> newUser = usermodel.User(
       id: FirebaseAuth.instance.currentUser!.uid,
       email: FirebaseAuth.instance.currentUser!.email ?? '',
       phone: phone ?? '',
@@ -416,7 +399,7 @@ class AuthMethods {
       events: [],
       stories: [],
       followers: [],
-      following: [],
+      followings: [],
       reminders: [],
       forevers: [],
       settingShowEventsNotifications: true,
@@ -428,7 +411,7 @@ class AuthMethods {
     debugPrint('NEW USER: $newUser');
 
     //  Update Firestore
-    await FirestoreMethods().createUser(context, FirebaseAuth.instance.currentUser!.uid, newUser);
+    await FirestoreMethods.createUser(context, FirebaseAuth.instance.currentUser!.uid, newUser);
 
     // ADD DEFAULT EVENT : BIRTHDAY
 
@@ -453,19 +436,13 @@ class AuthMethods {
     ).toJson();
 
     //  Update Firestore Event Table
-    await FirestoreMethods().createEvent(context, FirebaseAuth.instance.currentUser!.uid, defaultEventBirthday);
+    await FirestoreMethods.createEvent(context, FirebaseAuth.instance.currentUser!.uid, defaultEventBirthday);
     debugPrint('Default event created: birthday');
   }
 
   // LOGIN WITH EMAIL AND PASSWORD
   Future<bool> loginWithEmailAndPassword(context, email, psw) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     try {
       await auth.signInWithEmailAndPassword(email: email, password: psw);
@@ -494,13 +471,7 @@ class AuthMethods {
 
   // RESET PASSWORD
   Future<bool> resetPassword(context, email) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     try {
       await auth.sendPasswordResetEmail(email: email);
@@ -523,13 +494,7 @@ class AuthMethods {
 
   // CREATE USER WITH EMAIL AND PASSWORD
   Future<bool> createUserWithEmailAndPassword(context, email, psw) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     try {
       UserCredential credential = await auth.createUserWithEmailAndPassword(email: email, password: psw);
@@ -545,7 +510,8 @@ class AuthMethods {
       return true;
     } on FirebaseAuthException catch (e) {
       Navigator.of(context).pop();
-      showSnackbar(context, 'Une erreur s\'est produite : $e', null);
+      log('Error:$e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
       return false;
     }
   }
@@ -583,13 +549,7 @@ class AuthMethods {
   }
 
   Future<bool> continueWithPhone(context, authType, phoneNumber, pin) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
     try {
@@ -656,13 +616,7 @@ class AuthMethods {
 
   // CONTINUE LOGIN WITH GOOGLE
   Future<List> continueWithGoogle(context, authType) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
     try {
@@ -757,13 +711,7 @@ class AuthMethods {
 
   // CONTINUE LOGIN WITH FACEBOOK
   Future<List> continueWithFacebook(context, authType) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
     try {
@@ -886,13 +834,7 @@ class AuthMethods {
   Future<List> updateCurrentUserEmail(context, email) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check email account linked and redirect to Settings Page
     try {
@@ -907,8 +849,8 @@ class AuthMethods {
           };
 
           // ignore: use_build_context_synchronously
-          result = await FirestoreMethods()
-              .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+          result = await FirestoreMethods.updateUserWithSpecificFields(
+              context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
           if (result) {
             // ignore: use_build_context_synchronously
             showSnackbar(context, 'Votre email s\'est bien modifié !', kSuccessColor);
@@ -919,7 +861,7 @@ class AuthMethods {
 
       List<UserInfo> passwordProvider =
           FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
-      if (passwordProvider.length > 0) {
+      if (passwordProvider.isNotEmpty) {
         emailAccountEmail = passwordProvider[0].email!;
       }
 
@@ -1026,13 +968,7 @@ class AuthMethods {
   Future<List> updateCurrentUserPassword(context, psw) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check email account linked and redirect to Settings Page
     try {
@@ -1114,7 +1050,7 @@ class AuthMethods {
                               Navigator.push(
                                   context,
                                   SwipeablePageRoute(
-                                    builder: (context) => LoginPage(
+                                    builder: (context) => const LoginPage(
                                       redirectToAddEmailandPasswordPage: false,
                                       redirectToAddEmailPage: false,
                                       redirectToUpdatePasswordPage: true,
@@ -1161,13 +1097,7 @@ class AuthMethods {
   Future<List> linkCredentialsbyEmailAccount(context, email, psw) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check email account linked and redirect to Settings Page
     try {
@@ -1190,8 +1120,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             if (result) {
               // ignore: use_build_context_synchronously
               showSnackbar(context, 'Votre email s\'est bien ajouté', kSuccessColor);
@@ -1263,7 +1193,7 @@ class AuthMethods {
                               Navigator.push(
                                   context,
                                   SwipeablePageRoute(
-                                    builder: (context) => LoginPage(
+                                    builder: (context) => const LoginPage(
                                       redirectToAddEmailPage: false,
                                       redirectToAddEmailandPasswordPage: true,
                                       redirectToUpdatePasswordPage: false,
@@ -1310,13 +1240,7 @@ class AuthMethods {
   Future<bool> linkCredentialsbyPhoneNumber(context, authType, phoneNumber, pin) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check code availability and redirect to Settings Page
     try {
@@ -1338,8 +1262,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             debugPrint('Profile updated (with Phone Number)');
             return result;
           }
@@ -1376,13 +1300,7 @@ class AuthMethods {
   Future<List> linkCredentialsbyGoogleAccount(context) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check google account linked and redirect to Settings Page
     try {
@@ -1447,8 +1365,8 @@ class AuthMethods {
         };
 
         // ignore: use_build_context_synchronously
-        result = await FirestoreMethods()
-            .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+        result = await FirestoreMethods.updateUserWithSpecificFields(
+            context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
       }
 
       await FirebaseAuth.instance.currentUser?.linkWithCredential(credential).then(
@@ -1460,8 +1378,8 @@ class AuthMethods {
             };
 
             // ignore: use_build_context_synchronously
-            result = await FirestoreMethods()
-                .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+            result = await FirestoreMethods.updateUserWithSpecificFields(
+                context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
             if (result) {
               // ignore: use_build_context_synchronously
               showSnackbar(context, 'Votre compte Google s\'est bien ajouté', kSuccessColor);
@@ -1518,13 +1436,7 @@ class AuthMethods {
   Future<List> linkCredentialsbyFacebookAccount(context) async
   //
   {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Check facebook account linked and redirect to Settings Page
     try {
@@ -1590,7 +1502,9 @@ class AuthMethods {
         // CONTINUE
         try {
           await FirebaseAuth.instance.currentUser?.unlink(FacebookAuthProvider.PROVIDER_ID);
-        } catch (e) {}
+        } catch (e) {
+          //
+        }
 
         await FirebaseAuth.instance.currentUser?.linkWithCredential(facebookAuthCredential).then(
           (value) async {
@@ -1601,8 +1515,8 @@ class AuthMethods {
               };
 
               // ignore: use_build_context_synchronously
-              result = await FirestoreMethods()
-                  .updateUserWithSpecificFields(context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
+              result = await FirestoreMethods.updateUserWithSpecificFields(
+                  context, FirebaseAuth.instance.currentUser!.uid, userFieldToUpdate);
               if (result) {
                 // ignore: use_build_context_synchronously
                 showSnackbar(context, 'Votre compte Facebook s\'est bien ajouté', kSuccessColor);

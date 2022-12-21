@@ -8,7 +8,7 @@ class Modal extends StatefulWidget {
   final Widget child;
   final double? minHeightSize;
   final double? maxHeightSize;
-  Modal({required this.child, this.minHeightSize, this.maxHeightSize});
+  const Modal({Key? key, required this.child, this.minHeightSize, this.maxHeightSize}) : super(key: key);
 
   @override
   State<Modal> createState() => _ModalState();

@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/feedback.dart';
 import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
@@ -10,7 +9,7 @@ import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/textformfield.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 
 class FeedBackModal extends StatefulWidget {
   const FeedBackModal({super.key});
@@ -20,7 +19,7 @@ class FeedBackModal extends StatefulWidget {
 }
 
 class _FeedBackModalState extends State<FeedBackModal> {
-  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<usermodel.User?> currentUser = ValueNotifier<usermodel.User?>(null);
   TextEditingController textController = TextEditingController();
   PageController pageController = PageController();
   bool isLoading = false;
@@ -30,7 +29,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     textController.dispose();
   }
@@ -38,15 +37,9 @@ class _FeedBackModalState extends State<FeedBackModal> {
   Future<bool> sendFeedBack() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
-    // Modeling a question model
+    // Modeling a new feedback model
     Map<String, Object?> feedbackToSend = FeedBack(
       feedbackId: '',
       uid: currentUser.value!.id,
@@ -58,7 +51,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
     ).toJson();
 
     // ignore: use_build_context_synchronously
-    result = await FirestoreMethods().sendFeedback(context, feedbackToSend);
+    result = await FirestoreMethods.sendFeedback(context, feedbackToSend);
     debugPrint('Feedback sent : $feedbackToSend');
     // ignore: use_build_context_synchronously
     Navigator.pop(
@@ -88,7 +81,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
       onWillPop: () async {
         return await onWillPopHandler(context);
       },
-      child: StreamBuilder<UserModel.User?>(
+      child: StreamBuilder<usermodel.User?>(
           stream: Provider.of<UserProvider>(context).getCurrentUser(),
           builder: (context, snapshot) {
             if (snapshot.hasData && snapshot.data != null) {
@@ -171,7 +164,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
                                 hintText: 'Quelle fonctionnalité souhaitez-vous voir dans $appName ?',
                                 icon: const Icon(Icons.auto_awesome_rounded),
                                 fontSize: 14.sp,
-                                maxLines: 4,
+                                maxLines: 5,
                                 maxLength: 500,
                                 inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
                                 validateFn: (text) {
@@ -185,20 +178,21 @@ class _FeedBackModalState extends State<FeedBackModal> {
 
                             // Buttons
 
-                            FittedBox(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 10, bottom: 5),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, bottom: 5),
+                              child: FittedBox(
                                 child: Row(
                                   children: [
                                     //
                                     CupertinoButton.filled(
-                                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                                       borderRadius: BorderRadius.circular(20),
                                       child: Row(
-                                        children: const [
+                                        children: [
                                           Text(
                                             'Envoyer',
-                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                                            style: TextStyle(
+                                                fontSize: 14.sp, color: Colors.white, fontWeight: FontWeight.w500),
                                           ),
                                         ],
                                       ),
@@ -206,14 +200,10 @@ class _FeedBackModalState extends State<FeedBackModal> {
                                         // Send feedback
 
                                         //  Show Loader Modal
-                                        showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (_) => const Center(
-                                            child: CupertinoActivityIndicator(radius: 16, color: Colors.white),
-                                          ),
-                                        );
-                                        var isConnected = await InternetConnection().isConnected(context);
+                                        //
+                                        showFullPageLoader(context: context, color: Colors.white);
+                                        //
+                                        var isConnected = await InternetConnection.isConnected(context);
                                         //  Dismiss Loader Modal
                                         // ignore: use_build_context_synchronously
                                         Navigator.pop(context);

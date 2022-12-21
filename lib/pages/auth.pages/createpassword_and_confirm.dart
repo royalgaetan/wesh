@@ -21,13 +21,13 @@ class _CreatePasswordState extends State<CreatePassword> {
   late TextEditingController passwordController = TextEditingController();
   late TextEditingController passwordConfirmationController = TextEditingController();
   bool showVisibilityIcon = false;
-  bool showPasswordConfirmation_VisibilityIcon = false;
+  bool showPasswordConfirmationVisibilityIcon = false;
   bool isPswVisible = true;
   bool isPswConfirmationVisible = true;
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     passwordController.dispose();
     passwordConfirmationController.dispose();
@@ -183,13 +183,13 @@ class _CreatePasswordState extends State<CreatePassword> {
                                 if (value != '')
                                   {
                                     setState(() {
-                                      showPasswordConfirmation_VisibilityIcon = true;
+                                      showPasswordConfirmationVisibilityIcon = true;
                                     })
                                   }
                                 else
                                   {
                                     setState(() {
-                                      showPasswordConfirmation_VisibilityIcon = false;
+                                      showPasswordConfirmationVisibilityIcon = false;
                                     })
                                   }
                               }),

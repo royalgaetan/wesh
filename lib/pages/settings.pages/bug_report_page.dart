@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 import '../../models/bugreport.dart';
 import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
@@ -26,7 +26,7 @@ class _BugReportPageState extends State<BugReportPage> {
   TextEditingController textController = TextEditingController();
   bool includeDeviceInformations = true;
   bool isLoading = false;
-  ValueNotifier<UserModel.User?> currentUser = ValueNotifier<UserModel.User?>(null);
+  ValueNotifier<usermodel.User?> currentUser = ValueNotifier<usermodel.User?>(null);
 
   dynamic platformVersion = '';
   dynamic imeiNo = '';
@@ -40,13 +40,13 @@ class _BugReportPageState extends State<BugReportPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     textController.dispose();
   }
@@ -54,13 +54,7 @@ class _BugReportPageState extends State<BugReportPage> {
   sendBugReport() async {
     bool result = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     // Fetch device infos
     await fetchDeviceInfo(includeDeviceInformations);
@@ -85,7 +79,7 @@ class _BugReportPageState extends State<BugReportPage> {
     ).toJson();
 
     // ignore: use_build_context_synchronously
-    result = await FirestoreMethods().sendBugReport(context, bugReportToSend);
+    result = await FirestoreMethods.sendBugReport(context, bugReportToSend);
     debugPrint('Bug report sent : $bugReportToSend');
 
     // ignore: use_build_context_synchronously
@@ -94,6 +88,7 @@ class _BugReportPageState extends State<BugReportPage> {
     );
     // Pop the Screen once profile updated
     if (result) {
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
 
       // ignore: use_build_context_synchronously
@@ -117,7 +112,7 @@ class _BugReportPageState extends State<BugReportPage> {
       } on PlatformException {
         platformVersion = 'Impossible d\'obtenir la version de la plate forme';
       }
-      print('apiLevel : ${await DeviceInformation.apiLevel}');
+      debugPrint('apiLevel : ${await DeviceInformation.apiLevel}');
     }
   }
 
@@ -154,77 +149,79 @@ class _BugReportPageState extends State<BugReportPage> {
                   color: kSecondColor,
                 )
               : Container(),
-          StreamBuilder<UserModel.User?>(
-              stream: Provider.of<UserProvider>(context).getCurrentUser(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data != null) {
-                  // Update current user
-                  currentUser.value = snapshot.data;
+          SingleChildScrollView(
+            child: StreamBuilder<usermodel.User?>(
+                stream: Provider.of<UserProvider>(context).getCurrentUser(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    // Update current user
+                    currentUser.value = snapshot.data;
 
-                  return Column(
-                    children: [
-                      // Bug report add content field
-                      Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: buildTextFormField(
-                          controller: textController,
-                          hintText:
-                              'Dites nous qu\'est-ce qui s\'est produit ou qu\'est-ce qui ne fonctionne pas correctement (en moins de 500 caractères)',
-                          icon: const Icon(Icons.edit_note_rounded),
-                          maxLines: 10,
-                          maxLength: 500,
-                          inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
-                          validateFn: (text) {
-                            return null;
-                          },
-                          onChanged: (text) async {
-                            return;
-                          },
-                        ),
-                      ),
-
-                      // Include Device informations : user consentment
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      SwitchListTile(
-                        title: Text(
-                          'Inclure les informations sur l\'appareil',
-                          style: TextStyle(
-                            fontSize: 14.sp,
+                    return Column(
+                      children: [
+                        // Bug report add content field
+                        Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: buildTextFormField(
+                            controller: textController,
+                            hintText:
+                                'Dites nous qu\'est-ce qui s\'est produit ou qu\'est-ce qui ne fonctionne pas correctement (en moins de 500 caractères)',
+                            icon: const Icon(Icons.edit_note_rounded),
+                            maxLines: 10,
+                            maxLength: 500,
+                            inputBorder: const UnderlineInputBorder(borderSide: BorderSide(color: kSecondColor)),
+                            validateFn: (text) {
+                              return null;
+                            },
+                            onChanged: (text) async {
+                              return;
+                            },
                           ),
                         ),
-                        subtitle: Text(
-                          'Les informations sur votre appareil seront inclus dans votre rapport pour nous aider à mieux comprendre et resoudre votre problème',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                          ),
-                        ),
-                        value: includeDeviceInformations,
-                        onChanged: (bool value) {
-                          setState(() {
-                            includeDeviceInformations = value;
-                          });
-                        },
-                        secondary: const Icon(Icons.perm_device_information_rounded),
-                      ),
-                    ],
-                  );
-                }
 
-                if (snapshot.hasError) {
-                  // Handle error
-                  debugPrint('error: ${snapshot.error}');
+                        // Include Device informations : user consentment
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        SwitchListTile(
+                          title: Text(
+                            'Inclure les informations sur l\'appareil',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Les informations sur votre appareil seront inclus dans votre rapport pour nous aider à mieux comprendre et resoudre votre problème',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                          value: includeDeviceInformations,
+                          onChanged: (bool value) {
+                            setState(() {
+                              includeDeviceInformations = value;
+                            });
+                          },
+                          secondary: const Icon(Icons.perm_device_information_rounded),
+                        ),
+                      ],
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    // Handle error
+                    debugPrint('error: ${snapshot.error}');
+                    return const Center(
+                      child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
+                    );
+                  }
+
+                  // Display CircularProgressIndicator
                   return const Center(
-                    child: Text('Une erreur s\'est produite', style: TextStyle(color: Colors.white)),
+                    child: CupertinoActivityIndicator(color: Colors.white60, radius: 15),
                   );
-                }
-
-                // Display CircularProgressIndicator
-                return const Center(
-                  child: CupertinoActivityIndicator(color: Colors.white60, radius: 15),
-                );
-              }),
+                }),
+          ),
         ],
       ),
       floatingActionButton:
@@ -245,7 +242,7 @@ class _BugReportPageState extends State<BugReportPage> {
           setState(() {
             isLoading = true;
           });
-          var isConnected = await InternetConnection().isConnected(context);
+          var isConnected = await InternetConnection.isConnected(context);
           if (mounted) {
             setState(() {
               isLoading = false;

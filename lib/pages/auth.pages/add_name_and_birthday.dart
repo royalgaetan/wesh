@@ -1,19 +1,16 @@
-import 'package:age_calculator/age_calculator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/auth.pages/signupmethodspage.dart';
-import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/utils/functions.dart';
 import 'package:wesh/widgets/button.dart';
 import 'package:wesh/widgets/textfieldcontainer.dart';
 import '../../services/sharedpreferences.service.dart';
-import '../auth.pages/add_profile_picture.dart';
 
 class AddNameAndBirthdayPage extends StatefulWidget {
-  AddNameAndBirthdayPage({Key? key}) : super(key: key);
+  const AddNameAndBirthdayPage({Key? key}) : super(key: key);
 
   @override
   State<AddNameAndBirthdayPage> createState() => _AddNameAndBirthdayPageState();
@@ -27,14 +24,14 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //
     super.initState();
     birthday = DateTime(0);
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //
     super.dispose();
     nameController.dispose();
   }
@@ -48,8 +45,8 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
       if (birthday != DateTime(0)) {
         // DateDuration age = AgeCalculator.age(birthday);
         // if (age.years > 13) {
-        // FirestoreMethods().updateCurrentUserName(context, nameController.text);
-        // FirestoreMethods().updateCurrentUserBirthday(context, birthday);
+        // FirestoreMethods.updateCurrentUserName(context, nameController.text);
+        // FirestoreMethods.updateCurrentUserBirthday(context, birthday);
 
         await UserSimplePreferences.setName(nameController.text);
         await UserSimplePreferences.setBirthday(birthday.toIso8601String());
@@ -61,7 +58,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
         Navigator.push(
             context,
             SwipeablePageRoute(
-              builder: (context) => SignUpMethodPage(),
+              builder: (context) => const SignUpMethodPage(),
             ));
         // }
         // else {
@@ -130,7 +127,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
                       width: 0.14.sh,
                       decoration: const BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/images/gift.png'),
+                          image: AssetImage(gift),
                         ),
                       ),
                     ),

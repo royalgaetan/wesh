@@ -1,6 +1,3 @@
-import 'dart:developer';
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,23 +5,19 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/event_duration_type.dart';
-import 'package:wesh/pages/profile.dart';
 import 'package:wesh/utils/constants.dart';
-import 'package:wesh/utils/db.dart';
-import 'package:wesh/widgets/contactcard.dart';
-import 'package:wesh/widgets/contactview.dart';
 import 'package:wesh/widgets/eventview.dart';
 import 'package:wesh/widgets/modal.dart';
 import 'package:wesh/widgets/searcheventcard.dart';
 import 'package:wesh/widgets/usercard.dart';
-
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 import '../../models/event.dart';
 import '../../services/firestore.methods.dart';
 import '../../utils/functions.dart';
 
 class SearchPage extends StatefulWidget {
-  SearchPage({Key? key}) : super(key: key);
+  final int? initialPageIndex;
+  const SearchPage({Key? key, this.initialPageIndex}) : super(key: key);
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -40,7 +33,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      initialIndex: 0,
+      initialIndex: widget.initialPageIndex ?? 0,
       length: 2,
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -242,7 +235,7 @@ class _SearchPageState extends State<SearchPage> {
                   // EVENTS RESULTS
                   SingleChildScrollView(
                     child: StreamBuilder<List<Event>>(
-                      stream: FirestoreMethods().getAllEvents(),
+                      stream: FirestoreMethods.getAllEvents(),
                       builder: (context, snapshot) {
                         // QUERY SETTLED
                         if (_searchQuery.isNotEmpty) {
@@ -275,8 +268,8 @@ class _SearchPageState extends State<SearchPage> {
                                 for (var eventDuration in event.eventDurations) {
                                   EventDurationType currentEventDuration = EventDurationType.fromJson(eventDuration);
 
-                                  // ONLY FOR BIRTHDAY EVENT
-                                  if (event.type == 'birthday') {
+                                  // ONLY FOR EVENT WITH RECURRENCE
+                                  if (isEventWithRecurrence(event)) {
                                     if (currentEventDuration.date.month == dayFilter!.month &&
                                         currentEventDuration.date.day == dayFilter!.day) {
                                       return true;
@@ -346,7 +339,7 @@ class _SearchPageState extends State<SearchPage> {
                                   children: [
                                     Lottie.asset(
                                       height: 150,
-                                      'assets/animations/112136-empty-red.json',
+                                      empty,
                                       width: double.infinity,
                                     ),
                                     const SizedBox(
@@ -396,8 +389,8 @@ class _SearchPageState extends State<SearchPage> {
 
                   // ACCOUNT RESULTS
                   SingleChildScrollView(
-                    child: StreamBuilder<List<UserModel.User>>(
-                      stream: FirestoreMethods().getAllUsers(),
+                    child: StreamBuilder<List<usermodel.User>>(
+                      stream: FirestoreMethods.getAllUsers(),
                       builder: (context, snapshot) {
                         // QUERY SETTLED
                         if (_searchQuery.isNotEmpty) {
@@ -418,7 +411,7 @@ class _SearchPageState extends State<SearchPage> {
 
                           // Handle Data and perform search
                           if (snapshot.hasData) {
-                            List<UserModel.User?> result = snapshot.data!
+                            List<usermodel.User?> result = snapshot.data!
                                 .where((user) =>
                                     user.name.toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
                                     user.username.toString().toLowerCase().contains(_searchQuery.toLowerCase()))
@@ -483,7 +476,7 @@ class _SearchPageState extends State<SearchPage> {
                                   children: [
                                     Lottie.asset(
                                       height: 150,
-                                      'assets/animations/112136-empty-red.json',
+                                      empty,
                                       width: double.infinity,
                                     ),
                                     const SizedBox(

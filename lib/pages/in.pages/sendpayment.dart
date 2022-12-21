@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:math' as math;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl_phone_field/helpers.dart';
@@ -28,7 +27,7 @@ class SendPayment extends StatefulWidget {
   final Event? eventAttached;
   final Story? storyAttached;
 
-  SendPayment({
+  const SendPayment({
     Key? key,
     required this.filetype,
     required this.userReceiverId,
@@ -586,13 +585,9 @@ class _SendPaymentState extends State<SendPayment> with WidgetsBindingObserver {
 
           // Continue with Airtel Money
           if (paymentMethodSelected == airtelMoneyLabel) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => Center(
-                child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-              ),
-            );
+            //
+            showFullPageLoader(context: context, color: Colors.white);
+            //
 
             // STEP 1: Set the root
             await UssdAdvanced.multisessionUssd(code: '*128#', subscriptionId: 2);

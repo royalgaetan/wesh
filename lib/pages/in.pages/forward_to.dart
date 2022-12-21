@@ -1,17 +1,15 @@
 import 'dart:io';
 import 'dart:math';
-
+import 'dart:developer' as dev;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/in.pages/inbox.dart';
-import 'package:wesh/pages/profile.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/providers/user.provider.dart';
 import 'package:wesh/widgets/usercard.dart';
@@ -19,7 +17,7 @@ import '../../models/discussion.dart';
 import '../../models/story.dart';
 import '../../services/firestorage.methods.dart';
 import '../../services/firestore.methods.dart';
-import '../../models/user.dart' as UserModel;
+import '../../models/user.dart' as usermodel;
 import '../../models/message.dart';
 import '../../utils/constants.dart';
 import '../../utils/functions.dart';
@@ -45,7 +43,8 @@ class ForwardToPage extends StatefulWidget {
 }
 
 class _ForwardToPageState extends State<ForwardToPage> {
-  TextEditingController _searchtextcontroller = TextEditingController();
+  //
+  final TextEditingController _searchtextcontroller = TextEditingController();
   //
   String _searchQuery = '';
   //
@@ -73,16 +72,23 @@ class _ForwardToPageState extends State<ForwardToPage> {
       for (Message message in widget.messagesToForward ?? []) {
         // Text message
         if (message.type == 'text') {
-          Map<String, String> dataMap = {'data': message.data, 'type': message.type};
+          Map<String, String> dataMap = {
+            'data': message.data.substring(0, message.data.length > 500 ? 500 : message.data.length),
+            'type': message.type
+          };
           dataToForward.add(dataMap);
         }
         // Non-Text message
         else if (message.type != 'text') {
           File messageFile =
               File('${directories[0]}/$appName/${getSpecificDirByType(message.type)}/${message.filename}');
+          dev.log('FILE SIZE ${messageFile.lengthSync() / 1000000}');
 
-          Map<String, String> dataMap = {'data': messageFile.path, 'type': message.type};
-          dataToForward.add(dataMap);
+          // Check file size : limit to 15MB fileLimitSize15MB
+          if (messageFile.lengthSync() < fileLimitSize15MB) {
+            Map<String, String> dataMap = {'data': messageFile.path, 'type': message.type};
+            dataToForward.add(dataMap);
+          }
         }
       }
     }
@@ -90,25 +96,35 @@ class _ForwardToPageState extends State<ForwardToPage> {
     else if (widget.typeToForward == 'contentShared') {
       // Text messages
       if (widget.textSharedToForward != null && widget.textSharedToForward != '') {
-        Map<String, String> dataMap = {'data': widget.textSharedToForward ?? '', 'type': 'text'};
+        Map<String, String> dataMap = {
+          'data': widget.textSharedToForward
+                  ?.substring(0, widget.textSharedToForward!.length > 500 ? 500 : widget.textSharedToForward!.length) ??
+              '',
+          'type': 'text'
+        };
         dataToForward.add(dataMap);
       }
       // Media messages
       for (Map<String, Object> mediaShared in widget.mediaSharedToForward ?? []) {
-        // Image
-        if (mediaShared['type'] == SharedMediaType.IMAGE) {
-          Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'image'};
-          dataToForward.add(dataMap);
-        }
-        // Video
-        if (mediaShared['type'] == SharedMediaType.VIDEO) {
-          Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'video'};
-          dataToForward.add(dataMap);
-        }
-        // Music
-        if (mediaShared['type'] == SharedMediaType.FILE && isAudio(mediaShared['data'] as String)) {
-          Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'music'};
-          dataToForward.add(dataMap);
+        // Check file size
+        File contentFile = File(mediaShared['data'] as String);
+        dev.log('FILE SIZE ${contentFile.lengthSync() / 1000000}');
+        if (contentFile.lengthSync() < fileLimitSize15MB) {
+          // Image
+          if (mediaShared['type'] == SharedMediaType.IMAGE) {
+            Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'image'};
+            dataToForward.add(dataMap);
+          }
+          // Video
+          if (mediaShared['type'] == SharedMediaType.VIDEO) {
+            Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'video'};
+            dataToForward.add(dataMap);
+          }
+          // Music
+          if (mediaShared['type'] == SharedMediaType.FILE && isAudio(mediaShared['data'] as String)) {
+            Map<String, String> dataMap = {'data': (mediaShared['data'] as String), 'type': 'music'};
+            dataToForward.add(dataMap);
+          }
         }
       }
     }
@@ -123,66 +139,33 @@ class _ForwardToPageState extends State<ForwardToPage> {
   // Forward As Story : [My] Story
   forwardToMyStory(List<Map<String, String>> dataToForward) async {
     // Loader
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
+    showFullPageLoader(context: context);
 
     //
     List<bool> resultsList = [];
-    for (Map<String, String> data in dataToForward) {
-      print('Data to forward : $data');
 
-      // Forbid to forward Music or Audio file
-      if (data['type'] == 'music' || data['type'] == 'voicenote') {
-        print('[OPERATION FORBIDDEN] Can\'t forward ${data['type']} --> my Story...');
-        resultsList.add(false);
-      }
+    //
+    dev.log('Data to forward : $dataToForward');
+    if (dataToForward.isNotEmpty) {
+      for (Map<String, String> data in dataToForward) {
+        //
 
-      // Forward Text
-      if (data['type'] == 'text') {
-        print('Forwarding text --> my Story...');
-        // Modeling a new Text Story
-        Map<String, Object?> newTextStory = Story(
-            storyId: '',
-            content: (data['data'] as String),
-            uid: FirebaseAuth.instance.currentUser!.uid,
-            bgColor: Random().nextInt(storiesAvailableColorsList.length),
-            fontType: Random().nextInt(storiesAvailableFontsList.length),
-            storyType: (data['type'] as String),
-            caption: '',
-            videoThumbnail: '',
-            eventId: '',
-            createdAt: DateTime.now(),
-            endAt: DateTime.now().add(const Duration(hours: 24)),
-            viewers: []).toJson();
+        // Forbidden to forward Music or Audio file to Stories
+        if (data['type'] == 'music' || data['type'] == 'voicenote') {
+          debugPrint('[OPERATION FORBIDDEN] Can\'t forward ${data['type']} --> my Story...');
+          resultsList.add(false);
+        }
 
-        debugPrint('Story created : $newTextStory');
-
-        //  Update Firestore Stories Table
-        bool result =
-            await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
-        resultsList.add(result);
-      }
-
-      // Forward Image
-      if (data['type'] == 'image') {
-        print('Forwarding image --> my Story...');
-
-        // Upload StoryImage to Firestorage and getDownloadURL
-        // ignore: use_build_context_synchronously
-        String downloadUrl = await FireStorageMethods().uploadStoryContent(context, data['data'], 'image');
-        if (downloadUrl.isNotEmpty) {
-          // Modeling a new Image Story
-          Map<String, Object?> newImageStory = Story(
+        // Forward Text
+        if (data['type'] == 'text') {
+          debugPrint('Forwarding text --> my Story...');
+          // Modeling a new Text Story
+          Map<String, Object?> newTextStory = Story(
               storyId: '',
-              content: downloadUrl,
+              content: (data['data'] as String),
               uid: FirebaseAuth.instance.currentUser!.uid,
-              bgColor: 0,
-              fontType: 0,
+              bgColor: Random().nextInt(storiesAvailableColorsList.length),
+              fontType: Random().nextInt(storiesAvailableFontsList.length),
               storyType: (data['type'] as String),
               caption: '',
               videoThumbnail: '',
@@ -191,61 +174,121 @@ class _ForwardToPageState extends State<ForwardToPage> {
               endAt: DateTime.now().add(const Duration(hours: 24)),
               viewers: []).toJson();
 
-          debugPrint('Story modelled : $newImageStory');
+          debugPrint('Story created : $newTextStory');
 
           //  Update Firestore Stories Table
           bool result =
-              // ignore: use_build_context_synchronously
-              await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
+              await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newTextStory);
           resultsList.add(result);
-        } else {
-          resultsList.add(false);
         }
-        ;
-      }
 
-      // Forward Video
-      if (data['type'] == 'video') {
-        print('Forwarding video --> my Story...');
+        // Forward Image
+        if (data['type'] == 'image') {
+          debugPrint('Forwarding image --> my Story...');
 
-        // Upload StoryVideo to Firestorage and getDownloadURL
-        // ignore: use_build_context_synchronously
-        String downloadUrl = await FireStorageMethods().uploadStoryContent(context, data['data'], 'video');
+          // Upload StoryImage to Firestorage and getDownloadURL
 
-        // Upload StoryVideo Thumbnail to Firestorage and get Thumbnail downloadUrl
-        String vidhumbnailInString = await getVideoThumbnail(data['data']) ?? '';
-        String thumbnailVideoDownloadUrl =
-            // ignore: use_build_context_synchronously
-            await FireStorageMethods().uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
+          //
+          // Compress File : Only for Image Message
+          // Compress File : size > 2MB
+          File imageFile = File(data['data'] as String);
+          if (imageFile.lengthSync() > fileLimitSize2MB) {
+            // Resize file
+            imageFile = await resizeImageFile(filePath: imageFile.path);
+          }
 
-        if (downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
-          // Modeling a new Video Story
-          Map<String, Object?> newVideoStory = Story(
-              storyId: '',
-              content: downloadUrl,
-              uid: FirebaseAuth.instance.currentUser!.uid,
-              bgColor: 0,
-              fontType: 0,
-              storyType: (data['type'] as String),
-              videoThumbnail: thumbnailVideoDownloadUrl,
-              caption: '',
-              eventId: '',
-              createdAt: DateTime.now(),
-              endAt: DateTime.now().add(const Duration(hours: 24)),
-              viewers: []).toJson();
-
-          debugPrint('Story created : $newVideoStory');
-
-          //  Update Firestore Stories Table
-          bool result =
+          List resultFromStoryImageFile =
               // ignore: use_build_context_synchronously
-              await FirestoreMethods().createStory(context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
+              await FireStorageMethods.uploadStoryContent(context, imageFile.path, 'image');
+          bool isAllowToContinue = resultFromStoryImageFile[0];
+          String downloadUrl = resultFromStoryImageFile[1];
 
-          resultsList.add(result);
-        } else {
-          resultsList.add(false);
+          if (isAllowToContinue && downloadUrl.isNotEmpty) {
+            // Modeling a new Image Story
+            Map<String, Object?> newImageStory = Story(
+                storyId: '',
+                content: downloadUrl,
+                uid: FirebaseAuth.instance.currentUser!.uid,
+                bgColor: 0,
+                fontType: 0,
+                storyType: (data['type'] as String),
+                caption: '',
+                videoThumbnail: '',
+                eventId: '',
+                createdAt: DateTime.now(),
+                endAt: DateTime.now().add(const Duration(hours: 24)),
+                viewers: []).toJson();
+
+            debugPrint('Story modelled : $newImageStory');
+
+            //  Update Firestore Stories Table
+            bool result =
+                // ignore: use_build_context_synchronously
+                await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newImageStory);
+            resultsList.add(result);
+          } else {
+            resultsList.add(false);
+          }
         }
-        ;
+
+        // Forward Video
+        if (data['type'] == 'video') {
+          debugPrint('Forwarding video --> my Story...');
+
+          //
+          // STORY VIDEO FILE
+          //
+
+          // Upload StoryVideo to Firestorage and getDownloadURL
+          // ignore: use_build_context_synchronously
+
+          List resultFromStoryVidFile =
+              // ignore: use_build_context_synchronously
+              await FireStorageMethods.uploadStoryContent(context, data['data'], 'video');
+          bool isAllowToContinue = resultFromStoryVidFile[0];
+          String downloadUrl = resultFromStoryVidFile[1];
+
+          //
+          // STORY VIDEO THUMBNAIL
+          //
+
+          // Upload StoryVideo Thumbnail to Firestorage and get Thumbnail downloadUrl
+          String vidhumbnailInString = await getVideoThumbnail(data['data']) ?? '';
+
+          List resultFromStoryVidThumbnailFile =
+              // ignore: use_build_context_synchronously
+              await FireStorageMethods.uploadStoryContent(context, vidhumbnailInString, 'vidThumbnail');
+          isAllowToContinue = resultFromStoryVidThumbnailFile[0];
+          String thumbnailVideoDownloadUrl = resultFromStoryVidThumbnailFile[1];
+
+          if (isAllowToContinue && downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
+            // Modeling a new Video Story
+            Map<String, Object?> newVideoStory = Story(
+                storyId: '',
+                content: downloadUrl,
+                uid: FirebaseAuth.instance.currentUser!.uid,
+                bgColor: 0,
+                fontType: 0,
+                storyType: (data['type'] as String),
+                videoThumbnail: thumbnailVideoDownloadUrl,
+                caption: '',
+                eventId: '',
+                createdAt: DateTime.now(),
+                endAt: DateTime.now().add(const Duration(hours: 24)),
+                viewers: []).toJson();
+
+            debugPrint('Story created : $newVideoStory');
+
+            //  Update Firestore Stories Table
+            bool result =
+                // ignore: use_build_context_synchronously
+                await FirestoreMethods.createStory(context, FirebaseAuth.instance.currentUser!.uid, newVideoStory);
+
+            resultsList.add(result);
+          } else {
+            resultsList.add(false);
+          }
+        }
       }
     }
 
@@ -255,11 +298,11 @@ class _ForwardToPageState extends State<ForwardToPage> {
     // Pop the Loader Modal
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
-    if (resultsList.contains(false)) {
+    if (resultsList.isEmpty || resultsList.contains(false)) {
       // ignore: use_build_context_synchronously
       showSnackbar(
           context,
-          resultsList.length == 1
+          resultsList.length <= 1
               ? 'Impossible d\'envoyer cette story !'
               : 'Certaines stories ont bien été envoyées, mais d\'autres non !',
           resultsList.length == 1 ? kSecondColor : null);
@@ -272,7 +315,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
     }
 
     // PROCESS FINISHED
-    print('Story posting process finished !');
+    dev.log('Story posting process finished !');
 
     // Reset Receiver_intent
     ReceiveSharingIntent.reset();
@@ -283,67 +326,86 @@ class _ForwardToPageState extends State<ForwardToPage> {
       Navigator.of(context).pop();
     } else {
       // ignore: use_build_context_synchronously
-      Navigator.pushAndRemoveUntil(context, SwipeablePageRoute(
-        builder: (context) {
-          return StartPage(
-            context: context,
-            initTabIndex: 3,
-          );
-        },
-      ), (route) => false);
+      Navigator.pushReplacement(
+        context,
+        SwipeablePageRoute(
+          builder: (context) {
+            return StartPage(
+              context: context,
+              initTabIndex: 3,
+            );
+          },
+        ),
+      );
     }
   }
 
   // Forward As Message : to [Another] User
   forwardAsMessage(String anotherUserId, List<Map<String, String>> dataToForward) async {
     // Loader
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Center(
-        child: CupertinoActivityIndicator(radius: 12.sp, color: Colors.white),
-      ),
-    );
-
-    for (Map<String, String> data in dataToForward)
+    showFullPageLoader(context: context);
     //
-    {
-      print('Data to forward : $data');
-      String type = (data['type'] as String);
-      String dataPath = (data['data'] as String);
+    List<bool> resultsList = [];
 
-      await sendMessage(
-        context: context,
-        userReceiverId: anotherUserId,
-        messageType: type,
-        discussionId: '',
-        eventId: '',
-        storyId: '',
-        isPaymentMessage: false,
-        amount: 0,
-        receiverPhoneNumber: '',
-        paymentMethod: '',
-        transactionId: '',
-        messageTextValue: type == 'text' ? dataPath : '',
-        messageCaptionText: '',
-        voiceNotePath: type == 'voicenote' ? dataPath : '',
-        imagePath: type == 'image' ? dataPath : '',
-        videoPath: type == 'video' ? dataPath : '',
-        musicPath: type == 'music' ? dataPath : '',
-        messageToReplyId: '',
-        messageToReplyType: '',
-        messageToReplyData: '',
-        messageToReplyFilename: '',
-        messageToReplyThumbnail: '',
-        messageToReplyCaption: '',
-        messageToReplySenderId: '',
-      );
+    //
+    dev.log('Data to forward : $dataToForward');
+    if (dataToForward.isNotEmpty) {
+      // SEND ALL MESSAGES
+      for (Map<String, String> data in dataToForward) {
+        String type = (data['type'] as String);
+        String dataPath = (data['data'] as String);
+
+        await sendMessage(
+          context: context,
+          userReceiverId: anotherUserId,
+          messageType: type,
+          discussionId: '',
+          eventId: '',
+          storyId: '',
+          isPaymentMessage: false,
+          amount: 0,
+          receiverPhoneNumber: '',
+          paymentMethod: '',
+          transactionId: '',
+          messageTextValue: type == 'text' ? dataPath : '',
+          messageCaptionText: '',
+          voiceNotePath: type == 'voicenote' ? dataPath : '',
+          imagePath: type == 'image' ? dataPath : '',
+          videoPath: type == 'video' ? dataPath : '',
+          musicPath: type == 'music' ? dataPath : '',
+          messageToReplyId: '',
+          messageToReplyType: '',
+          messageToReplyData: '',
+          messageToReplyFilename: '',
+          messageToReplyThumbnail: '',
+          messageToReplyCaption: '',
+          messageToReplySenderId: '',
+        );
+        resultsList.add(true);
+      }
     }
 
     // Get Discussion of [anotherUserId] and [Me]
-    List<Discussion> listOfExistingDiscussions = await FirestoreMethods().getListOfExistingDiscussions(
+    List<Discussion> listOfExistingDiscussions = await FirestoreMethods.getListOfExistingDiscussions(
         userSenderId: FirebaseAuth.instance.currentUser!.uid, userReceiverId: anotherUserId);
-    print('listOfExistingDiscussions: $listOfExistingDiscussions');
+    debugPrint('listOfExistingDiscussions: $listOfExistingDiscussions');
+    dev.log('listOfExistingDiscussions: $listOfExistingDiscussions');
+
+    if (resultsList.isEmpty || resultsList.contains(false)) {
+      // ignore: use_build_context_synchronously
+      showSnackbar(
+          context,
+          resultsList.length <= 1
+              ? 'Impossible d\'envoyer ce message !'
+              : 'Certains messages ont bien été envoyés, mais d\'autres non !',
+          resultsList.length == 1 ? kSecondColor : null);
+    } else {
+      // ignore: use_build_context_synchronously
+      showSnackbar(
+          context,
+          resultsList.length == 1 ? 'Votre message a bien été envoyé !' : 'Vos messages ont bien été envoyés !',
+          kSuccessColor);
+    }
 
     // Pop the Loader Modal
     // ignore: use_build_context_synchronously
@@ -359,15 +421,17 @@ class _ForwardToPageState extends State<ForwardToPage> {
       Navigator.of(context).pop();
 
       // Replace Actual InboxPage by the NEW InboxPage...
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(context, SwipeablePageRoute(
-        builder: (context) {
-          return InboxPage(
-            discussion: listOfExistingDiscussions.first,
-            userReceiverId: anotherUserId,
-          );
-        },
-      ));
+      if (listOfExistingDiscussions.isNotEmpty) {
+        // ignore: use_build_context_synchronously
+        Navigator.pushReplacement(context, SwipeablePageRoute(
+          builder: (context) {
+            return InboxPage(
+              discussion: listOfExistingDiscussions.first,
+              userReceiverId: anotherUserId,
+            );
+          },
+        ));
+      }
     } else {
       // Replace Actual ForwardPage by the DiscussionPage [In order to create a page stack]...
       // ignore: use_build_context_synchronously
@@ -381,15 +445,17 @@ class _ForwardToPageState extends State<ForwardToPage> {
       );
 
       // Go to the NEW InboxPage...
-      // ignore: use_build_context_synchronously
-      Navigator.push(context, SwipeablePageRoute(
-        builder: (context) {
-          return InboxPage(
-            discussion: listOfExistingDiscussions.first,
-            userReceiverId: anotherUserId,
-          );
-        },
-      ));
+      if (listOfExistingDiscussions.isNotEmpty) {
+        // ignore: use_build_context_synchronously
+        Navigator.push(context, SwipeablePageRoute(
+          builder: (context) {
+            return InboxPage(
+              discussion: listOfExistingDiscussions.first,
+              userReceiverId: anotherUserId,
+            );
+          },
+        ));
+      }
     }
   }
 
@@ -496,7 +562,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                           ),
 
                           // SEARCH RESULTS
-                          StreamBuilder<List<UserModel.User>>(
+                          StreamBuilder<List<usermodel.User>>(
                               stream: Provider.of<UserProvider>(context).getAllUsersWithoutMe(),
                               builder: (context, snapshot) {
                                 // Handle Errors
@@ -516,7 +582,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
                                 // Handle Data and perform search
                                 if (snapshot.hasData) {
-                                  List<UserModel.User> result = snapshot.data!
+                                  List<usermodel.User> result = snapshot.data!
                                       .where((user) =>
                                           user.name.toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
                                           user.username.toString().toLowerCase().contains(_searchQuery.toLowerCase()))
@@ -533,7 +599,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                                             user: user,
                                             onTap: () async {
                                               // Send to this User
-                                              print('SEND !');
+                                              debugPrint('SEND !');
                                               List<Map<String, String>> dataToForward = await getDataToForward();
                                               forwardAsMessage(user.id, dataToForward);
                                             },
@@ -554,7 +620,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                                         children: [
                                           Lottie.asset(
                                             height: 150,
-                                            'assets/animations/112136-empty-red.json',
+                                            empty,
                                             width: double.infinity,
                                           ),
                                           const SizedBox(
@@ -611,12 +677,12 @@ class _ForwardToPageState extends State<ForwardToPage> {
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 5),
                                   child: UserCard(
-                                    user: (snapshot.data! as UserModel.User),
+                                    user: (snapshot.data! as usermodel.User),
                                     status: 'forward',
                                     onTap: () async {
                                       // CONTINUE...
                                       List<Map<String, String>> dataToForward = await getDataToForward();
-                                      print('dataToForward: $dataToForward');
+                                      debugPrint('dataToForward: $dataToForward');
                                       forwardToMyStory(dataToForward);
                                     },
                                   ),
@@ -634,7 +700,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                             }),
                           ),
 
-                          FutureBuilder<List<UserModel.User>>(
+                          FutureBuilder<List<usermodel.User>>(
                               future: Provider.of<UserProvider>(context).getAllUsersFromMyDiscussions(),
                               builder: (context, snapshot) {
                                 // Handle Errors
@@ -654,7 +720,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
                                 // Handle Data and perform search
                                 if (snapshot.hasData) {
-                                  List<UserModel.User> result = snapshot.data!;
+                                  List<usermodel.User> result = snapshot.data!;
 
                                   // DATA FOUND
                                   if (result.isNotEmpty) {
@@ -685,7 +751,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                                                 user: user,
                                                 onTap: () async {
                                                   // Send to this User
-                                                  print('SEND !');
+                                                  debugPrint('SEND !');
                                                   List<Map<String, String>> dataToForward = await getDataToForward();
                                                   forwardAsMessage(user.id, dataToForward);
                                                 },
