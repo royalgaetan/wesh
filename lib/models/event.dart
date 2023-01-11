@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // FIELS
+
 class EventFields {
   static const String eventId = 'eventId';
   static const String uid = 'uid';
@@ -50,7 +53,7 @@ class Event {
       required this.status});
 
   // toJson
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         EventFields.eventId: eventId,
         EventFields.uid: uid,
         EventFields.title: title,
@@ -60,8 +63,8 @@ class Event {
         EventFields.color: color,
         EventFields.location: location,
         EventFields.link: link,
-        EventFields.createdAt: createdAt.toIso8601String(),
-        EventFields.modifiedAt: modifiedAt.toIso8601String(),
+        EventFields.createdAt: createdAt,
+        EventFields.modifiedAt: modifiedAt,
         EventFields.eventDurations: eventDurations,
         EventFields.eventDurationType: eventDurationType,
         EventFields.status: status,
@@ -79,10 +82,14 @@ class Event {
         caption: json[EventFields.caption] ?? '',
         location: json[EventFields.location] ?? '',
         //
-        createdAt: json[EventFields.createdAt] != null ? DateTime.parse(json[EventFields.createdAt]) : DateTime.now(),
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
+
         //
-        modifiedAt:
-            json[EventFields.modifiedAt] != null ? DateTime.parse(json[EventFields.modifiedAt]) : DateTime.now(),
+        modifiedAt: json['modifiedAt'] != null && json['modifiedAt'] != ''
+            ? (json['modifiedAt'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
         //
         status: json[EventFields.status] ?? '',
         eventDurationType: json[EventFields.eventDurationType] ?? '',

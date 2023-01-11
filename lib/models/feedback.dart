@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class FeedBack {
   final String feedbackId;
   final String uid;
@@ -19,14 +21,14 @@ class FeedBack {
 
   // ToJson
 
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         'feedbackId': feedbackId,
         'uid': uid,
         'name': name,
         'reactionTitle': reactionTitle,
         'reactionEmoji': reactionEmoji,
         'content': content,
-        'createdAt': createdAt.toIso8601String(),
+        'createdAt': createdAt,
       };
 
   // From Json
@@ -38,8 +40,8 @@ class FeedBack {
         reactionTitle: json['reactionTitle'] ?? '',
         reactionEmoji: json['reactionEmoji'] ?? '',
         //
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'])
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
             : DateTime.now(),
         //
       );

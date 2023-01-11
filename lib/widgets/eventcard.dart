@@ -163,7 +163,7 @@ class _EventCardState extends State<EventCard> {
                               ),
                               Text(
                                 DateFormat(isEventWithRecurrence(widget.event) ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr')
-                                    .format((widget.event.eventDurations[0]['date'] as Timestamp).toDate()),
+                                    .format((widget.event.eventDurations[0]['date'] as Timestamp).toDate().toLocal()),
                                 style: TextStyle(fontSize: 12.sp),
                               )
                             ],

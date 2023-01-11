@@ -94,7 +94,7 @@ class _AboutTheAppPageState extends State<AboutTheAppPage> {
                         height: 7,
                       ),
                       const Text(
-                        '© 2022 $appName. Tous droits réservés',
+                        '© 2023 $appName. Tous droits réservés',
                         style: TextStyle(color: Colors.black87),
                       ),
                     ],

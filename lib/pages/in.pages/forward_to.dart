@@ -6,12 +6,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/pages/startPage.dart';
-import 'package:wesh/providers/user.provider.dart';
 import 'package:wesh/widgets/usercard.dart';
 import '../../models/discussion.dart';
 import '../../models/story.dart';
@@ -160,7 +158,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
         if (data['type'] == 'text') {
           debugPrint('Forwarding text --> my Story...');
           // Modeling a new Text Story
-          Map<String, Object?> newTextStory = Story(
+          Map<String, dynamic> newTextStory = Story(
               storyId: '',
               content: (data['data'] as String),
               uid: FirebaseAuth.instance.currentUser!.uid,
@@ -205,7 +203,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
           if (isAllowToContinue && downloadUrl.isNotEmpty) {
             // Modeling a new Image Story
-            Map<String, Object?> newImageStory = Story(
+            Map<String, dynamic> newImageStory = Story(
                 storyId: '',
                 content: downloadUrl,
                 uid: FirebaseAuth.instance.currentUser!.uid,
@@ -263,7 +261,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
           if (isAllowToContinue && downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
             // Modeling a new Video Story
-            Map<String, Object?> newVideoStory = Story(
+            Map<String, dynamic> newVideoStory = Story(
                 storyId: '',
                 content: downloadUrl,
                 uid: FirebaseAuth.instance.currentUser!.uid,
@@ -512,16 +510,12 @@ class _ForwardToPageState extends State<ForwardToPage> {
                   controller: _searchtextcontroller,
                   onChanged: ((value) {
                     // GET SEARCH RESULT
-                    // TO DO
-                    // Handle empty query
                     setState(() {
-                      _searchQuery = value;
+                      _searchQuery = removeDiacritics(value.trim());
                     });
                   }),
                   onSubmitted: ((value) {
                     // GET SEARCH RESULT
-                    // TO DO
-                    // Handle empty query
                   }),
                   padding: EdgeInsets.symmetric(horizontal: 0.03.sw, vertical: 0.03.sw),
                   prefixIcon: Container(),
@@ -563,7 +557,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
                           // SEARCH RESULTS
                           StreamBuilder<List<usermodel.User>>(
-                              stream: Provider.of<UserProvider>(context).getAllUsersWithoutMe(),
+                              stream: FirestoreMethods.getAllUsersWithoutMe(),
                               builder: (context, snapshot) {
                                 // Handle Errors
                                 if (snapshot.hasError) {
@@ -584,8 +578,12 @@ class _ForwardToPageState extends State<ForwardToPage> {
                                 if (snapshot.hasData) {
                                   List<usermodel.User> result = snapshot.data!
                                       .where((user) =>
-                                          user.name.toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                                          user.username.toString().toLowerCase().contains(_searchQuery.toLowerCase()))
+                                          removeDiacritics(user.name)
+                                              .toLowerCase()
+                                              .contains(_searchQuery.toLowerCase()) ||
+                                          removeDiacritics(user.username)
+                                              .toLowerCase()
+                                              .contains(_searchQuery.toLowerCase()))
                                       .toList();
 
                                   // DATA FOUND
@@ -671,7 +669,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
 
                           // SEND TO [MY] Story
                           StreamBuilder(
-                            stream: Provider.of<UserProvider>(context).getCurrentUser(),
+                            stream: FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
                             builder: ((context, snapshot) {
                               if (snapshot.hasData) {
                                 return Padding(
@@ -701,7 +699,7 @@ class _ForwardToPageState extends State<ForwardToPage> {
                           ),
 
                           FutureBuilder<List<usermodel.User>>(
-                              future: Provider.of<UserProvider>(context).getAllUsersFromMyDiscussions(),
+                              future: FirestoreMethods.getAllUsersFromMyDiscussions(),
                               builder: (context, snapshot) {
                                 // Handle Errors
                                 if (snapshot.hasError) {

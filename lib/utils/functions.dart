@@ -1,13 +1,22 @@
+// ignore_for_file: unnecessary_brace_in_string_interps
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dismissible_page/dismissible_page.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_statusbarcolor_ns/flutter_statusbarcolor_ns.dart';
+import 'package:image/image.dart' as img;
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
 import 'package:progressive_image/progressive_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:external_path/external_path.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,27 +28,27 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_number/phone_number.dart';
-import 'package:provider/provider.dart';
 import 'package:story_view/controller/story_controller.dart';
 import 'package:story_view/widgets/story_view.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart';
 import 'package:vibration/vibration.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:wesh/models/event_duration_type.dart';
 import 'package:wesh/models/eventtype.dart';
+import 'package:wesh/models/reminder.dart';
+import 'package:wesh/services/notifications_api.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import 'package:xid/xid.dart';
 import '../models/event.dart';
-import '../models/message.dart';
+import '../models/message.dart' as messagemodel;
 import '../models/stories_handler.dart';
 import '../models/story.dart';
 import '../pages/in.pages/storiesViewer.dart';
-import '../providers/user.provider.dart';
 import '../services/firestore.methods.dart';
 import '../services/sharedpreferences.service.dart';
 import 'constants.dart';
 import '../models/user.dart' as usermodel;
+import 'package:timezone/timezone.dart' as tz;
 
 // GET UNIQUE ID
 getUniqueId() {
@@ -47,6 +56,27 @@ getUniqueId() {
   log('generated id: $xid');
 
   return xid;
+}
+
+Future setSuitableStatusBarColor(Color color) async {
+  // change the status bar color
+  await FlutterStatusbarcolor.setStatusBarColor(color);
+  if (color == Colors.black87) {
+    log('Status bar FOREGROUNG to: White');
+    FlutterStatusbarcolor.setStatusBarWhiteForeground(true);
+  } else if (color == Colors.white) {
+    log('Status bar FOREGROUNG to: Black');
+    FlutterStatusbarcolor.setStatusBarWhiteForeground(false);
+  } else {
+    log('Status bar FOREGROUNG to: OTHERWISE');
+    if (useWhiteForeground(color)) {
+      FlutterStatusbarcolor.setStatusBarWhiteForeground(true);
+    } else {
+      FlutterStatusbarcolor.setStatusBarWhiteForeground(false);
+    }
+  }
+
+  log('Has change status bar color to: $color');
 }
 
 // SHOW FULLPAGE LOADER
@@ -67,6 +97,566 @@ Future triggerVibration({int? duration}) async {
   }
 }
 
+// SET CURRENT ACTIVE PAGE
+setCurrentActivePageFromIndex({required int? index, String? userId}) {
+  String page = '';
+  switch (index) {
+    case 0:
+      page = 'homepage';
+      // notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:event');
+      break;
+    case 1:
+      page = 'discussionpage';
+      // Cancel all Discussion Notifications
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:discussion');
+
+      break;
+    case 2:
+      page = 'addpage';
+      break;
+    case 3:
+      page = 'storiespage';
+      // Cancel all Stories Notifications
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:story');
+
+      break;
+    case 4:
+      page = 'profilepage';
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:event:$userId');
+      break;
+    case 5:
+      page = 'inboxpage:$userId';
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:discussion:$userId');
+      break;
+    case 6:
+      page = 'event:$userId';
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:event:$userId');
+      break;
+    case 7:
+      page = 'reminder:$userId';
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:reminder:$userId');
+      break;
+    case null:
+      page = '';
+      break;
+    default:
+      page = '';
+      break;
+  }
+  // Set Current Active Page
+  UserSimplePreferences.setCurrentActivePageHandler(page);
+  log('Current active page: $page');
+}
+
+// NOTIFICATION CANCEL ENGINE
+void notificationCancelEngine({required String notifMatchToCancel}) {
+  //
+  NotificationApi.init(initScheduled: true);
+  //
+  List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
+  log('[CANCEL FROM] \n ########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
+
+  if (notificationList.isNotEmpty) {
+    //
+    List usernotificationList = notificationList.where((match) => match.startsWith(notifMatchToCancel)).toList();
+    //
+    if (usernotificationList.isNotEmpty) {
+      // Retrieve Id inside usernotificationList
+      usernotificationList = usernotificationList.map((notifmatch) => (notifmatch as String).split(':').last).toList();
+      log('Usernotification [Ids Only] List: $usernotificationList');
+
+      // Cancel All User Related Notifications for this $type [Notification API]
+      for (int id in usernotificationList.map((id) => int.parse(id))) {
+        log('Cancelling notification $id [Notification API]');
+        NotificationApi.notification.cancel(id);
+      }
+
+      // Delete All User Related Notifications for this $type [Shared Preferences]
+      log('Deleting notification [Shared Preferences]');
+      log('notificationList.length: ${notificationList.length}');
+      for (var i = 0; i < notificationList.length; i++) {
+        log('Loop $i...');
+        String match = notificationList[i];
+        if ((usernotificationList.map((id) => int.parse(id))).contains(int.parse(match.split(':').last))) {
+          log('match to delete: $match');
+          int indexOfMatch = notificationList.indexOf(match);
+          log('match index: $indexOfMatch');
+          notificationList.removeAt(indexOfMatch);
+          log('Remaining: $notificationList');
+        }
+      }
+    }
+    UserSimplePreferences.setNotificationList(notificationList);
+    log('Remaining notificationList [Shared Preferences]: \n########### LOG NOTIFICATIONLIST ###########\n${UserSimplePreferences.getNotificationList()?.map((s) => '$s \n') ?? []}');
+  }
+}
+
+// NOTIFICATION ID ENGINE
+List notificationIdEngine({
+  required String currentUserId,
+  required String type,
+  required String notifUserId,
+  required String contentId,
+}) {
+  String notifMatch = '$currentUserId:$type:$notifUserId';
+  log('notifMatch: ${notifMatch}');
+
+  // UserSimplePreferences.setNotificationList([]);
+
+  // log('currentUserId: ${currentUserId}');
+  // log('type: ${type}');
+  // log('notifUserId: ${notifUserId}');
+  // log('contentId: ${contentId}');
+  List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
+  log('[START WITH] notificationList: ${notificationList}');
+
+  // IF NotificationList is EMPTY
+  if (notificationList.isEmpty) {
+    log('A: Creating a new notification, because notificationList was empty...');
+    return [true, generateNotificationToUse(notifMatch)];
+  } else {
+    // Cancel User Notification for this $type
+    notificationCancelEngine(notifMatchToCancel: notifMatch);
+
+    //  DON'T SHOW THE NOTIFICATION
+    if (notificationList.isNotEmpty && notificationList.contains(notifMatch)) {
+      return [false, ''];
+    }
+    // CREATE A NEW ONE
+    else {
+      log('B: Creating a new notification...');
+      return [true, generateNotificationToUse(notifMatch)];
+    }
+
+    // switch (type) {
+    //   case 'story':
+
+    //   // DON'T SHOW THE NOTIFICATION
+    //   // if (matchResult) {
+    //   //   return [false, ''];
+    //   // }
+    //   // // CREATE A NEW ONE
+    //   // else {
+    //   //   log('B: Creating a new notification...');
+    //   //   return [true, generateNotificationToUse(notifMatch)];
+    //   // }
+
+    //   default:
+    //     return [false, ''];
+    // }
+  }
+}
+
+// GENERATE NOTIFICATION ID TO USE
+String generateNotificationToUse(String notifMatch) {
+  int idtoUse = 0;
+  log('Generate a new notif Id with: $notifMatch');
+
+  List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
+  log('notificationList : $notificationList');
+
+  if (notificationList.isEmpty) {
+    idtoUse = 1;
+  }
+  //
+  else {
+    List<int> notificationListWithNotificationIdsOnly =
+        notificationList.map((notif) => int.parse(notif.split(':').last)).toList();
+
+    // Sort notificationListWithNotificationIdsOnly
+    notificationListWithNotificationIdsOnly.sort((a, b) => a.compareTo(b));
+
+    log('notificationList [ID ONLY]: $notificationListWithNotificationIdsOnly');
+    int lastNotificationIdInList = notificationListWithNotificationIdsOnly.last;
+    log('lastNotificationIdInList: $lastNotificationIdInList');
+
+    // Checking for missing number
+    for (int i = 1; i < lastNotificationIdInList; i++) {
+      log('TRIP: $i');
+      if (!notificationListWithNotificationIdsOnly.contains(i)) {
+        idtoUse = i;
+        log('ASSIGN TRIP: $i');
+      }
+    }
+    if (idtoUse == 0) {
+      idtoUse = lastNotificationIdInList + 1;
+    }
+  }
+
+  String notifToAdd = '$notifMatch:$idtoUse';
+
+  log('[GEN] Final notifToAdd: $notifToAdd');
+  notificationList.add(notifToAdd);
+  UserSimplePreferences.setNotificationList(notificationList);
+  log('[GEN] Final notificationList: $notificationList');
+
+  return notifToAdd;
+}
+
+// Create or Update the Local Notification
+Future createOrUpdateReminderLocalNotification({required String action, required String reminderId}) async {
+  // NOTIFICATION ID ENGINE | WHEN CREATED, MODIFIED
+  NotificationApi.init(initScheduled: true);
+  tz.initializeTimeZones();
+  // Get reminder
+  Reminder? reminder = await FirestoreMethods.getReminderByIdAsFuture(reminderId);
+
+  if (reminder != null) {
+    List result = notificationIdEngine(
+        currentUserId: FirebaseAuth.instance.currentUser!.uid,
+        type: 'reminder',
+        notifUserId: reminder.reminderId,
+        contentId: reminder.reminderId);
+    log('Engine: $result');
+
+    // Get Attached Event
+    Event? eventAttached;
+    if (reminder.eventId.isNotEmpty) {
+      eventAttached = await FirestoreMethods.getEventByIdAsFuture(reminder.eventId);
+    }
+
+    if (result[0] == true) {
+      // NEW [SCHEDULED] NOTIFICATION
+      String payload = 'reminder:${reminder.reminderId}';
+      String largeIconPath = await getNotificationLargeIconPath(
+        url: '',
+        eventAttached: eventAttached,
+        type: 'reminder',
+        uid: reminder.reminderId,
+      );
+      String reminderBody = await getReminderNotificationBody(reminder, eventAttached);
+
+      log('Payload from: $payload && largeIconPath: $largeIconPath');
+
+      NotificationApi.showScheduledNotification(
+        id: int.parse((result[1] as String).split(':').last),
+        title: reminder.title,
+        body: reminderBody,
+        payload: payload,
+        channel: notificationsChannelList[2],
+        largeIconPath: largeIconPath,
+        tzDateTime: scheduleDaily(
+          tz.TZDateTime(
+            tz.local,
+            reminder.remindAt.year,
+            reminder.remindAt.month,
+            reminder.remindAt.day,
+            reminder.remindAt.hour,
+            reminder.remindAt.minute,
+          ),
+        ),
+        dateTimeComponents:
+            reminder.recurrence.isEmpty ? null : getDateTimeComponentsFromRecurrence(reminder.recurrence),
+      );
+    }
+  }
+}
+
+// Get Reminder Notification Body
+Future<String> getReminderNotificationBody(Reminder reminder, Event? eventAttached) async {
+  String defaultMessage = '🔔 Rappel';
+  if (eventAttached == null) {
+    return defaultMessage;
+  } else {
+    usermodel.User? userPoster = await FirestoreMethods.getUserByIdAsFuture(eventAttached.uid);
+    if (userPoster != null) {
+      String eventName = isUserBirthday(eventAttached, userPoster)
+          ? userPoster.id == FirebaseAuth.instance.currentUser!.uid
+              ? 'Votre anniversaire'
+              : 'L\'anniversaire de ${userPoster.name}'
+          : eventAttached.title;
+      List<String> eventStartTime = getRemainingTimeBeforeEventStartFromDelay(reminder.reminderDelay);
+      String prefix = eventStartTime.length == 2 ? eventStartTime[0] : '';
+      String suffix = eventStartTime.length == 2 ? eventStartTime[1] : '';
+
+      return '🔔 $prefix$eventName$suffix';
+    }
+
+    return defaultMessage;
+  }
+}
+
+// Get Message Notification Body
+String getMessageNotificationBody(messagemodel.Message message) {
+  // Switch
+  switch (message.type) {
+    case "text":
+      return message.data;
+    case "image":
+      return '📷 Image ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
+
+    case "video":
+      return '🎬 Video ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
+
+    case "voicenote":
+      return '🎤 Note vocale ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
+
+    case "music":
+      return '🎵 Audio ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
+
+    case "gift":
+      return '🎁 Cadeau ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
+
+    case "payment":
+      return '💳 Argent ${message.data.isNotEmpty ? '• ${message.data}' : ''}';
+
+    default:
+      return '';
+  }
+}
+
+// Check whether it's User birthday
+bool isUserBirthday(Event? event, usermodel.User? user) {
+  if (event != null &&
+      user != null &&
+      event.uid == user.id &&
+      event.type == 'birthday' &&
+      DateUtils.dateOnly(user.birthday) ==
+          DateUtils.dateOnly((event.eventDurations[0]['date'] as Timestamp).toDate().toLocal())) {
+    return true;
+  }
+  return false;
+}
+
+// Get Event Notification Body
+Future<String> getEventBodyNotification({
+  required List<Map<Event, DocumentChangeType>> userEventsReceived,
+  required usermodel.User userPoster,
+}) async
+//
+{
+  // Sort User Event Received
+  if (userEventsReceived.length > 1) {
+    userEventsReceived.sort((a, b) => b.keys.first.createdAt.compareTo(a.keys.first.createdAt));
+  }
+
+  // RECALIBRATE NEW EVENT CREATED  : remove ModifiedTag to AddedTag
+  if (userEventsReceived.isNotEmpty) {
+    for (Map<Event, DocumentChangeType> eventMapToDisplay in userEventsReceived) {
+      int diff = eventMapToDisplay.keys.first.modifiedAt.difference(eventMapToDisplay.keys.first.createdAt).inMinutes;
+      log('Diff between CreatedAt and ModifiedAt: $diff min');
+      if (diff <= 1) {
+        eventMapToDisplay.update(eventMapToDisplay.keys.first, (value) => DocumentChangeType.added,
+            ifAbsent: () => DocumentChangeType.added);
+        log('RECALIBRATE: $eventMapToDisplay');
+      }
+      //
+      log('Checking ${eventMapToDisplay.values.first.name}: ${eventMapToDisplay.keys.first.title}');
+    }
+  }
+
+  // Get first event to display
+  Event firstEvent = userEventsReceived.first.keys.first;
+
+  //
+  String message = '';
+  String eventsChangedMessage = '';
+
+  // MODIFIED CASE OR REMOVED CASE
+  for (Map<Event, DocumentChangeType> eventMapToDisplay in userEventsReceived) {
+    log('All about event ${eventMapToDisplay.values.first.name}: ${eventMapToDisplay.keys.first.title}');
+
+    if (eventMapToDisplay.values.first == DocumentChangeType.modified ||
+        eventMapToDisplay.values.first == DocumentChangeType.removed) {
+      if (message.isNotEmpty) {
+        eventsChangedMessage = '\n${eventsChangedMessage}';
+      }
+      if (eventsChangedMessage.isNotEmpty) {
+        eventsChangedMessage = '${eventsChangedMessage}\n';
+      }
+      //
+      DocumentChangeType currentChangedType = eventMapToDisplay.values.first;
+      Event currentEventChanged = eventMapToDisplay.keys.first;
+      bool hasRemindersAttachedToThisCurrentEventChanged = false;
+
+      // Get All [My] Reminders attached to the current Event
+      List<Reminder> listOfMyRemindersAttached = await FirestoreMethods.getEventRemindersById(
+              currentEventChanged.eventId, FirebaseAuth.instance.currentUser!.uid)
+          .first;
+      log('### listOfMyRemindersAttached: ${listOfMyRemindersAttached.map((r) => r.title)}');
+
+      if (listOfMyRemindersAttached.isEmpty) {
+        hasRemindersAttachedToThisCurrentEventChanged = false;
+      }
+      // MODIFY OR DELETE ALL REMINDERS ATTACHED
+      else {
+        hasRemindersAttachedToThisCurrentEventChanged = true;
+
+        // MODIFY ALL
+        if (currentChangedType == DocumentChangeType.modified) {
+          for (Reminder reminder in listOfMyRemindersAttached) {
+            // Modeling a reminder
+            Map<String, dynamic> reminderToUpdate = Reminder(
+              title: reminder.title,
+              uid: FirebaseAuth.instance.currentUser!.uid,
+              reminderId: reminder.reminderId,
+              reminderDelay: reminder.reminderDelay,
+              eventId: reminder.eventId,
+              remindAt: getCompleteDateTimeFromFirstEventDuration(currentEventChanged)
+                  .subtract(getDurationFromDelay(reminder.reminderDelay)),
+              recurrence: isEventWithRecurrence(currentEventChanged) ? reminder.recurrence : 'Aucune récurrence',
+              remindFrom: getCompleteDateTimeFromFirstEventDuration(currentEventChanged),
+              createdAt: reminder.createdAt,
+              modifiedAt: DateTime.now(),
+              status: '',
+            ).toJson();
+            FirestoreMethods.updateReminder(null, reminder.reminderId, reminderToUpdate);
+          }
+        }
+
+        // DELETE ALL
+        else if (currentChangedType == DocumentChangeType.removed) {
+          for (Reminder reminder in listOfMyRemindersAttached) {
+            // Delete reminder...
+            FirestoreMethods.deleteReminder(null, reminder.reminderId, FirebaseAuth.instance.currentUser!.uid);
+          }
+        }
+      }
+
+      String verbToUse = currentChangedType == DocumentChangeType.modified ? 'modifié' : 'supprimé';
+      String messageOfcurrentEventModifiedOrDelete =
+          '📌 ${userPoster.name} a $verbToUse ${isUserBirthday(currentEventChanged, userPoster) ? 'son anniversaire' : 'l\'évènement ${currentEventChanged.title}'}${hasRemindersAttachedToThisCurrentEventChanged ? '. Vos rappels ont aussi été $verbToUse' : ''}';
+
+      eventsChangedMessage = '${eventsChangedMessage}${messageOfcurrentEventModifiedOrDelete}';
+    }
+  }
+
+  // CREATED CASE
+  if (userEventsReceived.any((element) => element.values.first == DocumentChangeType.added)) {
+    String eventName =
+        isUserBirthday(firstEvent, userPoster) ? 'fête son anniversaire' : 'organise ${firstEvent.title}';
+    //
+    String eventDate = !isOutdatedEvent(firstEvent) && !isHappeningEvent(firstEvent)
+        ? getEventRelativeStartTime(firstEvent)
+        : 'le ${DateFormat(isEventWithRecurrence(firstEvent) ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr').format((firstEvent.eventDurations[0]['date'] as Timestamp).toDate().toLocal())}';
+    //
+    message = userEventsReceived.length == 1
+        ? '${isUserBirthday(firstEvent, userPoster) ? '🎉🎈 ' : '📅'} ${userPoster.name} $eventName, $eventDate'
+        : '📅 ${userPoster.name} organise ${userEventsReceived.where((element) => !isUserBirthday(element.keys.first, userPoster) && !isOutdatedEvent(element.keys.first)).toList().length} ${userEventsReceived.where((element) => !isUserBirthday(element.keys.first, userPoster) && !isOutdatedEvent(element.keys.first)).toList().length > 1 ? 'évènements qui peuvent' : 'évènement qui peut'} vous intéresser';
+  }
+
+  // COMBINE ALL MESSAGES AND RETURN
+  return '${message}${eventsChangedMessage}';
+}
+
+// void fillCircle_bresenham_wo_alpha(img.Image image, int x0, int y0, int radius, int color) {
+//   int radiusSquared = radius * radius;
+//   for (int y = -radius; y <= radius; y++) {
+//     int ySquared = y * y;
+//     for (int x = -radius; x <= radius; x++) {
+//       int xSquared = x * x;
+//       if (xSquared + ySquared <= radiusSquared) {
+//         image.setPixel(x0 + x, y0 + y, color);
+//       }
+//     }
+//   }
+// }
+
+// Get Message Notification largeIconPath
+Future<String> getNotificationLargeIconPath({
+  required String url,
+  Event? eventAttached,
+  required String type,
+  required String uid,
+}) async
+//
+{
+  Uint8List? bytes;
+  if (type == 'reminder') {
+    File bellPicture = await getImageFileFromAssets(bell);
+    return bellPicture.path;
+  }
+
+  // FOR CELEBRATIONS ONLY
+  if (type == 'celebration') {
+    File ballonsPicture = await getImageFileFromAssets(ballons);
+
+    return ballonsPicture.path;
+  }
+
+  // Check file existence
+  File mainImageFile = File('');
+
+  if (url.isNotEmpty) {
+    mainImageFile = await DefaultCacheManager().getSingleFile(url);
+    log('mainImageFile: $mainImageFile');
+  }
+
+  // FOR STORIES ONLY
+  if (type == 'story') {
+    try {
+      // // Draw Colored Circle
+      // img.Image circle = img.Image(101, 101);
+      // fillCircle_bresenham_wo_alpha(circle, 50, 50, 50, img.getColor(224, 47, 102));
+      // img.copyResize(circle, width: 100, height: 100);
+      // log('circle: $circle');
+
+      // // Draw 2nd Circle : Padding
+      // img.Image circlePadding = img.Image(101, 101);
+      // fillCircle_bresenham_wo_alpha(circlePadding, 50, 50, 50, img.getColor(255, 255, 255));
+      // img.copyResize(circlePadding, width: 90, height: 90);
+      // log('circlePadding: $circlePadding');
+      // img.drawImage(circlePadding, circle, dstX: circle.width, blend: false);
+      // log('mergedImage: $circle');
+
+      final image = img.copyCropCircle(img.decodeImage(mainImageFile.readAsBytesSync())!);
+      mainImageFile.writeAsBytesSync(img.encodePng(image));
+      return mainImageFile.path;
+    } catch (e) {
+      //
+      log('Err: $e');
+    }
+  }
+  // FOR MESSAGE ONLY
+  else if (type == 'discussion') {
+    try {
+      final image = img.copyCropCircle(img.decodeImage(mainImageFile.readAsBytesSync())!);
+      mainImageFile.writeAsBytesSync(img.encodePng(image));
+      return mainImageFile.path;
+    } catch (e) {
+      //
+      log('Err: $e');
+    }
+  }
+
+  // FOR EVENTS ONLY
+  else if (type == 'event' && eventAttached != null) {
+    try {
+      if (eventAttached.trailing.isEmpty) {
+        File eventDefaultIcon = await getImageFileFromAssets('assets/images/eventtype.icons/${eventAttached.type}.png');
+        return eventDefaultIcon.path;
+      } else {
+        final eventPicture = img.copyCropCircle(img.decodeImage(mainImageFile.readAsBytesSync())!);
+        mainImageFile.writeAsBytesSync(img.encodePng(eventPicture));
+        return mainImageFile.path;
+      }
+    } catch (e) {
+      //
+      log('Err: $e');
+    }
+  }
+
+  try {
+    log('Build Circle avatar to display...');
+
+    // bytes = null;
+
+    if (bytes != null) {
+      // File fileGet = await File(path).writeAsBytes(bytes);
+      // return fileGet.path;
+      return '';
+    } else {
+      log('Error while building avatar: with bytes');
+      return mainImageFile.path;
+    }
+  }
+  //
+  catch (e) {
+    log('Error while building avatar: $e');
+    return mainImageFile.path;
+  }
+}
+
 // COMPRESS/RESIZE IMAGE FILE
 Future resizeImageFile({required String filePath, int? imageWidth}) async {
   log('COMPRESSING FILE [BECAUSE IT\'S TOO HEAVY]...');
@@ -83,10 +673,140 @@ Future resizeImageFile({required String filePath, int? imageWidth}) async {
   return compressedImageFile;
 }
 
+tz.TZDateTime scheduleDaily(tz.TZDateTime dateTime) {
+  final now = tz.TZDateTime.now(tz.local);
+  final scheduledDate = tz.TZDateTime(
+      tz.local, dateTime.year, dateTime.month, dateTime.day, dateTime.hour, dateTime.minute, dateTime.second);
+
+  return scheduledDate.isBefore(now) ? scheduledDate.add(const Duration(days: 1)) : scheduledDate;
+}
+
+tz.TZDateTime scheduleWeekly(tz.TZDateTime dateTime, {required List<int> days}) {
+  tz.TZDateTime scheduledDate = scheduleDaily(dateTime);
+
+  while (!days.contains(scheduledDate.weekday)) {
+    scheduledDate = scheduledDate.add(const Duration(days: 1));
+  }
+  return scheduledDate;
+}
+
+//
+DateTime getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType eventDuration) {
+  return DateTime(
+    DateTime.now().year,
+    eventDuration.date.month,
+    eventDuration.date.day,
+    eventDuration.startTime.hour,
+    eventDuration.startTime.minute,
+  );
+}
+
+// DAYS BETWEEN TWO DATES
 int daysBetween(DateTime from, DateTime to) {
   from = DateTime(from.year, from.month, from.day);
   to = DateTime(to.year, to.month, to.day);
   return (to.difference(from).inHours / 24).round();
+}
+
+// RANDOM NUMBER BETWEEN
+int getRandomNumberBetween(int min, int max) {
+  int randomNumber = min + math.Random().nextInt(max - min);
+  log('## Settled $randomNumber as random number');
+  return randomNumber;
+}
+
+// GET DURATION FROM DELAY
+DateTimeComponents? getDateTimeComponentsFromRecurrence(String recurrence) {
+  switch (recurrence) {
+    case 'Aucune récurrence':
+      return null;
+
+    case 'Chaque jour':
+      return DateTimeComponents.time;
+
+    case 'Chaque semaine':
+      return DateTimeComponents.dayOfWeekAndTime;
+
+    case 'Chaque mois':
+      return DateTimeComponents.dayOfMonthAndTime;
+
+    case 'Chaque année':
+      return DateTimeComponents.dateAndTime;
+
+    default:
+      return null;
+  }
+}
+
+// GET DURATION FROM DELAY
+Duration getDurationFromDelay(String delay) {
+  switch (delay) {
+    case 'dès qu\'il commence':
+      return const Duration();
+
+    case '10min avant':
+      return const Duration(minutes: 10);
+
+    case '1h avant':
+      return const Duration(hours: 1);
+
+    case '1 jour avant':
+      return const Duration(days: 1);
+
+    case '3 jours avant':
+      return const Duration(days: 3);
+
+    case '1 semaine avant':
+      return const Duration(days: 7);
+
+    case '1 mois avant':
+      return const Duration(days: 30);
+
+    default:
+      return const Duration();
+  }
+}
+
+// GET REMAINING TIME BEFORE EVENT START
+List<String> getRemainingTimeBeforeEventStartFromDelay(String delay) {
+  switch (delay) {
+    case 'dès qu\'il commence':
+      return ['', ' a commencé 🔥'];
+
+    case '10min avant':
+      return ['Dans 10 minutes c\'est ', ''];
+
+    case '1h avant':
+      return ['Dans 1 heure c\'est ', ''];
+
+    case '1 jour avant':
+      return ['Dans 1 jour c\'est ', ''];
+
+    case '3 jours avant':
+      return ['Dans 3 jours c\'est ', ''];
+
+    case '1 semaine avant':
+      return ['Dans 1 semaine c\'est ', ''];
+
+    case '1 mois avant':
+      return ['Dans 1 mois c\'est ', ''];
+
+    default:
+      return ['', ''];
+  }
+}
+
+// COMPLETE DATETIME FROM FIRST EVENT DURATION
+DateTime getCompleteDateTimeFromFirstEventDuration(Event? eventController) {
+  EventDurationType eventDurationGet = EventDurationType.fromJson(eventController!.eventDurations[0]);
+
+  return DateTime(
+    isEventWithRecurrence(eventController) ? DateTime.now().year : eventDurationGet.date.year,
+    eventDurationGet.date.month,
+    eventDurationGet.date.day,
+    eventDurationGet.startTime.hour,
+    eventDurationGet.startTime.minute,
+  );
 }
 
 // Debouncer
@@ -138,19 +858,19 @@ String getEventRelativeStartTime(Event event) {
         //
 
         if (diffInHours > 0 && diffInHours <= 23) {
-          return '...dans ${diffInHours.toString()} heure${diffInHours > 1 ? 's' : ''}';
+          return 'dans ${diffInHours.toString()} heure${diffInHours > 1 ? 's' : ''}';
         }
         // Less than 1 hour
         else {
           int diffInMinutes = firstEventDurationDateTime.difference(DateTime.now()).inMinutes;
           //
           if (diffInMinutes > 0 && diffInMinutes < 60) {
-            return '...dans ${diffInMinutes.toString()} minute${diffInMinutes > 1 ? 's' : ''}';
+            return 'dans ${diffInMinutes.toString()} minute${diffInMinutes > 1 ? 's' : ''}';
           }
           return 'bientôt !';
         }
       }
-      return '...dans ${diffInDays.toString()} jour${diffInDays > 1 ? 's' : ''}';
+      return 'dans ${diffInDays.toString()} jour${diffInDays > 1 ? 's' : ''}';
     }
   }
   return '';
@@ -284,15 +1004,15 @@ bool isAudio(String path) {
 }
 
 // Get Last Message of Discussion
-Message? getLastMessageOfDiscussion(List<Message> discussionMessages) {
-  Message? messageToDisplay;
-  List<Message> messagesList = [];
+messagemodel.Message? getLastMessageOfDiscussion(List<messagemodel.Message> discussionMessages) {
+  messagemodel.Message? messageToDisplay;
+  List<messagemodel.Message> messagesList = [];
 
   // Sort messages : by the latest
   discussionMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   // Remove: DeleteForMe messages
-  for (Message message in discussionMessages) {
+  for (messagemodel.Message message in discussionMessages) {
     if (!message.deleteFor.contains(FirebaseAuth.instance.currentUser!.uid)) {
       messagesList.add(message);
     }
@@ -324,9 +1044,9 @@ Future<List> getDirectories() async {
 // Get Message Type Icon
 Widget getMsgTypeIcon(int? messageStatus, String lastMessageType) {
   if (messageStatus != null && messageStatus == 0) {
-    return const Padding(
-      padding: EdgeInsets.only(right: 6),
-      child: Icon(Icons.access_time_rounded, color: Colors.grey, size: 18),
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Icon(FontAwesomeIcons.clock, color: Colors.grey, size: 13.sp),
     );
   } else {
     // if MessageType.text
@@ -343,17 +1063,17 @@ Widget getMsgTypeIcon(int? messageStatus, String lastMessageType) {
 
     // if MessageType.image
     if (lastMessageType == 'image') {
-      return const Padding(
-        padding: EdgeInsets.only(right: 6),
-        child: Icon(FontAwesomeIcons.image, color: Colors.grey, size: 18),
+      return Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(FontAwesomeIcons.image, color: Colors.grey, size: 15.sp),
       );
     }
 
     // if MessageType.video
     else if (lastMessageType == 'video') {
-      return const Padding(
-        padding: EdgeInsets.only(right: 6),
-        child: Icon(FontAwesomeIcons.play, color: Colors.red, size: 18),
+      return Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(FontAwesomeIcons.play, color: Colors.red, size: 15.sp),
       );
     }
 
@@ -361,15 +1081,15 @@ Widget getMsgTypeIcon(int? messageStatus, String lastMessageType) {
     else if (lastMessageType == 'music') {
       return Padding(
         padding: const EdgeInsets.only(right: 6),
-        child: Icon(FontAwesomeIcons.itunesNote, color: Colors.purple.shade300, size: 18),
+        child: Icon(FontAwesomeIcons.itunesNote, color: Colors.purple.shade300, size: 15.sp),
       );
     }
 
     // if MessageType.voicenote
     else if (lastMessageType == 'voicenote') {
-      return const Padding(
-        padding: EdgeInsets.only(right: 6),
-        child: Icon(FontAwesomeIcons.microphone, color: Colors.black87, size: 18),
+      return Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Icon(FontAwesomeIcons.microphone, color: Colors.black87, size: 15.sp),
       );
     }
 
@@ -398,38 +1118,31 @@ Widget getMsgTypeIcon(int? messageStatus, String lastMessageType) {
   }
 }
 
-// Get Message Status
-Widget getMessageStatusIcon(int status) {
-  if (status == 0) {
-    return Icon(
-      FontAwesomeIcons.clock,
-      color: Colors.black54,
-      size: 12.sp,
-    );
-  } else if (status == 1) {
-    return Icon(
-      FontAwesomeIcons.check,
-      color: Colors.black54,
-      size: 12.sp,
-    );
-  } else if (status == 2) {
-    return Icon(
-      FontAwesomeIcons.checkDouble,
-      color: Colors.black54,
-      size: 12.sp,
-    );
-  } else if (status == 3) {
+// Get Message Status : seen, read, sent, pending
+Widget getMessageStatusIcon(messagemodel.Message message) {
+  if (message.seen.contains(message.receiverId)) {
     return Icon(
       FontAwesomeIcons.checkDouble,
       color: kSecondColor,
       size: 12.sp,
     );
+  } else if (message.read.contains(message.receiverId)) {
+    return Icon(
+      FontAwesomeIcons.checkDouble,
+      color: Colors.black54,
+      size: 12.sp,
+    );
+  } else if (message.status == 0) {
+    return Icon(
+      FontAwesomeIcons.clock,
+      color: Colors.black54,
+      size: 12.sp,
+    );
   }
-
   return Icon(
-    FontAwesomeIcons.clock,
+    FontAwesomeIcons.check,
     color: Colors.black54,
-    size: 12.sp,
+    size: 11.sp,
   );
 }
 
@@ -460,49 +1173,6 @@ String getPaymentMethodLogo(String paymentMethod) {
 
     default:
       return '';
-  }
-}
-
-// Get Message Notification Body
-String getMessageNotificationBody(Message message) {
-  // Switch
-  switch (message.type) {
-    case "text":
-      return message.data;
-    case "image":
-      return '📷 Image ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
-
-    case "video":
-      return '🎬 Video ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
-
-    case "voicenote":
-      return '🎤 Note vocale ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
-
-    case "music":
-      return '🎵 Audio ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
-
-    case "gift":
-      return '🎁 Cadeau ${message.caption.isNotEmpty ? '• ${message.caption}' : ''}';
-
-    case "payment":
-      return '💳 Argent ${message.data.isNotEmpty ? '• ${message.data}' : ''}';
-
-    default:
-      return '';
-  }
-}
-
-// Get Message Notification largeIconPath
-Future<String> getMessageNotificationLargeIconPath(
-    {required String url, required String filename, required String type}) async {
-  List directories = await getDirectories();
-  // Check file existence
-  File file =
-      File('${directories[0]}/$appName/${getSpecificDirByType(type)}/${transformExtensionToThumbnailExt(filename)}');
-  if (file.existsSync()) {
-    return file.path;
-  } else {
-    return await downloadFile(url: url, fileName: filename, type: type);
   }
 }
 
@@ -559,7 +1229,7 @@ String getSpecificDirByType(messageType) {
   }
 }
 
-Future deleteMessageAssociatedFiles(Message message) async {
+Future deleteMessageAssociatedFiles(messagemodel.Message message) async {
   List directories = await getDirectories();
 
   File correspondingFile = File('${directories[0]}/$appName/${getSpecificDirByType(message.type)}/${message.filename}');
@@ -567,16 +1237,6 @@ Future deleteMessageAssociatedFiles(Message message) async {
     await correspondingFile.delete();
     log('File deleted at ${correspondingFile.path}');
   }
-}
-
-// Get User by Id /current user or anyone else
-Stream<usermodel.User?> getUserById(context, String userId) {
-  // await Future.delayed(Duration(seconds: 3));
-
-  if (userId == FirebaseAuth.instance.currentUser!.uid || userId.isEmpty) {
-    return Provider.of<UserProvider>(context, listen: true).getCurrentUser();
-  }
-  return Provider.of<UserProvider>(context, listen: true).getUserById(userId);
 }
 
 // Show DecisionModal
@@ -714,6 +1374,17 @@ Future<DateTime?> pickDate(
 //   ];
 // }
 
+String removeDiacritics(String str) {
+  var withDia = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÕÖØòóôõöøÈÉÊËèéêëðÇçÐÌÍÎÏìíîïÙÚÛÜùúûüÑñŠšŸÿýŽž';
+  var withoutDia = 'AAAAAAaaaaaaOOOOOOOooooooEEEEeeeeeCcDIIIIiiiiUUUUuuuuNnSsYyyZz';
+
+  for (int i = 0; i < withDia.length; i++) {
+    str = str.replaceAll(withDia[i], withoutDia[i]);
+  }
+
+  return str;
+}
+
 // COMPARE TWO DATES
 bool isEndTimeSuperiorThanStartTime(TimeOfDay startTime, TimeOfDay endTime) {
   if (endTime.hour > startTime.hour) {
@@ -773,7 +1444,7 @@ double getMessagePreviewCardHeight(messageType) {
 }
 
 Future<File> getImageFileFromAssets(String path) async {
-  final byteData = await rootBundle.load('assets/$path');
+  final byteData = await rootBundle.load(path);
 
   final file = File('${(await getTemporaryDirectory()).path}/$path');
   await file.create(recursive: true);
@@ -920,7 +1591,7 @@ Future sendMessage({
   // MODELING A NEW MESSAGE
   //
 
-  Map<String, Object> newMessage = Message(
+  Map<String, Object> newMessage = messagemodel.Message(
     messageId: '',
     type: messageType,
     createdAt: DateTime.now(),
@@ -935,6 +1606,8 @@ Future sendMessage({
     senderId: userSenderId,
     status: status,
     deleteFor: [],
+    read: [],
+    seen: [],
     paymentId: '',
     messageToReplyId: messageToReplyId,
     messageToReplyType: messageToReplyType,
@@ -1014,6 +1687,7 @@ Future<File> copyFile(File sourceFile, String newPath) async {
   try {
     return await sourceFile.copy(newPath);
   } on FileSystemException catch (e) {
+    log('Error while copying file: $e');
     throw Exception('An error occured while copying file');
   }
 }
@@ -1024,6 +1698,7 @@ Future<File> moveFile(File sourceFile, String newPath) async {
     // prefer using rename as it is probably faster
     return await sourceFile.rename(newPath);
   } on FileSystemException catch (e) {
+    log('Error: $e');
     // if rename fails, copy the source file and then delete it
     final newFile = await sourceFile.copy(newPath);
     await sourceFile.delete();
@@ -1711,19 +2386,16 @@ bool getEventRecurrence(key) {
   EventType eventresult = eventAvailableTypeList.singleWhere((element) => element.key == key);
 
   return eventresult.recurrence;
-  ;
 }
 
 // Show Snackbar
 showSnackbar(context, message, color) {
-  var _color = color ?? Colors.black87;
-
   var snackBar = SnackBar(
     content: Text(
       message,
       style: TextStyle(color: Colors.white, fontSize: 13.sp),
     ),
-    backgroundColor: _color,
+    backgroundColor: color ?? Colors.black87,
   );
   ScaffoldMessenger.of(context)
     ..removeCurrentSnackBar()
@@ -1753,125 +2425,5 @@ Future<bool> isPhoneNumberValid({
     return true;
   } else {
     return false;
-  }
-}
-
-// Returns true if email address is in use.
-Future<bool> checkIfEmailInUse(context, String emailAddress) async {
-  try {
-    // Fetch sign-in methods for the email address
-    final list = await FirebaseAuth.instance.fetchSignInMethodsForEmail(emailAddress);
-
-    // In case list is not empty
-    if (list.isNotEmpty) {
-      // Return true because there is an existing
-      // user using the email address
-      return true;
-    } else {
-      // Return false because email adress is not in use
-      return false;
-    }
-  } catch (e) {
-    // Handle error
-    // ...
-    log('Error:$e');
-    showSnackbar(context, 'Une erreur s\'est produite', null);
-    return false;
-  }
-}
-
-// Returns true if username is in use.
-Future<bool> checkIfEmailInUseInFirestore(context, String emailAddress) async {
-  try {
-    bool finalValue;
-    // Fetch all email in DB
-    final QuerySnapshot result =
-        await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: emailAddress).get();
-
-    final List<DocumentSnapshot> documents = result.docs;
-
-    if (documents.length > 0) {
-      //exists
-      finalValue = true;
-    } else {
-      //not exists
-      finalValue = false;
-    }
-
-    if (finalValue) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (e) {
-    // Handle error
-    // ...
-    log('Error:$e');
-    showSnackbar(context, 'Une erreur s\'est produite', null);
-    return true;
-  }
-}
-
-// Returns true if phone number is in use.
-Future<bool> checkIfPhoneNumberInUse(context, String phoneNumber) async {
-  try {
-    bool finalValue;
-    // Fetch all phone number in DB
-    final QuerySnapshot result =
-        await FirebaseFirestore.instance.collection('users').where('phone', isEqualTo: phoneNumber).get();
-
-    final List<DocumentSnapshot> documents = result.docs;
-
-    if (documents.length > 0) {
-      //exists
-      finalValue = true;
-    } else {
-      //not exists
-      finalValue = false;
-    }
-
-    if (finalValue) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (e) {
-    // Handle error
-    // ...
-    log('Error:$e');
-    showSnackbar(context, 'Une erreur s\'est produite', null);
-    return true;
-  }
-}
-
-// Returns true if username is in use.
-Future<bool> checkIfUsernameInUse(context, String username) async {
-  try {
-    bool finalValue;
-    // Fetch all username in DB
-    final QuerySnapshot result =
-        await FirebaseFirestore.instance.collection('users').where('username', isEqualTo: username.toLowerCase()).get();
-
-    final List<DocumentSnapshot> documents = result.docs;
-
-    if (documents.length > 0) {
-      //exists
-      finalValue = true;
-    } else {
-      //not exists
-      finalValue = false;
-    }
-
-    if (finalValue) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (e) {
-    // Handle error
-    // ...
-    log('Error:$e');
-    showSnackbar(context, 'Une erreur s\'est produite', null);
-    return true;
   }
 }

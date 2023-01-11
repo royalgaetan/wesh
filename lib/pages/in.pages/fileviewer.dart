@@ -31,211 +31,218 @@ class FileViewer extends StatefulWidget {
 
 class _FileviewerState extends State<FileViewer> {
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF10131C),
-        systemNavigationBarColor: Color(0xFF10131C),
-      ),
-      child: DismissiblePage(
-        onDismissed: () {
-          // Pop the page
-          Navigator.of(context).pop();
-        },
-        direction: DismissiblePageDismissDirection.down,
-        child: Scaffold(
-          appBar: MorphingAppBar(
-            heroTag: 'fileViewerPageAppBar',
-            automaticallyImplyLeading: false,
-            toolbarHeight: 0,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-          ),
-          backgroundColor: Colors.black87,
-          body: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              // BODY: VIEWER
-              Center(
-                  child: Column(
-                children: [
-                  // PROFILE PICTURE
-                  widget.fileType == 'profilePicture'
-                      ? Expanded(
-                          child: PhotoView(
-                            imageProvider: NetworkImage(widget.data),
-                          ),
-                        )
-                      : Container(),
+  void initState() {
+    super.initState();
+    setSuitableStatusBarColor(Colors.black87);
+  }
 
-                  // IMAGE
-                  widget.fileType == 'image'
-                      ? Expanded(
-                          child: FutureBuilder(
-                            future: getDirectories(),
-                            builder: (BuildContext context, AsyncSnapshot snapshot) {
-                              // Handle error
-                              if (snapshot.hasError) {
-                                debugPrint('error: ${snapshot.error}');
-                                return const Center(
-                                  child: buildErrorWidget(),
+  @override
+  void dispose() {
+    super.dispose();
+    setSuitableStatusBarColor(Colors.white);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DismissiblePage(
+      onDismissed: () {
+        // Pop the page
+        setSuitableStatusBarColor(Colors.white);
+        Navigator.of(context).pop();
+      },
+      direction: DismissiblePageDismissDirection.down,
+      child: Scaffold(
+        appBar: MorphingAppBar(
+          heroTag: 'fileViewerPageAppBar',
+          automaticallyImplyLeading: false,
+          toolbarHeight: 0,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+        ),
+        backgroundColor: Colors.black87,
+        body: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // BODY: VIEWER
+            Center(
+                child: Column(
+              children: [
+                // PROFILE PICTURE
+                widget.fileType == 'profilePicture'
+                    ? Expanded(
+                        child: PhotoView(
+                          imageProvider: NetworkImage(widget.data),
+                        ),
+                      )
+                    : Container(),
+
+                // IMAGE
+                widget.fileType == 'image'
+                    ? Expanded(
+                        child: FutureBuilder(
+                          future: getDirectories(),
+                          builder: (BuildContext context, AsyncSnapshot snapshot) {
+                            // Handle error
+                            if (snapshot.hasError) {
+                              debugPrint('error: ${snapshot.error}');
+                              return const Center(
+                                child: buildErrorWidget(),
+                              );
+                            }
+
+                            // Display DATA
+                            if (snapshot.hasData) {
+                              var directories = snapshot.data;
+                              File imageFile = File(
+                                  '${directories[0]}/$appName/${getSpecificDirByType(widget.fileType)}/${widget.fileName}');
+
+                              // IF file exist, then Display it:
+                              if (imageFile.existsSync()) {
+                                return Hero(
+                                  tag: 'fileviewer_${widget.data}',
+                                  child: PhotoView(
+                                    imageProvider: NetworkToFileImage(url: widget.data, file: imageFile),
+                                  ),
                                 );
                               }
-
-                              // Display DATA
-                              if (snapshot.hasData) {
-                                var directories = snapshot.data;
-                                File imageFile = File(
-                                    '${directories[0]}/$appName/${getSpecificDirByType(widget.fileType)}/${widget.fileName}');
-
-                                // IF file exist, then Display it:
-                                if (imageFile.existsSync()) {
-                                  return Hero(
-                                    tag: 'fileviewer_${widget.data}',
-                                    child: PhotoView(
-                                      imageProvider: NetworkToFileImage(url: widget.data, file: imageFile),
-                                    ),
-                                  );
-                                }
-                                // NO FILE FOUND
-                                else {
-                                  return Center(
-                                    child: FittedBox(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(13),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(10),
-                                          color: Colors.black87.withOpacity(0.3),
-                                        ),
-                                        child: const Text('Ce fichier a été déplacé ou n\'existe plus !',
-                                            style: TextStyle(color: Colors.white)),
+                              // NO FILE FOUND
+                              else {
+                                return Center(
+                                  child: FittedBox(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(13),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.black87.withOpacity(0.3),
                                       ),
+                                      child: const Text('Ce fichier a été déplacé ou n\'existe plus !',
+                                          style: TextStyle(color: Colors.white)),
                                     ),
+                                  ),
+                                );
+                              }
+                            }
+
+                            // Display Loader
+                            return Center(
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.black87.withOpacity(0.5),
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : Container(),
+
+                // VIDEO
+                widget.fileType == 'video'
+                    ? Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FutureBuilder(
+                              future: getDirectories(),
+                              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                // Handle error
+                                if (snapshot.hasError) {
+                                  debugPrint('error: ${snapshot.error}');
+                                  return const Center(
+                                    child: buildErrorWidget(),
                                   );
                                 }
-                              }
 
-                              // Display Loader
-                              return Center(
-                                child: CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: Colors.black87.withOpacity(0.5),
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Container(),
+                                // Display DATA
+                                if (snapshot.hasData) {
+                                  var directories = snapshot.data;
+                                  File videoFile = File(
+                                      '${directories[0]}/$appName/${getSpecificDirByType(widget.fileType)}/${widget.fileName}');
 
-                  // VIDEO
-                  widget.fileType == 'video'
-                      ? Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              FutureBuilder(
-                                future: getDirectories(),
-                                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                                  // Handle error
-                                  if (snapshot.hasError) {
-                                    debugPrint('error: ${snapshot.error}');
-                                    return const Center(
-                                      child: buildErrorWidget(),
+                                  // IF file exist, then Display it:
+                                  if (videoFile.existsSync()) {
+                                    return VideoPlayerWidget(data: videoFile.path);
+                                  }
+                                  // NO FILE FOUND
+                                  else {
+                                    return Center(
+                                      child: FittedBox(
+                                        child: Container(
+                                          padding: const EdgeInsets.all(13),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(10),
+                                            color: Colors.black87.withOpacity(0.3),
+                                          ),
+                                          child: const Text('Ce fichier a été déplacé ou n\'existe plus !',
+                                              style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ),
                                     );
                                   }
+                                }
 
-                                  // Display DATA
-                                  if (snapshot.hasData) {
-                                    var directories = snapshot.data;
-                                    File videoFile = File(
-                                        '${directories[0]}/$appName/${getSpecificDirByType(widget.fileType)}/${widget.fileName}');
-
-                                    // IF file exist, then Display it:
-                                    if (videoFile.existsSync()) {
-                                      return VideoPlayerWidget(data: videoFile.path);
-                                    }
-                                    // NO FILE FOUND
-                                    else {
-                                      return Center(
-                                        child: FittedBox(
-                                          child: Container(
-                                            padding: const EdgeInsets.all(13),
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(10),
-                                              color: Colors.black87.withOpacity(0.3),
-                                            ),
-                                            child: const Text('Ce fichier a été déplacé ou n\'existe plus !',
-                                                style: TextStyle(color: Colors.white)),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-
-                                  // Display Loader
-                                  return Center(
-                                    child: CircleAvatar(
-                                      radius: 40,
-                                      backgroundColor: Colors.black87.withOpacity(0.5),
-                                      child: const CircularProgressIndicator(
-                                        color: Colors.white,
-                                      ),
+                                // Display Loader
+                                return Center(
+                                  child: CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: Colors.black87.withOpacity(0.5),
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
                                     ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        )
-                      : Container(),
-
-                  // AUDIO
-
-                  // OTHERS
-                  // ...
-                ],
-              )),
-
-              // CUSTOM APP BAR: VIEWER
-
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomRight,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.2),
-                      Colors.black.withOpacity(0.4),
-                      Colors.black.withOpacity(0.6),
-                    ],
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8, top: 8),
-                        child: IconButton(
-                          splashRadius: 0.06.sw,
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: Colors.white,
-                          ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
+                      )
+                    : Container(),
+
+                // AUDIO
+
+                // OTHERS
+                // ...
+              ],
+            )),
+
+            // CUSTOM APP BAR: VIEWER
+
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomRight,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.2),
+                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.6),
                   ],
                 ),
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8, top: 8),
+                      child: IconButton(
+                        splashRadius: 0.06.sw,
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back_ios_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

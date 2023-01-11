@@ -45,7 +45,7 @@ class _SuggestionsState extends State<Suggestions> {
     // Send Answer About "Send Gift Feature"
 
     // Modeling a new feedback model
-    Map<String, Object?> feedbackToSend = FeedBack(
+    Map<String, dynamic> feedbackToSend = FeedBack(
       feedbackId: '',
       uid: FirebaseAuth.instance.currentUser!.uid,
       name: currentUser?.name ?? '',
@@ -125,7 +125,7 @@ class _SuggestionsState extends State<Suggestions> {
               ),
               const SizedBox(height: 10),
               // Text 1
-              Text('Cette fonctionnalité vous permettra d\'envoyer directement des cadeaux aux personnes',
+              Text('C\'est ici que vous pouvez envoyer des cadeaux aux personnes',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54, fontSize: 17.sp)),
               const SizedBox(height: 25),

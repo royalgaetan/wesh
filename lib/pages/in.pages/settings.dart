@@ -123,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (deleteDecision[0] == true) {
                   // Sign out
                   // ignore: use_build_context_synchronously
-                  AuthMethods().signout(context);
+                  AuthMethods.signout(context);
                 }
               },
               icon: const Icon(

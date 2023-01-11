@@ -78,17 +78,20 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
 
           if (isPhoneValid) {
             //  Check if the phone is used
-            bool isPhoneNumberUsed = await checkIfPhoneNumberInUse(context, '+$phoneCode${phoneController.text}');
 
-            if (isPhoneNumberUsed == false) {
+            bool isUserExisting =
+                await AuthMethods.checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
+            if (isUserExisting == true) {
+              // ignore: use_build_context_synchronously
+              showSnackbar(context, 'Ce numéro est déjà pris...', null);
+              return;
+            } else {
               Navigator.push(
                 context,
                 SwipeablePageRoute(
                   builder: (_) => const OTPverificationPage(authType: 'signup'),
                 ),
               );
-            } else {
-              showSnackbar(context, 'Ce numéro est déjà pris', null);
             }
           } else {
             showSnackbar(context, 'Votre numéro est incorrect !', null);
@@ -115,7 +118,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
 
       // Returns true if email address is available
 
-      bool isEmailUsed = await checkIfEmailInUse(context, emailController.text);
+      bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
 
       if (isEmailUsed == true) {
         setState(() {
@@ -154,7 +157,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
 
       debugPrint("Has connection : $isConnected");
 
-      List isAllowedToContinue = await AuthMethods().continueWithGoogle(context, 'signup');
+      List isAllowedToContinue = await AuthMethods.continueWithGoogle(context, 'signup');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
@@ -191,7 +194,7 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
 
       debugPrint("Has connection : $isConnected");
 
-      List isAllowedToContinue = await AuthMethods().continueWithFacebook(context, 'signup');
+      List isAllowedToContinue = await AuthMethods.continueWithFacebook(context, 'signup');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 

@@ -1,19 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/functions.dart';
 import '../models/message.dart';
-import '../services/sharedpreferences.service.dart';
 import '../utils/constants.dart';
 import '../widgets/buildWidgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:wesh/widgets/discussioncard.dart';
 import '../models/discussion.dart';
-import '../providers/user.provider.dart';
 
 class MessagesPage extends StatefulWidget {
   const MessagesPage({Key? key}) : super(key: key);
@@ -36,9 +34,6 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
   void dispose() {
     //
     super.dispose();
-
-    // Remove Current Active Page
-    UserSimplePreferences.setCurrentActivePageHandler('');
   }
 
   @override
@@ -46,14 +41,11 @@ class _MessagesPageState extends State<MessagesPage> with WidgetsBindingObserver
     //Notice the super-call here.
     super.build(context);
 
-    // Set Current Active Page
-    UserSimplePreferences.setCurrentActivePageHandler(context.widget.toStringShort());
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
       body: StreamBuilder<List<Discussion>>(
-          stream: Provider.of<UserProvider>(context).getCurrentUserDiscussions(),
+          stream: FirestoreMethods.getCurrentUserDiscussions(),
           builder: (context, snapshot) {
             // Handle Errors
             if (snapshot.hasError) {

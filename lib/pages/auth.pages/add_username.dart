@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wesh/pages/auth.pages/add_name_and_birthday.dart';
+import 'package:wesh/services/auth.methods.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -103,10 +104,10 @@ class _CheckUsernameState extends State<AddUsernamePage> {
                 TextformContainer(
                   child: TextField(
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp("[a-z]")),
+                      FilteringTextInputFormatter.allow(RegExp('[a-z0-9_]')),
                     ],
                     onChanged: (value) async {
-                      bool isUsed = await checkIfUsernameInUse(context, value);
+                      bool isUsed = await AuthMethods.checkIfUsernameInUse(context, value);
                       if (mounted) {
                         setState(() {
                           isUsernameUsed = isUsed;
@@ -201,7 +202,7 @@ class _CheckUsernameState extends State<AddUsernamePage> {
 
 checkUsername(context, String username) async {
   if (username.isNotEmpty && username.length > 4) {
-    bool isUsed = await checkIfUsernameInUse(context, username);
+    bool isUsed = await AuthMethods.checkIfUsernameInUse(context, username);
 
     debugPrint('Username isUsed: $isUsed');
     if (!isUsed) {

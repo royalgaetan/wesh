@@ -1,4 +1,6 @@
 // FIELDS
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ReminderFields {
   static final List<String> values = [
     'title',
@@ -64,35 +66,41 @@ class Reminder {
         ReminderFields.uid: uid,
         ReminderFields.reminderDelay: reminderDelay,
         ReminderFields.eventId: eventId,
-        ReminderFields.createdAt: createdAt.toIso8601String(),
-        ReminderFields.modifiedAt: modifiedAt.toIso8601String(),
-        ReminderFields.remindAt: remindAt.toIso8601String(),
-        ReminderFields.remindFrom: remindFrom.toIso8601String(),
+        ReminderFields.createdAt: createdAt,
+        ReminderFields.modifiedAt: modifiedAt,
+        ReminderFields.remindAt: remindAt,
+        ReminderFields.remindFrom: remindFrom,
         ReminderFields.recurrence: recurrence,
         ReminderFields.status: status,
       };
 
   // fromJson
   static Reminder fromJson(Map<String, dynamic> json) => Reminder(
-        title: json[ReminderFields.title] ?? '',
-        uid: json[ReminderFields.uid] ?? '',
-        reminderId: json[ReminderFields.reminderId] ?? '',
-        reminderDelay: json[ReminderFields.reminderDelay] ?? '',
-        eventId: json[ReminderFields.eventId] ?? '',
-        recurrence: json[ReminderFields.recurrence] ?? '',
-        status: json[ReminderFields.status] ?? '',
-        //
-        createdAt:
-            json[ReminderFields.createdAt] != null ? DateTime.parse(json[ReminderFields.createdAt]) : DateTime.now(),
-        //
-        modifiedAt:
-            json[ReminderFields.modifiedAt] != null ? DateTime.parse(json[ReminderFields.modifiedAt]) : DateTime.now(),
-        //
-        remindFrom:
-            json[ReminderFields.remindFrom] != null ? DateTime.parse(json[ReminderFields.remindFrom]) : DateTime.now(),
-        //
-        remindAt:
-            json[ReminderFields.remindAt] != null ? DateTime.parse(json[ReminderFields.remindAt]) : DateTime.now(),
-        //
+      title: json[ReminderFields.title] ?? '',
+      uid: json[ReminderFields.uid] ?? '',
+      reminderId: json[ReminderFields.reminderId] ?? '',
+      reminderDelay: json[ReminderFields.reminderDelay] ?? '',
+      eventId: json[ReminderFields.eventId] ?? '',
+      recurrence: json[ReminderFields.recurrence] ?? '',
+      status: json[ReminderFields.status] ?? '',
+      //
+      //
+      createdAt: json['createdAt'] != null && json['createdAt'] != ''
+          ? (json['createdAt'] as Timestamp).toDate().toLocal()
+          : DateTime.now(),
+
+      //
+      modifiedAt: json['modifiedAt'] != null && json['modifiedAt'] != ''
+          ? (json['modifiedAt'] as Timestamp).toDate().toLocal()
+          : DateTime.now(),
+      //
+      remindFrom: json['remindFrom'] != null && json['remindFrom'] != ''
+          ? (json['remindFrom'] as Timestamp).toDate().toLocal()
+          : DateTime.now(),
+      //
+      remindAt: json['remindAt'] != null && json['remindAt'] != ''
+          ? (json['remindAt'] as Timestamp).toDate().toLocal()
+          : DateTime.now()
+      //
       );
 }

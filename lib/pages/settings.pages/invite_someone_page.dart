@@ -156,7 +156,7 @@ enum Share {
 
 Future<void> onButtonTap(context, Share share) async {
   String msg =
-      '$appName te permet de créer et de te rappeler des évenements importants comme les anniversaires de tes proches, ou plus encore. Rejoins moi vite sur ce lien : $downloadAppUrl';
+      '$appName te permet de créer et de te rappeler des évènements importants comme les anniversaires de tes proches, ou plus encore. Rejoins moi vite sur ce lien : $downloadAppUrl';
 
   String url = downloadAppUrl;
 

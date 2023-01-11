@@ -23,16 +23,16 @@ class ForeverCard extends StatefulWidget {
 
 class _ForeverCardState extends State<ForeverCard> {
   Future<List<Story>> getStoriesFromStoriesIdList(List<String> storiesIdList) async {
-    List<Story> _storiesData = [];
+    List<Story> storiesData = [];
 
     for (String storyId in storiesIdList) {
       Story? storyGet = await FirestoreMethods.getStoryByIdAsFuture(storyId);
       if (storyGet != null) {
-        _storiesData.add(storyGet);
+        storiesData.add(storyGet);
       }
     }
     //
-    return _storiesData;
+    return storiesData;
   }
 
   @override
@@ -44,7 +44,7 @@ class _ForeverCardState extends State<ForeverCard> {
         //
 
         //
-        List<StoriesHandler> _storiesHandlerList = [];
+        List<StoriesHandler> storiesHandlerList = [];
         if (widget.foreversList.isNotEmpty) {
           // Build StoriesHandler - for Forevers
           for (Forever forever in widget.foreversList) {
@@ -53,7 +53,7 @@ class _ForeverCardState extends State<ForeverCard> {
             List<Story> storiesGet =
                 await getStoriesFromStoriesIdList(forever.stories.map((storyId) => storyId.toString()).toList());
 
-            _storiesHandlerList.add(
+            storiesHandlerList.add(
               StoriesHandler(
                 origin: 'foreverStories',
                 posterId: forever.foreverId,
@@ -71,11 +71,11 @@ class _ForeverCardState extends State<ForeverCard> {
 
           // Story Page View
           StoriesHandler currentForeverStoriesHandler =
-              _storiesHandlerList.where((storiesHandler) => storiesHandler.posterId == widget.forever.foreverId).first;
+              storiesHandlerList.where((storiesHandler) => storiesHandler.posterId == widget.forever.foreverId).first;
           // ignore: use_build_context_synchronously
           context.pushTransparentRoute(StoriesViewer(
-            storiesHandlerList: _storiesHandlerList,
-            indexInStoriesHandlerList: _storiesHandlerList.indexOf(currentForeverStoriesHandler),
+            storiesHandlerList: storiesHandlerList,
+            indexInStoriesHandlerList: storiesHandlerList.indexOf(currentForeverStoriesHandler),
           ));
         }
       },

@@ -50,6 +50,15 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
+
+    // CANCEL ALL USER'EVENTS NOTIFICATIONS ONCE ON PROFILE PAGE
+    log('[Cancel all ${widget.uid} events notifications]');
+    setCurrentActivePageFromIndex(index: 4, userId: widget.uid);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -60,8 +69,16 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     return Scaffold(
       backgroundColor: Colors.white,
       body: StreamBuilder(
-          stream: getUserById(context, widget.uid),
+          stream: FirestoreMethods.getUserById(widget.uid),
           builder: (context, snapshot) {
+            // Handle Errors
+            if (snapshot.hasError) {
+              debugPrint('error: ${snapshot.error}');
+              return const Center(
+                child: buildErrorWidget(onWhiteBackground: true),
+              );
+            }
+
             // Data loaded
             if (snapshot.hasData) {
               usermodel.User currentUser = snapshot.data as usermodel.User;
@@ -117,7 +134,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     ),
 
                     // TOP BODY
-
                     SliverList(
                       delegate: SliverChildListDelegate(
                         [
@@ -347,6 +363,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                                   currentUser.linkinbio,
                                                   style: TextStyle(
                                                     fontSize: 13.sp,
+                                                    fontWeight: FontWeight.bold,
                                                     color: Colors.lightBlue.shade600,
                                                   ),
                                                 ),
@@ -435,8 +452,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                                   Button(
                                                     height: 0.12.sw,
                                                     width: 0.27.sw,
-                                                    prefixIcon: Icons.messenger_outline_rounded,
-                                                    prefixIconSize: 15.sp,
+                                                    prefixIcon: FontAwesomeIcons.message,
+                                                    prefixIconSize: 17.sp,
                                                     prefixIconColor: Colors.black87,
                                                     fontColor: Colors.black,
                                                     color: const Color(0xFFF0F0F0),
@@ -474,7 +491,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                     nb: currentUser.events!.length,
                                     label: 'Evénements',
                                     onTap: () {
-                                      // EMPTY LOCATION
+                                      // Active Tab : Events
+                                      // ...
                                     },
                                   ),
                                   profileStat(
@@ -533,17 +551,26 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         unselectedLabelColor: Colors.grey.shade600,
                         indicatorColor: kSecondColor,
                         tabs: <Widget>[
-                          Tab(
-                            icon: Icon(FontAwesomeIcons.splotch, size: 16.sp),
-                            // text: "Vos Evénements",
+                          Tooltip(
+                            message: 'Evènements',
+                            child: Tab(
+                              icon: Icon(FontAwesomeIcons.splotch, size: 16.sp),
+                              // text: "Vos Evénements",
+                            ),
                           ),
-                          Tab(
-                            icon: Icon(FontAwesomeIcons.clockRotateLeft, size: 16.sp),
-                            // text: "Vos Rappels",
+                          Tooltip(
+                            message: 'Rappels',
+                            child: Tab(
+                              icon: Icon(FontAwesomeIcons.clockRotateLeft, size: 16.sp),
+                              // text: "Vos Rappels",
+                            ),
                           ),
-                          Tab(
-                            icon: Icon(FontAwesomeIcons.circleNotch, size: 16.sp),
-                            // text: "Vos Rappels",
+                          Tooltip(
+                            message: 'Forevers',
+                            child: Tab(
+                              icon: Icon(FontAwesomeIcons.circleNotch, size: 16.sp),
+                              // text: "Vos Forevers",
+                            ),
                           ),
                         ],
                       ),
@@ -553,6 +580,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                         child: TabBarView(
                           children: [
                             // TabBarSection 1 : Events
+
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 5),
                               child: StreamBuilder<List<Event>>(
@@ -579,8 +607,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                             ),
                                             Text(
                                               widget.uid == FirebaseAuth.instance.currentUser!.uid
-                                                  ? 'Vous n\'avez aucun évenement'
-                                                  : 'Aucun évenement trouvé !',
+                                                  ? 'Vous n\'avez aucun évènement'
+                                                  : 'Aucun évènement trouvé !',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 color: Colors.black45,
@@ -597,7 +625,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                                                             builder: (context) => CreateOrUpdateEventPage(),
                                                           ));
                                                     },
-                                                    child: const Text('+ Créer un évenement'),
+                                                    child: const Text('+ Créer un évènement'),
                                                   )
                                                 : Container()
                                           ],
@@ -864,8 +892,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               );
             }
 
-            // Waiting...
-            return Container();
+            // Display Loading while waiting
+            return Center(
+              child: Container(
+                padding: const EdgeInsets.all(50),
+                height: 100,
+                child: const CupertinoActivityIndicator(),
+              ),
+            );
           }),
     );
   }

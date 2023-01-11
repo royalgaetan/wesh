@@ -117,7 +117,7 @@ class _ButtonState extends State<Button> {
 
                       // TEXT
                       SizedBox(
-                        width: widget.text != null ? 5 : 0,
+                        width: widget.text != null ? 7 : 0,
                       ),
                       widget.text != null
                           ? Text(

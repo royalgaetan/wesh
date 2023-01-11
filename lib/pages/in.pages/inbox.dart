@@ -27,7 +27,6 @@ import 'package:wesh/widgets/messagefilepicker.dart';
 import '../../models/discussion.dart';
 import '../../models/event.dart';
 import '../../models/story.dart';
-import '../../services/sharedpreferences.service.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/modal.dart';
@@ -62,7 +61,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
   //
   bool showEmojiKeyboard = false;
   //
-  List<Message>? listMsg = [];
+  List<Message> listMsg = [];
   Message? messageToReply;
 
   FocusNode messageTextFocus = FocusNode();
@@ -116,6 +115,9 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
 
   Future refreshDiscussion() async {
     if (widget.discussion == null) {
+      setState(() {
+        isLoading = true;
+      });
       // Get Discussion of [anotherUserId] and [Me]
       List<Discussion> listOfExistingDiscussions = await FirestoreMethods.getListOfExistingDiscussions(
           userSenderId: FirebaseAuth.instance.currentUser!.uid, userReceiverId: widget.userReceiverId);
@@ -127,6 +129,9 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
         });
         dev.log('widget.discussion: ${widget.discussion!.participants}');
       }
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -134,11 +139,11 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
   void initState() {
     super.initState();
     //
+    setCurrentActivePageFromIndex(index: 5, userId: widget.userReceiverId);
     refreshDiscussion();
     //
     recorderController = RecorderController();
     //
-    FirestoreMethods.updateMessagesToStatus3(widget.discussion?.messages.map((m) => m as String).toList() ?? []);
   }
 
   @override
@@ -147,9 +152,6 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
     recorderController.dispose();
     //
     internetSubscription != null ? internetSubscription!.cancel() : null;
-
-    // Remove Current Active Page
-    UserSimplePreferences.setCurrentActivePageHandler('');
   }
 
   //
@@ -401,9 +403,6 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
     //Notice the super-call here.
     super.build(context);
 
-    // Set Current Active Page
-    UserSimplePreferences.setCurrentActivePageHandler(context.widget.toStringShort());
-
     return WillPopScope(
       onWillPop: () async {
         return await onWillPopHandler(context);
@@ -420,7 +419,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                   elevation: 0,
                   backgroundColor: Colors.white,
                   titleSpacing: 0,
-                  leadingWidth: 100,
+                  leadingWidth: 90,
                   leading: Row(
                     children: [
                       IconButton(
@@ -548,7 +547,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                             Map<String, Message> allMessagesList = {};
 
                             // Get all discussion messages
-                            for (Message message in listMsg ?? []) {
+                            for (Message message in listMsg) {
                               allMessagesList.addAll({message.messageId: message});
                             }
                             deleteMessages(allMessagesList);
@@ -603,7 +602,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
 
                 // SELECTION MODE APP BAR
                 Visibility(
-                  visible: isSelectionMode && messagesSelectedList.length > 0 ? true : false,
+                  visible: isSelectionMode && messagesSelectedList.isNotEmpty ? true : false,
                   child: MorphingAppBar(
                     heroTag: 'inboxSelectionModeAppBar',
                     elevation: 0,
@@ -752,38 +751,42 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                           return SizedBox(width: 0.5.sw, child: const buildErrorWidget(onWhiteBackground: true));
                         }
 
-                        if (snapshot.hasData) {
-                          listMsg = snapshot.data as List<Message>?;
+                        if (snapshot.hasData && snapshot.data != null) {
+                          listMsg = snapshot.data as List<Message>;
 
                           // Remove [Invalid Message] && [DeleteForMe Message]
-                          listMsg = listMsg!.where((currentMessage) {
-                            // [Invalid Message]
-                            if (currentMessage.senderId != FirebaseAuth.instance.currentUser!.uid &&
-                                currentMessage.status == 0) {
-                              return false;
-                            }
+                          if (listMsg.isNotEmpty) {
+                            listMsg = listMsg.where((currentMessage) {
+                              // [Invalid Message]
+                              if (currentMessage.senderId != FirebaseAuth.instance.currentUser!.uid &&
+                                  currentMessage.status == 0) {
+                                return false;
+                              }
 
-                            // Retrieve [DeleteForMe Message]
-                            if (currentMessage.deleteFor.contains(FirebaseAuth.instance.currentUser!.uid)) {
-                              return false;
-                            }
+                              // Retrieve [DeleteForMe Message]
+                              if (currentMessage.deleteFor.contains(FirebaseAuth.instance.currentUser!.uid)) {
+                                return false;
+                              }
 
-                            return true;
-                          }).toList();
+                              return true;
+                            }).toList();
 
-                          messagesListLength.add(listMsg!.length);
+                            messagesListLength.add(listMsg.length);
+                          }
 
                           // Show Scroll to the end btn : if necessary
-                          if (isLastMessageVisible == false &&
+                          if (listMsg.isNotEmpty &&
+                              listMsg.any((m) => m.senderId != FirebaseAuth.instance.currentUser!.uid) &&
+                              isLastMessageVisible == false &&
                               messagesListLength.length > 2 &&
                               messagesListLength.last > messagesListLength[messagesListLength.length - 2]) {
                             showScrollDownButton.value = true;
                           }
 
-                          listMsg!.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                          listMsg.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                           // No discussion found
-                          if (listMsg!.isEmpty) {
+                          if (listMsg.isEmpty) {
                             return Container(
                               padding: const EdgeInsets.all(30),
                               height: 300,
@@ -821,21 +824,21 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                   return true;
                                 },
                                 child: ScrollablePositionedList.builder(
-                                  itemCount: listMsg!.length,
+                                  itemCount: listMsg.length,
                                   itemScrollController: _scrollController,
                                   reverse: true,
                                   itemBuilder: (context, index) {
-                                    Message message = listMsg![index];
+                                    Message message = listMsg[index];
                                     bool hasTheSameDateWithNextMessage = false;
                                     num nextMessageIndex = index + 1;
 
                                     // Get next message index
-                                    if (nextMessageIndex >= listMsg!.length - 1) {
+                                    if (nextMessageIndex >= listMsg.length - 1) {
                                       nextMessageIndex = index;
                                     } else {
                                       nextMessageIndex = index + 1;
                                     }
-                                    Message nextMessage = listMsg![nextMessageIndex as int];
+                                    Message nextMessage = listMsg[nextMessageIndex as int];
 
                                     if (DateUtils.dateOnly(message.createdAt)
                                         .isAtSameMomentAs(DateUtils.dateOnly(nextMessage.createdAt))) {
@@ -863,17 +866,17 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                         key: Key(message.messageId),
                                         onVisibilityChanged: (VisibilityInfo info) {
                                           if (listMsg != null &&
-                                              listMsg!.isNotEmpty &&
+                                              listMsg.isNotEmpty &&
                                               info.visibleFraction == 0 &&
-                                              listMsg!.first.messageId == message.messageId) {
+                                              listMsg.first.messageId == message.messageId) {
                                             if (!mounted) return;
                                             setState(() {
                                               isLastMessageVisible = false;
                                             });
                                           } else if (listMsg != null &&
-                                              listMsg!.isNotEmpty &&
+                                              listMsg.isNotEmpty &&
                                               info.visibleFraction == 1.0 &&
-                                              listMsg!.first.messageId == message.messageId) {
+                                              listMsg.first.messageId == message.messageId) {
                                             if (!mounted) return;
                                             setState(() {
                                               isLastMessageVisible = true;
@@ -883,7 +886,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                         },
                                         child: MessageCard(
                                           onScrollTo: () {
-                                            scrollTo(listMsg!, message.messageToReplyId);
+                                            scrollTo(listMsg, message.messageToReplyId);
                                           },
                                           onSwipe: () async {
                                             // VIBRATE
@@ -892,7 +895,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                             replyMessage(message);
                                           },
                                           currentMessageIndex: index,
-                                          listMsgLength: listMsg!.length,
+                                          listMsgLength: listMsg.length,
                                           nextMessage: nextMessage,
                                           hasTheSameDateWithNextMessage: hasTheSameDateWithNextMessage,
                                           message: message,
@@ -934,8 +937,8 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                             showScrollDownButton.value = false;
 
                                             // Get last message : NB: last is 1st
-                                            Message lastMessage = listMsg!.first;
-                                            scrollTo(listMsg!, lastMessage.messageId);
+                                            Message lastMessage = listMsg.first;
+                                            scrollTo(listMsg, lastMessage.messageId);
                                           },
                                         ),
                                       ),
@@ -986,8 +989,8 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                 showScrollDownButton.value = false;
 
                                                 // Get last message : NB: last is 1st
-                                                Message lastMessage = listMsg!.first;
-                                                scrollTo(listMsg!, lastMessage.messageId);
+                                                Message lastMessage = listMsg.first;
+                                                scrollTo(listMsg, lastMessage.messageId);
                                               },
                                             ),
                                           ),
@@ -1328,9 +1331,9 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                       await triggerVibration();
 
                                                       // Get last message : NB: last is 1st
-                                                      if (listMsg != null && listMsg!.isNotEmpty) {
-                                                        Message lastMessage = listMsg!.first;
-                                                        scrollTo(listMsg!, lastMessage.messageId);
+                                                      if (listMsg != null && listMsg.isNotEmpty) {
+                                                        Message lastMessage = listMsg.first;
+                                                        scrollTo(listMsg, lastMessage.messageId);
                                                       }
 
                                                       // Send Voicenote Message
@@ -1409,6 +1412,13 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                                           // ignore: use_build_context_synchronously
                                                           showSnackbar(context, 'Une erreur s\'est produite', null);
                                                         }
+                                                      } else {
+                                                        // WE NEED PERMISSION TO CONTINUE...
+                                                        // ignore: use_build_context_synchronously
+                                                        showSnackbar(
+                                                            context,
+                                                            'Nous avons besoin d\'une permission pour enregistrer !',
+                                                            null);
                                                       }
                                                     },
                                                     icon: Transform.translate(
@@ -1541,9 +1551,9 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                 await triggerVibration();
 
                                 // Get last message : NB: last is 1st
-                                if (listMsg != null && listMsg!.isNotEmpty) {
-                                  Message lastMessage = listMsg!.first;
-                                  scrollTo(listMsg!, lastMessage.messageId);
+                                if (listMsg != null && listMsg.isNotEmpty) {
+                                  Message lastMessage = listMsg.first;
+                                  scrollTo(listMsg, lastMessage.messageId);
                                 }
 
                                 // Send Text Message !

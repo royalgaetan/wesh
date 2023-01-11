@@ -74,7 +74,7 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
         return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
-      bool isEmailUsed = await checkIfEmailInUse(context, emailController.text);
+      bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
 
       if (isEmailUsed == true) {
         // ignore: use_build_context_synchronously
@@ -98,7 +98,7 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
 
       // IF ALL CHECKERS VALIDATED : [CONTINUE]
       // Link Password Provider
-      List result = await AuthMethods().linkCredentialsbyEmailAccount(context, email, psw);
+      List result = await AuthMethods.linkCredentialsbyEmailAccount(context, email, psw);
       if (result[0]) {
         // Redirect to Settings Security Page
         Navigator.of(context).pop();
@@ -141,29 +141,31 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
             shrinkWrap: true,
             reverse: true,
             children: [
-              Column(children: const [
-                Text(
-                  'Attacher votre email et un mot de passe',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              Text(
+                'Attacher votre email et un mot de passe',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22.sp,
                 ),
-                SizedBox(
-                  height: 30,
-                ),
-              ]),
+              ),
+              SizedBox(height: 0.12.sw),
 
               // Email
               TextformContainer(
                 child: TextFormField(
                   keyboardType: TextInputType.emailAddress,
                   controller: emailController,
-                  decoration: const InputDecoration(
-                      hintText: 'Email', contentPadding: EdgeInsets.all(20), border: InputBorder.none),
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                    contentPadding: EdgeInsets.all(0.04.sw),
+                    hintText: 'Email',
+                    border: InputBorder.none,
+                  ),
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+
+              SizedBox(height: 0.04.sw),
 
               // Password Field
               TextformContainer(
@@ -185,24 +187,26 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                       }),
                   obscureText: isPswVisible,
                   decoration: InputDecoration(
-                      hintText: 'Mot de passe',
-                      contentPadding: const EdgeInsets.all(20),
-                      border: InputBorder.none,
-                      suffixIcon: showVisibilityIcon
-                          ? IconButton(
-                              splashRadius: 22,
-                              onPressed: () {
-                                setState(() {
-                                  isPswVisible = !isPswVisible;
-                                });
-                              },
-                              icon: isPswVisible
-                                  ? const Icon(Icons.visibility_rounded)
-                                  : const Icon(Icons.visibility_off_rounded))
-                          : const SizedBox(
-                              width: 2,
-                              height: 2,
-                            )),
+                    hintText: 'Mot de passe',
+                    hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                    contentPadding: EdgeInsets.all(0.04.sw),
+                    border: InputBorder.none,
+                    suffixIcon: showVisibilityIcon
+                        ? IconButton(
+                            splashRadius: 22,
+                            onPressed: () {
+                              setState(() {
+                                isPswVisible = !isPswVisible;
+                              });
+                            },
+                            icon: isPswVisible
+                                ? const Icon(Icons.visibility_rounded)
+                                : const Icon(Icons.visibility_off_rounded))
+                        : SizedBox(
+                            width: 0.04.sw,
+                            height: 0.04.sw,
+                          ),
+                  ),
                 ),
               ),
               const SizedBox(
@@ -232,24 +236,26 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                                 }),
                             obscureText: isPswConfirmationVisible,
                             decoration: InputDecoration(
-                                hintText: 'Confirmer le mot de passe',
-                                contentPadding: const EdgeInsets.all(20),
-                                border: InputBorder.none,
-                                suffixIcon: showVisibilityIcon
-                                    ? IconButton(
-                                        splashRadius: 22,
-                                        onPressed: () {
-                                          setState(() {
-                                            isPswConfirmationVisible = !isPswConfirmationVisible;
-                                          });
-                                        },
-                                        icon: isPswConfirmationVisible
-                                            ? const Icon(Icons.visibility_rounded)
-                                            : const Icon(Icons.visibility_off_rounded))
-                                    : const SizedBox(
-                                        width: 2,
-                                        height: 2,
-                                      )),
+                              hintText: 'Confirmer le mot de passe',
+                              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                              contentPadding: EdgeInsets.all(0.04.sw),
+                              border: InputBorder.none,
+                              suffixIcon: showVisibilityIcon
+                                  ? IconButton(
+                                      splashRadius: 22,
+                                      onPressed: () {
+                                        setState(() {
+                                          isPswConfirmationVisible = !isPswConfirmationVisible;
+                                        });
+                                      },
+                                      icon: isPswConfirmationVisible
+                                          ? const Icon(Icons.visibility_rounded)
+                                          : const Icon(Icons.visibility_off_rounded))
+                                  : SizedBox(
+                                      width: 0.04.sw,
+                                      height: 0.04.sw,
+                                    ),
+                            ),
                           ),
                         ),
                         const SizedBox(
@@ -260,18 +266,15 @@ class _AddEmailandPasswordPageState extends State<AddEmailandPasswordPage> {
                   : Container(),
 
               // END Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Button(
-                  height: 50,
-                  width: double.infinity,
-                  text: 'Ajouter',
-                  color: kSecondColor,
-                  onTap: () {
-                    // Check Email and Passwords --> Continue to Setings Security Page
-                    checkEmailandPasswordandLinkProvider(context);
-                  },
-                ),
+              Button(
+                height: 0.12.sw,
+                width: double.infinity,
+                text: 'Ajouter',
+                color: kSecondColor,
+                onTap: () {
+                  // Check Email and Passwords --> Continue to Setings Security Page
+                  checkEmailandPasswordandLinkProvider(context);
+                },
               ),
             ].reversed.toList(),
           ),

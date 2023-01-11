@@ -15,7 +15,7 @@ import '../utils/functions.dart';
 
 class FirestoreMethods {
   // Create a new user
-  static Future createUser(context, uid, Map<String, Object?> user) async {
+  static Future createUser(context, uid, Map<String, dynamic> user) async {
     log('CREATING NEW USER...');
     try {
       // Ref to doc
@@ -31,7 +31,7 @@ class FirestoreMethods {
   }
 
   // Update user with specific fields
-  static Future<bool> updateUserWithSpecificFields(context, uid, Map<String, Object?> fieldsToUpload) async {
+  static Future<bool> updateUserWithSpecificFields(context, uid, Map<String, dynamic> fieldsToUpload) async {
     log('UPDATING USER...');
     try {
       // Ref to doc
@@ -131,7 +131,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create a new event
-  static Future<bool> createEvent(context, uid, Map<String, Object?> event) async
+  static Future<bool> createEvent(context, uid, Map<String, dynamic> event) async
   //
   {
     log('CREATING NEW EVENT...');
@@ -164,7 +164,7 @@ class FirestoreMethods {
   }
 
   // Update an existing event
-  static Future<bool> updateEvent(context, eventId, Map<String, Object?> eventToUpdate) async
+  static Future<bool> updateEvent(context, eventId, Map<String, dynamic> eventToUpdate) async
   //
   {
     log('UPDATING EXISTING EVENT...');
@@ -209,7 +209,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create a new reminder
-  static Future createReminder(context, uid, Map<String, Object?> reminder) async
+  static Future createReminder(context, uid, Map<String, dynamic> reminder) async
   //
   {
     log('CREATING NEW REMINDER...');
@@ -231,8 +231,17 @@ class FirestoreMethods {
         'reminders': FieldValue.arrayUnion([reminderid])
       });
 
+      // Create the local_notification [A Scheduled Notification one]
+      log('Creating the local_notification [A Scheduled Notification one]');
+      try {
+        createOrUpdateReminderLocalNotification(action: 'create', reminderId: reminderid);
+      } catch (e) {
+        //
+        log('Err: $e');
+      }
+
       // Create a new notification
-      await createNotification(context, uid, reminderid, 'reminderCreated');
+      // await createNotification(context, uid, reminderid, 'reminderCreated');
 
       //
       log('Reminder created (+notification) !');
@@ -244,7 +253,7 @@ class FirestoreMethods {
   }
 
   // Update an existing event
-  static Future<bool> updateReminder(context, reminderId, Map<String, Object?> reminderToUpdate) async
+  static Future<bool> updateReminder(context, reminderId, Map<String, dynamic> reminderToUpdate) async
   //
   {
     log('UPDATING EXISTING REMINDER...');
@@ -253,14 +262,25 @@ class FirestoreMethods {
       final refReminder = FirebaseFirestore.instance.collection('reminders').doc(reminderId);
       await refReminder.update(reminderToUpdate);
 
+      // Update the local_notification [That Scheduled Notification]
+      log('Updating the local_notification [That Scheduled Notification one]');
+      try {
+        createOrUpdateReminderLocalNotification(action: 'update', reminderId: reminderId);
+      } catch (e) {
+        //
+        log('Err: $e');
+      }
+
       // Create a new notification : updated
-      await createNotification(context, FirebaseAuth.instance.currentUser!.uid, reminderId, 'reminderUpdated');
+      // await createNotification(context, FirebaseAuth.instance.currentUser!.uid, reminderId, 'reminderUpdated');
 
       //
       log('Reminder updated !');
       return true;
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite lors de la modification du rappel', null);
+      if (context != null) {
+        showSnackbar(context, 'Une erreur s\'est produite lors de la modification du rappel', null);
+      }
       return false;
     }
   }
@@ -278,9 +298,18 @@ class FirestoreMethods {
       await refUser.update({
         'reminders': FieldValue.arrayRemove([reminderId])
       });
+
+      // Delete the local_notification [That Scheduled Notification]
+      log('Deleting the local_notification [That Scheduled Notification one]');
+      notificationCancelEngine(notifMatchToCancel: '${FirebaseAuth.instance.currentUser!.uid}:reminder:$reminderId');
+
+      //
       return true;
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite lors de la suppression du rappel', null);
+      if (context != null) {
+        showSnackbar(context, 'Une erreur s\'est produite lors de la suppression du rappel', null);
+      }
+
       return false;
     }
   }
@@ -290,7 +319,7 @@ class FirestoreMethods {
   //////////////////
 
   // Create a new story
-  static Future<bool> createStory(context, uid, Map<String, Object?> story) async {
+  static Future<bool> createStory(context, uid, Map<String, dynamic> story) async {
     log('CREATING NEW STORY...');
     try {
       // Create story and write it to the database : Stories Table
@@ -301,19 +330,13 @@ class FirestoreMethods {
       var storyId = refStory.id;
       var refStoryCreated = FirebaseFirestore.instance.collection('stories').doc(storyId);
       await refStoryCreated.update({'storyId': storyId});
-      log('Event id is: $storyId');
+      log('Story id is: $storyId');
 
       // Update User_creator Stories Array
       log('Updating User "Stories field"...');
       var refUser = FirebaseFirestore.instance.collection('users').doc(uid);
       await refUser.update({
         'stories': FieldValue.arrayUnion([storyId])
-      });
-
-      // Update User_creator lastStoryUpdateDateTime field
-      log('Updating User "Last Story UpdateDateTime field"...');
-      await refUser.update({
-        'lastStoryUpdateDateTime': DateTime.now().toIso8601String(),
       });
 
       // Create a new notification
@@ -412,6 +435,18 @@ class FirestoreMethods {
   //////////////////
   //////////////////
 
+  // Get Users Forevers
+  static Stream<List<Forever>> getForevers(String uid) {
+    return FirebaseFirestore.instance
+        .collection('forevers')
+        .where('uid', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              // Get Forevers
+              return Forever.fromJson(doc.data());
+            }).toList());
+  }
+
   // Get Forever Cover /to build Cover+Title
   static Future<Widget?> getForeverCoverByFirstStoryId(storyId) async {
     final ref = FirebaseFirestore.instance.collection('stories').where('storyId', isEqualTo: storyId);
@@ -438,7 +473,7 @@ class FirestoreMethods {
   }
 
   // Create forever
-  static Future createForever(context, uid, Map<String, Object?> forever) async {
+  static Future createForever(context, uid, Map<String, dynamic> forever) async {
     log('CREATING NEW FOREVER...');
     try {
       // Create forever and write it to the database : Forevers Table
@@ -471,7 +506,7 @@ class FirestoreMethods {
   }
 
   // Update forever
-  static Future<bool> updateForever(context, foreverId, Map<String, Object?> foreverToUpdate) async
+  static Future<bool> updateForever(context, foreverId, Map<String, dynamic> foreverToUpdate) async
   //
   {
     log('UPDATING EXISTING FOREVER...');
@@ -570,6 +605,96 @@ class FirestoreMethods {
         .map((snapshot) => Discussion.fromJson(snapshot.data()!));
   }
 
+  // Get current user discussions
+  static Stream<List<Discussion>> getCurrentUserDiscussions() {
+    return FirebaseFirestore.instance
+        .collection('discussions')
+        .where('participants', arrayContainsAny: [FirebaseAuth.instance.currentUser!.uid])
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map(
+              (doc) => Discussion.fromJson(
+                doc.data(),
+              ),
+            )
+            .toList());
+  }
+
+  // Get [Future] all User from My Discussion
+  static Future<List<usermodel.User>> getAllUsersFromMyDiscussions() async {
+    List discussionsIDs = [];
+    List<Discussion> listOfDiscussions = [];
+    List<String> usersInsideMessagesList = [];
+    List<usermodel.User> users = [];
+
+    List<Map<String, Object>> listOfUsersWithLastMessageDateTimeInDiscussion = [];
+
+    // Get All My Discussions IDs
+    final ref = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+    final snapshot = await ref.get();
+    if (snapshot.exists) {
+      usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
+      discussionsIDs = user.discussions ?? [];
+    }
+    // Loop AllDiscussionId and retrieve Related Discussions Data
+    for (String discussionID in discussionsIDs) {
+      final refDiscussion =
+          FirebaseFirestore.instance.collection('discussions').where('discussionId', isEqualTo: discussionID);
+      final snapshot = await refDiscussion.get();
+      if (snapshot.size > 0) {
+        for (var element in snapshot.docs) {
+          if (element.exists) {
+            Discussion disc = Discussion.fromJson(element.data());
+            listOfDiscussions.add(disc);
+          }
+        }
+      }
+    }
+
+    for (Discussion discussion in listOfDiscussions) {
+      List<Map<String, Object>> discussionMessages =
+          await FirestoreMethods.getMessagesFromListOfDiscussionAsFuture(listOfDiscussions);
+
+      List<Message> discussionMessagesUsedToGetLastMessage = discussionMessages
+          .where((map) => map['discussionId'] == discussion.discussionId)
+          .map((map) => (map['message'] as Message))
+          .toList();
+
+      Message? lastMessage = getLastMessageOfDiscussion(discussionMessagesUsedToGetLastMessage);
+
+      if (lastMessage != null) {
+        String userIdToUse = lastMessage.senderId != FirebaseAuth.instance.currentUser!.uid
+            ? lastMessage.senderId
+            : lastMessage.receiverId;
+        listOfUsersWithLastMessageDateTimeInDiscussion
+            .add({'lastMessageDateTime': lastMessage.createdAt, 'userId': userIdToUse});
+      }
+    }
+
+    // Sort messages : by the latest
+    listOfUsersWithLastMessageDateTimeInDiscussion
+        .sort((a, b) => (b['lastMessageDateTime'] as DateTime).compareTo(a['lastMessageDateTime'] as DateTime));
+
+    // Remove [Me] from [usersInsideMessagesList]
+    usersInsideMessagesList = listOfUsersWithLastMessageDateTimeInDiscussion
+        .where((map) => (map['userId'] as String) != FirebaseAuth.instance.currentUser!.uid)
+        .map((map) => (map['userId'] as String))
+        .toList();
+
+    // Get UserData
+    for (String userId in usersInsideMessagesList) {
+      final refUser = FirebaseFirestore.instance.collection('users').doc(userId);
+      final snapshot = await refUser.get();
+      if (snapshot.exists) {
+        usermodel.User user = usermodel.User.fromJson(snapshot.data()!);
+        users.add(user);
+      }
+    }
+    //
+
+    return users;
+  }
+
   ////////////////// MESSAGE
   //////////////////
   //////////////////
@@ -634,7 +759,7 @@ class FirestoreMethods {
             }).toList());
   }
 
-  // Get Messages by discussionId
+  // Get Messages From List of discussionId
   static Stream<List<Map<String, Object>>> getMessagesFromListOfDiscussion(List<Discussion> discussionList) {
     return FirebaseFirestore.instance
         .collection('messages')
@@ -819,8 +944,6 @@ class FirestoreMethods {
     //
     log('CREATING NEW PAYMENT...');
     try {
-      bool result = false;
-
       // Modeling a new payment
       Map<String, dynamic> newPayment = Payment(
         paymentId: '',
@@ -932,59 +1055,51 @@ class FirestoreMethods {
   }
 
   //
-  static updateMessagesToStatus2(List<String> messagesIds) async {
+  static updateMessagesAsRead(List<Message> messagesList) async {
     try {
-      List<Message> messagesList = [];
-
-      // Get messages by messageById
-
-      for (String messageId in messagesIds) {
-        // debugPrint("Msg: $messageId");
-        Message? message = await FirestoreMethods.getMessageByIdAsFuture(messageId);
-
-        if (message != null) messagesList.add(message);
-      }
-
-      // Update message Status to 2
+      // CHECK IF MESSAGE IS UNREAD AND UPDATE IT AND CHECK STATUS
       for (Message message in messagesList) {
-        if (message.status == 1 && message.receiverId == FirebaseAuth.instance.currentUser!.uid) {
-          debugPrint('Message targetted: ${message.data}');
-          // Update message status to 1
-          final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
-          await refMessage.update({
-            'status': 2,
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('Error in background: $e');
-    }
-  }
-
-  static updateMessagesToStatus3(List<String> messagesIds) async {
-    try {
-      List<Message> messagesList = [];
-
-      // Get messages by messageById
-
-      for (String messageId in messagesIds) {
-        // debugPrint("Msg: $messageId");
-        Message? message = await FirestoreMethods.getMessageByIdAsFuture(messageId);
-
-        if (message != null) messagesList.add(message);
-      }
-
-      // Update message Status to 3
-      for (Message message in messagesList) {
-        if (message.status == 2 ||
-            message.status == 1 && message.receiverId == FirebaseAuth.instance.currentUser!.uid) {
+        if (message.status != 0 &&
+            message.receiverId == FirebaseAuth.instance.currentUser!.uid &&
+            !message.read.contains(FirebaseAuth.instance.currentUser!.uid)) {
           debugPrint('Message targetted: ${message.data}');
           // Update message status to 2
           final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
           await refMessage.update({
-            'status': 3,
+            'read': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid]),
           });
         }
+      }
+    } catch (e) {
+      log('Error in background: $e');
+    }
+  }
+
+  static updateMessagesAsSeen(Message message) async {
+    try {
+      // CHECK IF MESSAGE IS UNREAD AND UPDATE IT AND CHECK STATUS
+
+      if (message.status != 0 &&
+          message.receiverId == FirebaseAuth.instance.currentUser!.uid &&
+          !message.read.contains(FirebaseAuth.instance.currentUser!.uid)) {
+        debugPrint('Message targetted: ${message.data}');
+        // Update message status to 2
+        final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
+        await refMessage.update({
+          'read': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid]),
+        });
+      }
+
+      // CHECK IF MESSAGE IS UNSEEN AND UPDATE IT AND CHECK STATUS
+      if (message.status != 0 &&
+          message.receiverId == FirebaseAuth.instance.currentUser!.uid &&
+          !message.seen.contains(FirebaseAuth.instance.currentUser!.uid)) {
+        debugPrint('Message targetted: ${message.data}');
+        // Update message status to 2
+        final refMessage = FirebaseFirestore.instance.collection('messages').doc(message.messageId);
+        await refMessage.update({
+          'seen': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid]),
+        });
       }
     } catch (e) {
       debugPrint('Error in background: $e');
@@ -1098,7 +1213,7 @@ class FirestoreMethods {
   //////////////////
 
   // Send bug report
-  static Future sendBugReport(context, Map<String, Object?> reportToSend) async {
+  static Future sendBugReport(context, Map<String, dynamic> reportToSend) async {
     log('SENDING BUG REPORT...');
     try {
       // Create a bug report and write it down to the database : BugReports Table
@@ -1121,7 +1236,7 @@ class FirestoreMethods {
   }
 
   // Send question
-  static Future sendQuestion(context, Map<String, Object?> questionToSend) async {
+  static Future sendQuestion(context, Map<String, dynamic> questionToSend) async {
     log('SENDING QUESTION...');
     try {
       // Create a question and write it down to the database : Questions Table
@@ -1144,7 +1259,7 @@ class FirestoreMethods {
   }
 
   // Send feedback
-  static Future sendFeedback(context, Map<String, Object?> feedbackToSend) async {
+  static Future sendFeedback(context, Map<String, dynamic> feedbackToSend) async {
     log('SENDING FEEDBACK...');
     try {
       // Create a feedback and write it down to the database : Feedbacks Table
@@ -1231,6 +1346,19 @@ class FirestoreMethods {
     return listOfUsers;
   }
 
+  // Get All Users : without [ME]
+  static Stream<List<usermodel.User>> getAllUsersWithoutMe() {
+    debugPrint('Fetching all users...');
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where('id', whereNotIn: [FirebaseAuth.instance.currentUser!.uid])
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              // Get Users
+              return usermodel.User.fromJson(doc.data());
+            }).toList());
+  }
+
   // Get User events
   static Stream<List<Event>> getUserEvents(String userId) {
     log('Fetching user events...');
@@ -1287,7 +1415,7 @@ class FirestoreMethods {
 
   // Get event by userPosterId in List
   static Stream<List<Event>> getEventsByUserPosterIdInList(List<String> userPosterIdList) {
-    log('Fetching [Events] by by userPosterId in List...');
+    log('Fetching [Events] by userPosterId in List...');
 
     return FirebaseFirestore.instance
         .collection('events')
@@ -1443,7 +1571,6 @@ class FirestoreMethods {
 
   // Update Current User Name
   Future updateCurrentUserName(context, String name) async {
-    final String finalName = name.trim();
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
 
@@ -1462,7 +1589,7 @@ class FirestoreMethods {
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
-      await ref.update({'birthday': date.toIso8601String()});
+      await ref.update({'birthday': date});
       return date;
     } catch (e) {
       log('Error: $e');

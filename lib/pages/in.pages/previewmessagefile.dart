@@ -51,6 +51,18 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
 
   StreamController<String> togglePlayPauseVideo = StreamController.broadcast();
 
+  @override
+  void initState() {
+    super.initState();
+    setSuitableStatusBarColor(Colors.black87);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    setSuitableStatusBarColor(Colors.white);
+  }
+
   detachEventOrStoryOrMessage() {
     if (!mounted) return;
     setState(() {
@@ -231,323 +243,316 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
         onWillPopHandler(context);
         return false;
       },
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.black, // Status bar
-          systemNavigationBarColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.black, // Status bar
-        ),
-        child: Scaffold(
-          backgroundColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.black,
-          appBar: MorphingAppBar(
-            heroTag: 'previewMessageFilePageAppBar',
-            elevation: 0,
-            backgroundColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.transparent,
-            leading: IconButton(
-              splashRadius: 0.06.sw,
-              onPressed: () async {
-                bool result = onWillPopHandler(context);
-                if (result) {
-                  // POP THE SCREEN
+      child: Scaffold(
+        backgroundColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.black,
+        appBar: MorphingAppBar(
+          heroTag: 'previewMessageFilePageAppBar',
+          elevation: 0,
+          backgroundColor: widget.filetype == 'music' ? const Color(0xFF10131C) : Colors.transparent,
+          leading: IconButton(
+            splashRadius: 0.06.sw,
+            onPressed: () async {
+              bool result = onWillPopHandler(context);
+              if (result) {
+                // POP THE SCREEN
 
-                } else {
-                  //
-                }
-              },
-              icon: const Icon(
-                Icons.arrow_back_ios_rounded,
-                color: Colors.white,
-              ),
+              } else {
+                //
+              }
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.white,
             ),
           ),
-          extendBodyBehindAppBar: true,
-          body: Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              // IMAGE
-              widget.filetype == 'image'
-                  ? PhotoView(
-                      imageProvider: FileImage(File(widget.file.path)),
-                    )
-                  : const Text('Erreur de chargement...'),
+        ),
+        extendBodyBehindAppBar: true,
+        body: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            // IMAGE
+            widget.filetype == 'image'
+                ? PhotoView(
+                    imageProvider: FileImage(File(widget.file.path)),
+                  )
+                : const Text('Erreur de chargement...'),
 
-              // VIDEO
-              widget.filetype == 'video'
-                  ? Expanded(
+            // VIDEO
+            widget.filetype == 'video'
+                ? Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        VideoPlayerWidget(
+                          data: widget.file.path,
+                          togglePlayPause: togglePlayPauseVideo,
+                        )
+                      ],
+                    ),
+                  )
+                : Container(),
+
+            // MUSIC
+            widget.filetype == 'music'
+                ? Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          VideoPlayerWidget(
-                            data: widget.file.path,
-                            togglePlayPause: togglePlayPauseVideo,
-                          )
+                          // Music Artwork
+                          const CircleAvatar(
+                            radius: 100,
+                            backgroundColor: kGreyColor,
+                            backgroundImage: AssetImage(music),
+                          ),
+
+                          //
+                          const SizedBox(height: 20),
+                          // Audio Slider
+                          AudioWidget(data: widget.file.path, btnTheme: 'white'),
                         ],
                       ),
-                    )
-                  : Container(),
+                    ),
+                  )
+                : Container(),
 
-              // MUSIC
-              widget.filetype == 'music'
-                  ? Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Music Artwork
-                            const CircleAvatar(
-                              radius: 100,
-                              backgroundColor: kGreyColor,
-                              backgroundImage: AssetImage(music),
-                            ),
+            // ADD CAPTION & SEND BUTTON
+            // Chat Bottom Actions
+            SafeArea(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  BottomAppBar(
+                    color: Colors.transparent,
+                    elevation:
+                        widget.messageToReply == null && widget.eventAttached == null && widget.storyAttached == null
+                            ? 0
+                            : 20,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // INPUTS + SEND BUTTON
+                        Padding(
+                          padding: EdgeInsets.only(
+                              left: 0.02.sw,
+                              right: 0.02.sw,
+                              bottom: 0.02.sw,
+                              top: widget.messageToReply == null &&
+                                      widget.eventAttached == null &&
+                                      widget.storyAttached == null
+                                  ? 0.01.sw
+                                  : 0.02.sw),
+                          child: Row(
+                            children: [
+                              // Entry Message Fields
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(widget.messageToReply == null &&
+                                            widget.eventAttached == null &&
+                                            widget.storyAttached == null
+                                        ? 50
+                                        : 20),
+                                    color: kGreyColor,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Stack(
+                                        alignment: Alignment.topRight,
+                                        children: [
+                                          // Display Message to reply
+                                          widget.messageToReply != null &&
+                                                  widget.eventAttached == null &&
+                                                  widget.storyAttached == null
+                                              ? Wrap(
+                                                  children: [
+                                                    getMessageToReplyGridPreview(
+                                                      messageToReplyId: widget.messageToReply?.messageId ?? '',
+                                                      messageToReplySenderId: widget.messageToReply?.senderId ?? '',
+                                                      messageToReplyType: widget.messageToReply?.type ?? '',
+                                                      messageToReplyCaption: widget.messageToReply?.caption ?? '',
+                                                      messageToReplyFilename: widget.messageToReply?.filename ?? '',
+                                                      messageToReplyData: widget.messageToReply?.data ?? '',
+                                                      messageToReplyThumbnail: widget.messageToReply?.thumbnail ?? '',
+                                                    ),
+                                                  ],
+                                                )
+                                              : Container(),
 
-                            //
-                            const SizedBox(height: 20),
-                            // Audio Slider
-                            AudioWidget(data: widget.file.path, btnTheme: 'white'),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Container(),
+                                          // Display Event Attached
+                                          widget.eventAttached != null &&
+                                                  widget.storyAttached == null &&
+                                                  widget.messageToReply == null
+                                              ? InkWell(
+                                                  onTap: () {
+                                                    // Show Event Selector
+                                                    showEventSelector(context);
+                                                  },
+                                                  child:
+                                                      getEventGridPreview(eventId: widget.eventAttached?.eventId ?? ''),
+                                                )
+                                              : Container(),
 
-              // ADD CAPTION & SEND BUTTON
-              // Chat Bottom Actions
-              SafeArea(
-                child: Column(
-                  children: [
-                    const Spacer(),
-                    BottomAppBar(
-                      color: Colors.transparent,
-                      elevation:
-                          widget.messageToReply == null && widget.eventAttached == null && widget.storyAttached == null
-                              ? 0
-                              : 20,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // INPUTS + SEND BUTTON
-                          Padding(
-                            padding: EdgeInsets.only(
-                                left: 0.02.sw,
-                                right: 0.02.sw,
-                                bottom: 0.02.sw,
-                                top: widget.messageToReply == null &&
-                                        widget.eventAttached == null &&
-                                        widget.storyAttached == null
-                                    ? 0.01.sw
-                                    : 0.02.sw),
-                            child: Row(
-                              children: [
-                                // Entry Message Fields
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(widget.messageToReply == null &&
-                                              widget.eventAttached == null &&
-                                              widget.storyAttached == null
-                                          ? 50
-                                          : 20),
-                                      color: kGreyColor,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Stack(
-                                          alignment: Alignment.topRight,
-                                          children: [
-                                            // Display Message to reply
-                                            widget.messageToReply != null &&
-                                                    widget.eventAttached == null &&
-                                                    widget.storyAttached == null
-                                                ? Wrap(
-                                                    children: [
-                                                      getMessageToReplyGridPreview(
-                                                        messageToReplyId: widget.messageToReply?.messageId ?? '',
-                                                        messageToReplySenderId: widget.messageToReply?.senderId ?? '',
-                                                        messageToReplyType: widget.messageToReply?.type ?? '',
-                                                        messageToReplyCaption: widget.messageToReply?.caption ?? '',
-                                                        messageToReplyFilename: widget.messageToReply?.filename ?? '',
-                                                        messageToReplyData: widget.messageToReply?.data ?? '',
-                                                        messageToReplyThumbnail: widget.messageToReply?.thumbnail ?? '',
-                                                      ),
-                                                    ],
-                                                  )
-                                                : Container(),
+                                          // Display Story Attached
+                                          widget.storyAttached != null &&
+                                                  widget.eventAttached == null &&
+                                                  widget.messageToReply == null
+                                              ? getStoryGridPreview(storyId: widget.storyAttached?.storyId ?? '')
+                                              : Container(),
 
-                                            // Display Event Attached
-                                            widget.eventAttached != null &&
-                                                    widget.storyAttached == null &&
-                                                    widget.messageToReply == null
-                                                ? InkWell(
-                                                    onTap: () {
-                                                      // Show Event Selector
-                                                      showEventSelector(context);
-                                                    },
-                                                    child: getEventGridPreview(
-                                                        eventId: widget.eventAttached?.eventId ?? ''),
-                                                  )
-                                                : Container(),
-
-                                            // Display Story Attached
-                                            widget.storyAttached != null &&
-                                                    widget.eventAttached == null &&
-                                                    widget.messageToReply == null
-                                                ? getStoryGridPreview(storyId: widget.storyAttached?.storyId ?? '')
-                                                : Container(),
-
-                                            // Button Detach event or story linked
-                                            Visibility(
-                                              visible: widget.messageToReply != null ||
-                                                  widget.eventAttached != null ||
-                                                  widget.storyAttached != null,
-                                              child: IconButton(
-                                                splashRadius: 22,
-                                                onPressed: () {
-                                                  //
-                                                  detachEventOrStoryOrMessage();
-                                                },
-                                                icon: CircleAvatar(
-                                                  radius: 0.04.sw,
-                                                  backgroundColor: Colors.grey.shade600.withOpacity(0.7),
-                                                  child: Icon(
-                                                    Icons.close,
-                                                    color: Colors.white,
-                                                    size: 0.06.sw,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-
-                                        // MAIN FIELD: type your msg here + action buttons
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              splashRadius: 0.06.sw,
-                                              splashColor: kSecondColor,
+                                          // Button Detach event or story linked
+                                          Visibility(
+                                            visible: widget.messageToReply != null ||
+                                                widget.eventAttached != null ||
+                                                widget.storyAttached != null,
+                                            child: IconButton(
+                                              splashRadius: 22,
                                               onPressed: () {
-                                                // Show Emoji Keyboard Here !
-                                                setState(() {
-                                                  showEmojiKeyboard = !showEmojiKeyboard;
-                                                });
-                                                if (showEmojiKeyboard) {
-                                                  messageCaptionFocus.unfocus();
-                                                } else {
-                                                  messageCaptionFocus.requestFocus();
-                                                }
+                                                //
+                                                detachEventOrStoryOrMessage();
                                               },
-                                              icon: Icon(
-                                                FontAwesomeIcons.faceGrin,
-                                                size: 0.06.sw,
-                                                color: showEmojiKeyboard ? kSecondColor : Colors.grey.shade600,
-                                              ),
-                                            ),
-
-                                            // Show normal bottom bar
-                                            Expanded(
-                                              child: TextField(
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    messageTextValue = value;
-                                                  });
-                                                },
-                                                onTap: () {
-                                                  // Dismiss emoji keyboard
-                                                  setState(() {
-                                                    showEmojiKeyboard = false;
-                                                  });
-                                                },
-                                                focusNode: messageCaptionFocus,
-                                                controller: captionMessageController,
-                                                cursorColor: Colors.black38,
-                                                style: TextStyle(color: Colors.black87, fontSize: 15.sp),
-                                                maxLines: 5,
-                                                minLines: 1,
-                                                keyboardType: TextInputType.text,
-                                                decoration: InputDecoration(
-                                                  border: InputBorder.none,
-                                                  contentPadding: EdgeInsets.all(0.009.sw),
-                                                  hintText: 'Ecrivez ici...',
-                                                  hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 15.sp),
+                                              icon: CircleAvatar(
+                                                radius: 0.04.sw,
+                                                backgroundColor: Colors.grey.shade600.withOpacity(0.7),
+                                                child: Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 0.06.sw,
                                                 ),
                                               ),
                                             ),
+                                          ),
+                                        ],
+                                      ),
 
-                                            IconButton(
-                                              splashRadius: 0.06.sw,
-                                              splashColor: kSecondColor,
-                                              onPressed: () async {
-                                                // Show Event Selector
-                                                showEventSelector(context);
+                                      // MAIN FIELD: type your msg here + action buttons
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            splashRadius: 0.06.sw,
+                                            splashColor: kSecondColor,
+                                            onPressed: () {
+                                              // Show Emoji Keyboard Here !
+                                              setState(() {
+                                                showEmojiKeyboard = !showEmojiKeyboard;
+                                              });
+                                              if (showEmojiKeyboard) {
+                                                messageCaptionFocus.unfocus();
+                                              } else {
+                                                messageCaptionFocus.requestFocus();
+                                              }
+                                            },
+                                            icon: Icon(
+                                              FontAwesomeIcons.faceGrin,
+                                              size: 0.06.sw,
+                                              color: showEmojiKeyboard ? kSecondColor : Colors.grey.shade600,
+                                            ),
+                                          ),
+
+                                          // Show normal bottom bar
+                                          Expanded(
+                                            child: TextField(
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  messageTextValue = value;
+                                                });
                                               },
-                                              icon: Icon(
-                                                FontAwesomeIcons.splotch,
-                                                size: 0.06.sw,
-                                                color:
-                                                    widget.eventAttached != null ? kSecondColor : Colors.grey.shade600,
+                                              onTap: () {
+                                                // Dismiss emoji keyboard
+                                                setState(() {
+                                                  showEmojiKeyboard = false;
+                                                });
+                                              },
+                                              focusNode: messageCaptionFocus,
+                                              controller: captionMessageController,
+                                              cursorColor: Colors.black38,
+                                              style: TextStyle(color: Colors.black87, fontSize: 15.sp),
+                                              maxLines: 5,
+                                              minLines: 1,
+                                              keyboardType: TextInputType.text,
+                                              decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                contentPadding: EdgeInsets.all(0.009.sw),
+                                                hintText: 'Ecrivez ici...',
+                                                hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 15.sp),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                          ),
+
+                                          IconButton(
+                                            splashRadius: 0.06.sw,
+                                            splashColor: kSecondColor,
+                                            onPressed: () async {
+                                              // Show Event Selector
+                                              showEventSelector(context);
+                                            },
+                                            icon: Icon(
+                                              FontAwesomeIcons.splotch,
+                                              size: 0.06.sw,
+                                              color: widget.eventAttached != null ? kSecondColor : Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ),
 
-                                // [ACTION BUTTON] Send Message Button or Mic Button
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(50),
-                                  onTap: () async {
-                                    // VIBRATE
-                                    triggerVibration();
+                              // [ACTION BUTTON] Send Message Button or Mic Button
+                              InkWell(
+                                borderRadius: BorderRadius.circular(50),
+                                onTap: () async {
+                                  // VIBRATE
+                                  triggerVibration();
 
-                                    // Stop playing video
+                                  // Stop playing video
 
-                                    togglePlayPauseVideo.sink.add('pause');
+                                  togglePlayPauseVideo.sink.add('pause');
 
-                                    // Send Message File Here !
-                                    sendMessageFile();
+                                  // Send Message File Here !
+                                  sendMessageFile();
 
-                                    captionMessageController.clear();
+                                  captionMessageController.clear();
 
-                                    setState(() {
-                                      messageTextValue = '';
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 13),
-                                    child: CircleAvatar(
-                                      backgroundColor: kSecondColor,
-                                      radius: 0.077.sw,
-                                      child: Transform.translate(
-                                        offset: const Offset(1, -1),
-                                        child: Transform.rotate(
-                                          angle: -pi / 4,
-                                          child: Icon(
-                                            Icons.send_rounded,
-                                            size: 0.06.sw,
-                                            color: Colors.white,
-                                          ),
+                                  setState(() {
+                                    messageTextValue = '';
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 13),
+                                  child: CircleAvatar(
+                                    backgroundColor: kSecondColor,
+                                    radius: 0.077.sw,
+                                    child: Transform.translate(
+                                      offset: const Offset(1, -1),
+                                      child: Transform.rotate(
+                                        angle: -pi / 4,
+                                        child: Icon(
+                                          Icons.send_rounded,
+                                          size: 0.06.sw,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    // Show Emoji Keyboard
-                    emojiPickerOffstage(showEmojiKeyboard: showEmojiKeyboard, textController: captionMessageController),
-                  ],
-                ),
+                  // Show Emoji Keyboard
+                  emojiPickerOffstage(showEmojiKeyboard: showEmojiKeyboard, textController: captionMessageController),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -15,7 +15,7 @@ class Modal extends StatefulWidget {
 }
 
 class _ModalState extends State<Modal> {
-  double initChildHeight = 200;
+  double initChildHeight = 250;
   BorderRadiusGeometry borderRadius = const BorderRadius.only(
     topLeft: Radius.circular(20),
     topRight: Radius.circular(24.0),

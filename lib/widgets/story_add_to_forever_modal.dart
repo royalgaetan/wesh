@@ -3,13 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/forever.dart';
 import 'package:wesh/pages/in.pages/create_or_update_forever.dart';
 import 'package:wesh/utils/constants.dart';
 import '../models/story.dart';
-import '../providers/user.provider.dart';
 import '../services/firestore.methods.dart';
 import 'buildWidgets.dart';
 import 'button.dart';
@@ -29,7 +27,7 @@ class _AddtoForeverModalState extends State<AddtoForeverModal> {
     return (() {
       // No one has seen your story yet
       return StreamBuilder(
-        stream: Provider.of<UserProvider>(context).getForevers(widget.story.uid),
+        stream: FirestoreMethods.getForevers(widget.story.uid),
         builder: (context, snapshot) {
           // on Error
           if (snapshot.hasError) {

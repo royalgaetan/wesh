@@ -1,14 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:device_information/device_information.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/user.dart' as usermodel;
 import '../../models/bugreport.dart';
-import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -60,7 +59,7 @@ class _BugReportPageState extends State<BugReportPage> {
     await fetchDeviceInfo(includeDeviceInformations);
 
     // Modeling an bugReportModel
-    Map<String, Object?> bugReportToSend = BugReport(
+    Map<String, dynamic> bugReportToSend = BugReport(
       bugReportId: '',
       uid: currentUser.value!.id,
       name: currentUser.value!.name,
@@ -151,7 +150,7 @@ class _BugReportPageState extends State<BugReportPage> {
               : Container(),
           SingleChildScrollView(
             child: StreamBuilder<usermodel.User?>(
-                stream: Provider.of<UserProvider>(context).getCurrentUser(),
+                stream: FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
                 builder: (context, snapshot) {
                   if (snapshot.hasData && snapshot.data != null) {
                     // Update current user

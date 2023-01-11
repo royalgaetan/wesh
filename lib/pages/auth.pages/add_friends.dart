@@ -31,7 +31,7 @@ class _AddFriendsState extends State<AddFriends> {
             Padding(
               padding: const EdgeInsets.only(top: 25, bottom: 20, left: 15, right: 15),
               child: Text(
-                'Suivez une personne qui vous interesse',
+                'Suivez une personne qui vous intéresse',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17.sp),
               ),

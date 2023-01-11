@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserSimplePreferences {
   static late SharedPreferences _preferences;
 
+  static const _notificationListKey = 'notificationList';
   static const _currentActivePageKey = 'currentActivePage';
   static const _showIntroductionPagesKey = 'showIntroductionPages';
   static const _lastHappyBirthdayDateTimeWishKey = 'happyBirthdayDateTimeWish';
@@ -21,6 +22,13 @@ class UserSimplePreferences {
   static const _redirectToUpdatePasswordPagekey = '_redirectToUpdatePasswordPageValue';
 
   static Future init() async => _preferences = await SharedPreferences.getInstance();
+
+  // Notification List: Handler
+  static Future setNotificationList(List<String> valueList) async {
+    _preferences.setStringList(_notificationListKey, valueList);
+  }
+
+  static List<String>? getNotificationList() => _preferences.getStringList(_notificationListKey);
 
   // Current Active Page : Handler
   static Future setCurrentActivePageHandler(String value) async {

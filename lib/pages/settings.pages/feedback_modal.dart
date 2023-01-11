@@ -1,9 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 import '../../models/feedback.dart';
-import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -40,7 +39,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
     showFullPageLoader(context: context);
 
     // Modeling a new feedback model
-    Map<String, Object?> feedbackToSend = FeedBack(
+    Map<String, dynamic> feedbackToSend = FeedBack(
       feedbackId: '',
       uid: currentUser.value!.id,
       name: currentUser.value!.name,
@@ -82,7 +81,7 @@ class _FeedBackModalState extends State<FeedBackModal> {
         return await onWillPopHandler(context);
       },
       child: StreamBuilder<usermodel.User?>(
-          stream: Provider.of<UserProvider>(context).getCurrentUser(),
+          stream: FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
           builder: (context, snapshot) {
             if (snapshot.hasData && snapshot.data != null) {
               // Update current user

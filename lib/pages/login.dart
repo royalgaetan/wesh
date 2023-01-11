@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -90,17 +92,27 @@ class _LoginPageState extends State<LoginPage> {
         return showSnackbar(context, 'Veuillez entrer un mot de passe de plus de 6 caractères', null);
       }
 
-      var result = await AuthMethods().loginWithEmailAndPassword(context, email, psw);
+      bool isUserExisting = await AuthMethods.checkUserWithEmailExistenceInDb(email);
+      log('isUserExisting: $isUserExisting');
+      if (isUserExisting == false) {
+        // ignore: use_build_context_synchronously
+        showSnackbar(context, 'Aucun compte n\'existe avec cet émail...', null);
+        return;
+      }
+      // USER EXIST : CONTINUE
+      else {
+        var result = await AuthMethods.loginWithEmailAndPassword(context, email, psw);
 
-      if (result) {
-        // Return to Start Page
-        Navigator.of(context).pop();
-        Navigator.pushAndRemoveUntil(
-            context,
-            SwipeablePageRoute(
-              builder: (context) => StartPage(context: context),
-            ),
-            (route) => false);
+        if (result) {
+          // Return to Start Page
+          Navigator.of(context).pop();
+          Navigator.pushAndRemoveUntil(
+              context,
+              SwipeablePageRoute(
+                builder: (context) => StartPage(context: context),
+              ),
+              (route) => false);
+        }
       }
     } else {
       debugPrint("Has connection : $isConnected");
@@ -142,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
 
       List isAllowedToContinue =
           // ignore: use_build_context_synchronously
-          await AuthMethods().continueWithGoogle(context, 'login');
+          await AuthMethods.continueWithGoogle(context, 'login');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 
@@ -203,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
 
       List isAllowedToContinue =
           // ignore: use_build_context_synchronously
-          await AuthMethods().continueWithFacebook(context, 'login');
+          await AuthMethods.continueWithFacebook(context, 'login');
 
       debugPrint("isAllowedToContinue: $isAllowedToContinue");
 

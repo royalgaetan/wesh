@@ -20,7 +20,7 @@ class StoriesHandler {
 
   // ToJson
 
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         'origin': origin,
         'posterId': posterId,
         'avatarPath': avatarPath,
@@ -38,7 +38,7 @@ class StoriesHandler {
         stories: json['stories'] ?? [],
         //
         lastStoryDateTime: json['lastStoryDateTime'] != null && json['lastStoryDateTime'] != ''
-            ? (json['lastStoryDateTime'] as Timestamp).toDate()
+            ? (json['lastStoryDateTime'] as Timestamp).toDate().toLocal()
             : DateTime.now(),
         //
       );

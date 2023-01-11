@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:validators/validators.dart';
+import '../services/auth.methods.dart';
 import '../utils/constants.dart';
 import '../utils/functions.dart';
 import 'button.dart';
@@ -92,7 +93,7 @@ class _AddTextModalState extends State<AddTextModal> {
                     return null;
                   },
                   onChanged: (text) async {
-                    bool isUsed = await checkIfUsernameInUse(context, textController.text);
+                    bool isUsed = await AuthMethods.checkIfUsernameInUse(context, textController.text);
                     if (mounted) {
                       setState(() {
                         isUsernameUsed = isUsed;

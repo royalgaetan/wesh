@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BugReport {
   final String bugReportId;
   final String uid;
@@ -34,12 +36,12 @@ class BugReport {
   });
 
   // ToJson
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         'bugReportId': bugReportId,
         'uid': uid,
         'name': name,
         'content': content,
-        'createdAt': createdAt.toIso8601String(),
+        'createdAt': createdAt,
         'downloadUrl': downloadUrl,
         'platformVersion': platformVersion,
         'imeiNo': imeiNo,
@@ -69,8 +71,8 @@ class BugReport {
         cpuType: json['cpuType'] ?? '',
         hardware: json['hardware'] ?? '',
         //
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'])
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
             : DateTime.now(),
         //
       );

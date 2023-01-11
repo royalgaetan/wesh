@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/audiowidget_extra.dart';
-import 'package:just_audio/just_audio.dart';
 
 class AudioWidget extends StatefulWidget {
   final String data;

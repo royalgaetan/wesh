@@ -10,7 +10,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/pages/settings.pages/add_email_and_password_page.dart';
 import 'package:wesh/pages/settings.pages/change_email_or_password_page.dart';
 import 'package:wesh/pages/settings.pages/payment_activity_page.dart';
-import '../../providers/user.provider.dart';
+import 'package:wesh/services/firestore.methods.dart';
 import '../../services/auth.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../services/sharedpreferences.service.dart';
@@ -180,7 +180,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
         },
         child: SingleChildScrollView(
           child: StreamBuilder<usermodel.User?>(
-              stream: Provider.of<UserProvider>(context).getCurrentUser(),
+              stream: FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data != null) {
                   // Update current user
@@ -317,7 +317,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Google account
                                     // ignore: use_build_context_synchronously
-                                    bool result = await AuthMethods().unlinkSpecificProvider(context, 'password');
+                                    bool result = await AuthMethods.unlinkSpecificProvider(context, 'password');
 
                                     fetchPasswordProviderInfo();
                                   }
@@ -396,7 +396,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Phone number
                                     // ignore: use_build_context_synchronously
-                                    await AuthMethods().unlinkSpecificProvider(context, 'phone');
+                                    await AuthMethods.unlinkSpecificProvider(context, 'phone');
                                   }
                                 },
                               )
@@ -416,7 +416,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                           Navigator.of(context).pop();
                           if (isConnected) {
                             // ignore: use_build_context_synchronously
-                            List result = await AuthMethods().linkCredentialsbyGoogleAccount(context);
+                            List result = await AuthMethods.linkCredentialsbyGoogleAccount(context);
                             setState(() {
                               googleAccountEmail = result[1];
                             });
@@ -486,7 +486,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Google account
                                     // ignore: use_build_context_synchronously
-                                    await AuthMethods().unlinkSpecificProvider(context, 'google.com');
+                                    await AuthMethods.unlinkSpecificProvider(context, 'google.com');
                                   }
                                 },
                               )
@@ -497,7 +497,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                       SettingCard(
                         onTap: () async {
                           // Redirect to
-                          List result = await AuthMethods().linkCredentialsbyFacebookAccount(context);
+                          List result = await AuthMethods.linkCredentialsbyFacebookAccount(context);
                           setState(() {
                             facebookAccountName = result[1];
                           });
@@ -561,7 +561,7 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                                   if (deleteDecision[0] == true) {
                                     // Detach Facebook account
                                     // ignore: use_build_context_synchronously
-                                    await AuthMethods().unlinkSpecificProvider(context, 'facebook.com');
+                                    await AuthMethods.unlinkSpecificProvider(context, 'facebook.com');
                                   }
                                 },
                               )

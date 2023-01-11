@@ -44,7 +44,7 @@ class _LoginPageState extends State<ForgotPasswordPage> {
         return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
-      var result = await AuthMethods().resetPassword(
+      var result = await AuthMethods.resetPassword(
         context,
         email,
       );

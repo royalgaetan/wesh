@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -41,9 +40,6 @@ class _EventViewState extends State<EventView> {
   void initState() {
     //
     super.initState();
-
-    // Check if the Event Date has a Reminder
-    // TO DO
   }
 
   bool handleOnWillPop() {
@@ -83,6 +79,9 @@ class _EventViewState extends State<EventView> {
               if (snapshot.hasData && snapshot.data != null) {
                 Event event = snapshot.data!;
 
+                //
+                setCurrentActivePageFromIndex(index: 6, userId: event.uid);
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
                   child: Column(
@@ -110,7 +109,7 @@ class _EventViewState extends State<EventView> {
                         style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold),
                       ),
 
-                      // Outdate indicator
+                      // Outdate | IsHappening | Coming soon indicator
                       Container(
                         margin: const EdgeInsets.only(bottom: 25, top: 10),
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -302,6 +301,15 @@ class _EventViewState extends State<EventView> {
                               ),
                             ],
                           ),
+
+                          // Event Type
+                          event.type.isNotEmpty
+                              ? EventInfoRow(
+                                  icon: FontAwesomeIcons.splotch,
+                                  label: getEventTitle(event.type),
+                                  type: 'eventType',
+                                )
+                              : Container(),
 
                           // Event Date + Time
                           ...event.eventDurations.map((eventDuration) {
@@ -690,7 +698,7 @@ class EventInfoRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
       );
-    } else if (type == 'location') {
+    } else if (type == 'location' || type == 'eventType') {
       return Text(
         label,
         overflow: TextOverflow.ellipsis,

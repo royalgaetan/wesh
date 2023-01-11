@@ -9,7 +9,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:uuid/uuid.dart';
 import 'package:validators/validators.dart';
 import 'package:wesh/models/event.dart';
 import 'package:wesh/models/event_duration_type.dart';
@@ -244,7 +243,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
       // CREATE A NEW ONE
       if (widget.event == null) {
         // Modeling an event
-        Map<String, Object?> event = Event(
+        Map<String, dynamic> event = Event(
           eventId: '',
           uid: FirebaseAuth.instance.currentUser!.uid,
           title: nameEventController.text,
@@ -271,9 +270,14 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
 
       // UPDATE AN EXISTING ONE
       if (widget.event != null) {
+        // Check whether it's user birthday or not
+        if (isUserBirthday(widget.event, widget.userPoster)) {
+          isOneDayEvent = true;
+        }
+
         // Modeling an event
 
-        Map<String, Object?> eventToUpdate = Event(
+        Map<String, dynamic> eventToUpdate = Event(
           eventId: widget.event!.eventId,
           uid: FirebaseAuth.instance.currentUser!.uid,
           title: nameEventController.text,
@@ -311,7 +315,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
         // ignore: use_build_context_synchronously
         showSnackbar(
             context,
-            widget.event == null ? 'Votre évenement à bien été crée !' : 'Votre évenement à bien été modifié !',
+            widget.event == null ? 'Votre évènement à bien été crée !' : 'Votre évènement à bien été modifié !',
             kSuccessColor);
       }
     } else {
@@ -327,7 +331,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
         widget.userPoster != null &&
         widget.userPoster!.id == FirebaseAuth.instance.currentUser!.uid &&
         widget.event!.type == 'birthday' &&
-        widget.userPoster!.birthday == (widget.event?.eventDurations[0]['date'] as Timestamp).toDate()) {
+        widget.userPoster!.birthday == (widget.event?.eventDurations[0]['date'] as Timestamp).toDate().toLocal()) {
       return true;
     }
     return false;
@@ -394,7 +398,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                         List deleteDecision = await showModalDecision(
                           context: context,
                           header: 'Supprimer',
-                          content: 'Voulez-vous supprimer définitivement cet évenement ?',
+                          content: 'Voulez-vous supprimer définitivement cet évènement ?',
                           firstButton: 'Annuler',
                           secondButton: 'Supprimer',
                         );
@@ -413,7 +417,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                             );
 
                             // ignore: use_build_context_synchronously
-                            showSnackbar(context, 'Votre évenement à bien été supprimé !', kSecondColor);
+                            showSnackbar(context, 'Votre évènement à bien été supprimé !', kSecondColor);
                           }
                         }
                       },
@@ -425,7 +429,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                   : Container(),
             ],
             title: Text(
-              widget.event == null ? 'Créer un évenement' : 'Modifier l\'évenement',
+              widget.event == null ? 'Créer un évènement' : 'Modifier l\'évènement',
               style: const TextStyle(color: Colors.black),
             ),
             centerTitle: false,
@@ -443,7 +447,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
               // Add Event Name
               buildTextFormField(
                 controller: nameEventController,
-                hintText: 'Ajouter le nom de l\'évenement',
+                hintText: 'Ajouter le nom de l\'évènement',
                 icon: Icon(FontAwesomeIcons.splotch, size: 19.sp),
                 validateFn: (eventName) {
                   return null;
@@ -456,7 +460,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
               // Add Event Caption
               buildTextFormField(
                 controller: captionEventController,
-                hintText: 'Ajouter la description de l\'évenement',
+                hintText: 'Ajouter la description de l\'évènement',
                 icon: Icon(Icons.messenger_outline_sharp, size: 22.sp),
                 maxLines: 4,
                 maxLength: 150,
@@ -476,7 +480,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                     // ignore: use_build_context_synchronously
                     showSnackbar(
                         context,
-                        'Vous ne pouvez pas modifier le type d\'évenement car il s\'agit de votre anniversaire !',
+                        'Vous ne pouvez pas modifier le type d\'évènement car il s\'agit de votre anniversaire !',
                         null);
                     return;
                   }
@@ -495,7 +499,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                             Padding(
                               padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
                               child: Text(
-                                'Choisissez un type d\'événement',
+                                'Choisissez un type d\'évènement',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -516,7 +520,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                                   title: Text(
                                     eventAvailableTypeList[index].name,
                                     style: TextStyle(
-                                      fontSize: 12.sp,
+                                      fontSize: 13.sp,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -543,15 +547,15 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                   }
                 },
                 child: Padding(
-                  padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 4),
+                  padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 9),
                   child: Row(
                     children: [
-                      Icon(Icons.favorite_outline_rounded, size: 22.sp, color: Colors.grey.shade600),
-                      SizedBox(width: 0.07.sw),
+                      Icon(Icons.favorite_outline_rounded, size: 23.sp, color: Colors.grey.shade600),
+                      SizedBox(width: 0.057.sw),
                       Expanded(
                         child: eventType.isEmpty
                             ? Text(
-                                'Type d\'événement',
+                                'Type d\'évènement',
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                               )
                             : Text(
@@ -569,7 +573,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
               // Add Event Link
               buildTextFormField(
                 controller: linkEventController,
-                hintText: 'Ajouter un lien à l\'évenement',
+                hintText: 'Ajouter un lien à l\'évènement',
                 icon: Icon(FontAwesomeIcons.link, size: 19.sp),
                 validateFn: (eventLink) {
                   return null;
@@ -582,7 +586,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
               // Add Event Location
               buildTextFormField(
                 controller: locationEventController,
-                hintText: 'Ajouter le lieu de l\'évenement',
+                hintText: 'Ajouter le lieu de l\'évènement',
                 icon: Icon(FontAwesomeIcons.locationDot, size: 19.sp),
                 validateFn: (eventLocation) {
                   return null;
@@ -602,6 +606,8 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                     context: context,
                     backgroundColor: Colors.transparent,
                     builder: ((context) => const Modal(
+                          minHeightSize: 200,
+                          maxHeightSize: 200,
                           child: ImagePickerModal(),
                         )),
                   );
@@ -611,7 +617,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                     final filename = 'eventcover_${getUniqueId()}';
                     final path = '${directory.path}/$filename.jpg';
 
-                    var res = file.saveTo(path).whenComplete(() => debugPrint('File was saved correctly at $path'));
+                    file.saveTo(path).whenComplete(() => dev.log('File was saved correctly at $path'));
 
                     setState(() {
                       coverEventController = path;
@@ -625,11 +631,11 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                   }
                 },
                 child: Padding(
-                  padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 4),
+                  padding: EdgeInsets.only(top: 6, bottom: 0.02.sw, left: 11),
                   child: Row(
                     children: [
-                      Icon(FontAwesomeIcons.image, size: 19.sp, color: Colors.grey.shade600),
-                      SizedBox(width: 0.07.sw),
+                      Icon(FontAwesomeIcons.image, size: 18.sp, color: Colors.grey.shade600),
+                      SizedBox(width: 0.057.sw),
                       Expanded(
                         child: Text(
                           'Ajouter une couverture',
@@ -1210,7 +1216,7 @@ class _CreateOrUpdateEventPageState extends State<CreateOrUpdateEventPage> {
                     }
                   } else {
                     // Event type error handler
-                    showSnackbar(context, 'Veuillez entrer un type d\'évenement', null);
+                    showSnackbar(context, 'Veuillez entrer un type d\'évènement', null);
                   }
                 } else {
                   // Description error handler

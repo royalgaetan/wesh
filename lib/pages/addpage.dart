@@ -7,6 +7,12 @@ import 'package:wesh/pages/in.pages/create_or_update_reminder.dart';
 import '../utils/constants.dart';
 import '../widgets/button.dart';
 
+// import 'dart:developer';
+// import '../services/notifications_api.dart';
+// import '../utils/functions.dart';
+// import 'package:timezone/data/latest.dart' as tz;
+// import 'package:timezone/timezone.dart' as tz;
+
 class AddPage extends StatefulWidget {
   const AddPage({Key? key}) : super(key: key);
 
@@ -17,6 +23,12 @@ class AddPage extends StatefulWidget {
 class _AddPageState extends State<AddPage> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    // NotificationApi.init(initScheduled: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +54,9 @@ class _AddPageState extends State<AddPage> with AutomaticKeepAliveClientMixin {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // SETTINGS
+              // CREATE EVENT BUTTON
               Button(
-                text: 'Créer un événement',
+                text: 'Créer un évènement',
                 height: 0.12.sw,
                 width: double.infinity,
                 prefixIcon: FontAwesomeIcons.splotch,
@@ -64,7 +76,7 @@ class _AddPageState extends State<AddPage> with AutomaticKeepAliveClientMixin {
                 height: 14,
               ),
 
-              // FEEDBACK
+              // CREATE REMINDER BUTTON
               Button(
                 text: 'Créer un rappel',
                 height: 0.12.sw,
@@ -84,6 +96,45 @@ class _AddPageState extends State<AddPage> with AutomaticKeepAliveClientMixin {
                       ));
                 },
               ),
+
+              // TEST BTN
+              // const SizedBox(
+              //   height: 14,
+              // ),
+
+              // Button(
+              //   text: 'Scheduled One task',
+              //   height: 0.12.sw,
+              //   width: double.infinity,
+              //   fontColor: Colors.white,
+              //   color: kWarningColor,
+              //   isBordered: true,
+              //   onTap: () async {
+              //     //
+              //     NotificationApi.init(initScheduled: true);
+
+              //     tz.TZDateTime toUse = tz.TZDateTime(
+              //       tz.local,
+              //       DateTime.now().year,
+              //       DateTime.now().month,
+              //       DateTime.now().day,
+              //       DateTime.now().hour,
+              //       DateTime.now().minute,
+              //       DateTime.now().second,
+              //     ).add(const Duration(seconds: 10));
+              //     log('At: $toUse');
+
+              //     NotificationApi.showScheduledNotification(
+              //       id: 19889,
+              //       title: 'Another',
+              //       body: '🤓 Cool nah ?!',
+              //       payload: '',
+              //       channel: notificationsChannelList[2],
+              //       largeIconPath: '',
+              //       tzDateTime: scheduleDaily(toUse),
+              //     );
+              //   },
+              // ),
             ],
           ),
         ),

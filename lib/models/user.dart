@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class User {
   final String id;
   final String email;
@@ -11,7 +13,6 @@ class User {
   final String profilePicture;
   final String linkinbio;
   final DateTime birthday;
-  final DateTime lastStoryUpdateDateTime;
   final List<dynamic>? events;
   final List<dynamic>? stories;
   final List<dynamic>? followers;
@@ -37,7 +38,6 @@ class User {
     required this.profilePicture,
     required this.linkinbio,
     required this.birthday,
-    required this.lastStoryUpdateDateTime,
     this.events,
     this.stories,
     this.followers,
@@ -53,7 +53,7 @@ class User {
 
   // ToJson
 
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         'id': id,
         'email': email,
         'facebookID': facebookID,
@@ -65,8 +65,7 @@ class User {
         'bio': bio,
         'profilePicture': profilePicture,
         'linkinbio': linkinbio,
-        'birthday': birthday.toIso8601String(),
-        'lastStoryUpdateDateTime': lastStoryUpdateDateTime.toIso8601String(),
+        'birthday': birthday,
         'events': events,
         'stories': stories,
         'followers': followers,
@@ -94,12 +93,9 @@ class User {
         profilePicture: json['profilePicture'] ?? '',
         linkinbio: json['linkinbio'] ?? '',
         //
-        birthday: json['birthday'] != null ? DateTime.parse(json['birthday']) : DateTime.now(),
-        //
-        lastStoryUpdateDateTime:
-            json['lastStoryUpdateDateTime'] != DateTime(0) && json['lastStoryUpdateDateTime'] != null
-                ? DateTime.parse(json['lastStoryUpdateDateTime'])
-                : DateTime(0),
+        birthday: json['birthday'] != null && json['birthday'] != ''
+            ? (json['birthday'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
         //
         events: json['events'] ?? [],
         stories: json['stories'] ?? [],

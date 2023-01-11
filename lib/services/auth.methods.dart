@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -15,14 +16,14 @@ import '../utils/functions.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthMethods {
-  FirebaseAuth auth = FirebaseAuth.instance;
+  static FirebaseAuth auth = FirebaseAuth.instance;
 
   //////////////////  CHECKERS
   //////////////////
   //////////////////
 
   // Check is User exist in DB
-  Future<bool> checkUserExistenceInDb(uid) async {
+  static Future<bool> checkUserExistenceInDb(uid) async {
     final ref = FirebaseFirestore.instance.collection('users').doc(uid);
     final snapshot = await ref.get();
     if (snapshot.exists) {
@@ -32,10 +33,58 @@ class AuthMethods {
     return false;
   }
 
-  // Check is User with email exist in DB
-  Future<bool> checkUserWithEmailExistenceInDb(email) async {
+  // Returns true if email address is in use.
+  static Future<bool> checkIfEmailInUse(context, String emailAddress) async {
     try {
-      dynamic finalValue;
+      // Fetch sign-in methods for the email address
+      final list = await FirebaseAuth.instance.fetchSignInMethodsForEmail(emailAddress);
+
+      // In case list is not empty
+      if (list.isNotEmpty) {
+        // Return true because there is an existing
+        // user using the email address
+        return true;
+      } else {
+        // Return false because email adress is not in use
+        return false;
+      }
+    } catch (e) {
+      // Handle error
+      // ...
+      log('Error: $e');
+      showSnackbar(context, 'Une erreur s\'est produite', null);
+      return false;
+    }
+  }
+
+// Returns true if username is in use.
+  static Future<bool> checkIfUsernameInUse(context, String username) async {
+    try {
+      // Fetch all username in DB
+      final QuerySnapshot result = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isEqualTo: username.toLowerCase())
+          .get();
+
+      final List<DocumentSnapshot> documents = result.docs;
+
+      if (documents.isNotEmpty) {
+        //exists
+        return true;
+      } else {
+        //not exists
+        return false;
+      }
+    } catch (error) {
+      // Handle error
+      log('Err: $error');
+      return false;
+    }
+  }
+
+  // Check is User with email exist in DB
+  static Future<bool> checkUserWithEmailExistenceInDb(email) async {
+    try {
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
@@ -44,28 +93,21 @@ class AuthMethods {
 
       if (documents.isNotEmpty) {
         //exists
-        finalValue = true;
-      } else {
-        //not exists
-        finalValue = false;
-      }
-
-      if (finalValue) {
         return true;
       } else {
+        //not exists
         return false;
       }
     } catch (error) {
       // Handle error
-      // ...
-      return true;
+      log('Err: $error');
+      return false;
     }
   }
 
-  // Check is User with email exist in DB
-  Future<bool> checkUserWithPhoneExistenceInDb(phone) async {
+  // Check is User with phone exist in DB
+  static Future<bool> checkUserWithPhoneExistenceInDb(phone) async {
     try {
-      dynamic finalValue;
       // Fetch all phone numbers in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('phone', isEqualTo: phone).get();
@@ -74,28 +116,21 @@ class AuthMethods {
 
       if (documents.isNotEmpty) {
         //exists
-        finalValue = true;
-      } else {
-        //not exists
-        finalValue = false;
-      }
-
-      if (finalValue) {
         return true;
       } else {
+        //not exists
         return false;
       }
     } catch (error) {
       // Handle error
-      // ...
-      return true;
+      log('Err: $error');
+      return false;
     }
   }
 
   // Check is User with GoogleID exist in DB
-  Future<bool> checkUserWithGoogleIDExistenceInDb(googleID) async {
+  static Future<bool> checkUserWithGoogleIDExistenceInDb(googleID) async {
     try {
-      dynamic finalValue;
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('googleID', isEqualTo: googleID).get();
@@ -104,28 +139,21 @@ class AuthMethods {
 
       if (documents.isNotEmpty) {
         //exists
-        finalValue = true;
-      } else {
-        //not exists
-        finalValue = false;
-      }
-
-      if (finalValue) {
         return true;
       } else {
+        //not exists
         return false;
       }
     } catch (error) {
       // Handle error
-      // ...
-      return true;
+      log('Err: $error');
+      return false;
     }
   }
 
   // Check is User with FacebookID exist in DB
-  Future<bool> checkUserWithFacebookIDExistenceInDb(facebookID) async {
+  static Future<bool> checkUserWithFacebookIDExistenceInDb(facebookID) async {
     try {
-      dynamic finalValue;
       // Fetch all email number in DB
       final QuerySnapshot result =
           await FirebaseFirestore.instance.collection('users').where('facebookID', isEqualTo: facebookID).get();
@@ -134,21 +162,15 @@ class AuthMethods {
 
       if (documents.isNotEmpty) {
         //exists
-        finalValue = true;
-      } else {
-        //not exists
-        finalValue = false;
-      }
-
-      if (finalValue) {
         return true;
       } else {
+        //not exists
         return false;
       }
     } catch (error) {
       // Handle error
-      // ...
-      return true;
+      log('Err: $error');
+      return false;
     }
   }
 
@@ -157,7 +179,7 @@ class AuthMethods {
   //////////////////
 
   // Sign out
-  Future signout(context) async {
+  static Future signout(context) async {
     debugPrint('Signing out...');
     showFullPageLoader(context: context);
     try {
@@ -190,7 +212,7 @@ class AuthMethods {
   }
 
   // Free up SharedPreferences
-  Future freeingSharedPrefrences() async {
+  static Future freeingSharedPrefrences() async {
     debugPrint('Freeing up Shared Preferences...');
 
     await UserSimplePreferences.setUsername('');
@@ -207,7 +229,7 @@ class AuthMethods {
   }
 
   // UNLINK SPECIFIC PROVIDER
-  Future<bool> unlinkSpecificProvider(context, String providerID) async {
+  static Future<bool> unlinkSpecificProvider(context, String providerID) async {
     showFullPageLoader(context: context);
 
     // Check providersList length
@@ -239,7 +261,7 @@ class AuthMethods {
             bool result = false;
 
             // Update current user email [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'email': '',
             };
 
@@ -267,7 +289,7 @@ class AuthMethods {
             UserSimplePreferences.setPhoneCodeVerification('');
 
             // Update current user phoneNumber [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'phone': '',
             };
 
@@ -297,7 +319,7 @@ class AuthMethods {
             bool result = false;
 
             // Update current user googleID [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'googleID': '',
             };
 
@@ -325,7 +347,7 @@ class AuthMethods {
 
             bool result = false;
             // Update current user facebookID [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'facebookID': '',
             };
 
@@ -366,8 +388,8 @@ class AuthMethods {
   //////////////////
 
   // MODELING NEW USER
-  Future modelingNewUser({required context}) async {
-    debugPrint('MODELING NEW USER...');
+  static Future modelingNewUser({required context}) async {
+    log('MODELING NEW USER...');
 
     String? username = UserSimplePreferences.getUsername();
     String? name = UserSimplePreferences.getName();
@@ -378,11 +400,12 @@ class AuthMethods {
 
     String? country = UserSimplePreferences.getCountry();
     DateTime? birthday = DateTime.tryParse(UserSimplePreferences.getBirthday()!);
-    var ref = FirebaseStorage.instance.ref(defaultProfilePicture);
+
+    var ref = FirebaseStorage.instance.ref('profilepictures/default_profile_picture.jpg');
     String downloadUrl = await ref.getDownloadURL();
 
     // Create a new user
-    Map<String, Object?> newUser = usermodel.User(
+    Map<String, dynamic> newUser = usermodel.User(
       id: FirebaseAuth.instance.currentUser!.uid,
       email: FirebaseAuth.instance.currentUser!.email ?? '',
       phone: phone ?? '',
@@ -392,7 +415,6 @@ class AuthMethods {
       username: username!,
       name: name!,
       bio: '',
-      lastStoryUpdateDateTime: DateTime(0),
       profilePicture: downloadUrl,
       linkinbio: '',
       birthday: birthday!,
@@ -408,7 +430,7 @@ class AuthMethods {
       settingShowMessagesNotifications: true,
     ).toJson();
 
-    debugPrint('NEW USER: $newUser');
+    log('NEW USER: $newUser');
 
     //  Update Firestore
     await FirestoreMethods.createUser(context, FirebaseAuth.instance.currentUser!.uid, newUser);
@@ -416,14 +438,14 @@ class AuthMethods {
     // ADD DEFAULT EVENT : BIRTHDAY
 
     // Create a default event : Birthday
-    Map<String, Object?> defaultEventBirthday = Event(
+    Map<String, dynamic> defaultEventBirthday = Event(
       eventId: '',
       uid: FirebaseAuth.instance.currentUser!.uid,
       title: 'Anniversaire de $name',
       caption: '',
       trailing: '',
       type: 'birthday',
-      color: 0,
+      color: math.Random().nextInt(eventAvailableColorsList.length),
       location: '',
       link: '',
       createdAt: DateTime.now(),
@@ -437,11 +459,11 @@ class AuthMethods {
 
     //  Update Firestore Event Table
     await FirestoreMethods.createEvent(context, FirebaseAuth.instance.currentUser!.uid, defaultEventBirthday);
-    debugPrint('Default event created: birthday');
+    log('Default event created: birthday');
   }
 
   // LOGIN WITH EMAIL AND PASSWORD
-  Future<bool> loginWithEmailAndPassword(context, email, psw) async {
+  static Future<bool> loginWithEmailAndPassword(context, email, psw) async {
     showFullPageLoader(context: context);
 
     try {
@@ -470,7 +492,7 @@ class AuthMethods {
   }
 
   // RESET PASSWORD
-  Future<bool> resetPassword(context, email) async {
+  static Future<bool> resetPassword(context, email) async {
     showFullPageLoader(context: context);
 
     try {
@@ -493,11 +515,11 @@ class AuthMethods {
   }
 
   // CREATE USER WITH EMAIL AND PASSWORD
-  Future<bool> createUserWithEmailAndPassword(context, email, psw) async {
+  static Future<bool> createUserWithEmailAndPassword(context, email, psw) async {
     showFullPageLoader(context: context);
 
     try {
-      UserCredential credential = await auth.createUserWithEmailAndPassword(email: email, password: psw);
+      await auth.createUserWithEmailAndPassword(email: email, password: psw);
 
       modelingNewUser(
         context: context,
@@ -517,7 +539,7 @@ class AuthMethods {
   }
 
   // CONTINUE LOGIN WITH PHONE
-  sendPhoneVerificationCode(phoneNumber) async {
+  static sendPhoneVerificationCode(phoneNumber) async {
     UserSimplePreferences.setPhoneCodeVerification('');
 
     String verificationCode = '';
@@ -525,20 +547,22 @@ class AuthMethods {
     await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '$phoneNumber',
         verificationCompleted: (PhoneAuthCredential credential) async {
+          log('Credential: $credential');
           await FirebaseAuth.instance.signInWithCredential(credential).then((value) async {
             if (value.user != null) {
-              debugPrint('Verif code: $verificationCode');
+              log('Verif code: $verificationCode');
               // return verificationCode;
             }
           });
         },
         verificationFailed: (FirebaseAuthException e) {
-          debugPrint(e.message);
+          log('Err: ${e.message}');
           throw Exception('Une erreur s\'est produite');
           // showSnackbar(context, 'Une erreur s\'est produite', null);
         },
         codeSent: (String? verficationID, int? resendToken) {
           verificationCode = verficationID ?? 'null';
+          log('VerificationCode: $verificationCode');
           UserSimplePreferences.setPhoneCodeVerification(verificationCode);
         },
         codeAutoRetrievalTimeout: (String verificationID) {
@@ -548,56 +572,61 @@ class AuthMethods {
         timeout: const Duration(seconds: 120));
   }
 
-  Future<bool> continueWithPhone(context, authType, phoneNumber, pin) async {
+  static Future<bool> continueWithPhone(context, authType, phoneNumber, pin) async {
     showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
     try {
-      await FirebaseAuth.instance
-          .signInWithCredential(
+      log('With: ${UserSimplePreferences.getPhoneCodeVerification()!} : $pin ');
+
+      UserCredential value = await FirebaseAuth.instance.signInWithCredential(
         PhoneAuthProvider.credential(verificationId: UserSimplePreferences.getPhoneCodeVerification()!, smsCode: pin),
-      )
-          .then(
-        (value) async {
-          if (value.user != null) {
-            UserSimplePreferences.setPhoneCodeVerification('');
-
-            if (authType == 'login') {
-              // Login to existing user
-              Navigator.of(context).pop();
-
-              bool isUserExisting = await checkUserWithPhoneExistenceInDb(phoneNumber);
-              if (isUserExisting == false) {
-                showSnackbar(context, 'Aucun compte n\'existe avec numéro...', null);
-                return false;
-              }
-              return true;
-            } else if (authType == 'signup') {
-              // Sign up : create new user
-
-              // Check if any user exists with this phone number
-              bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
-
-              if (isUserExisting == false) {
-                AuthMethods().modelingNewUser(
-                  context: context,
-                );
-
-                // Set ShowIntroductionPagesHandler to: true
-                await UserSimplePreferences.setShowIntroductionPagesHandler(true);
-
-                Navigator.of(context).pop();
-                return true;
-              }
-              return false;
-            }
-
-            return true;
-          }
-        },
       );
 
-      return true;
+      log('VALUE: $value...');
+
+      if (value.user != null) {
+        UserSimplePreferences.setPhoneCodeVerification('');
+
+        if (authType == 'login') {
+          // Login to existing user
+          Navigator.of(context).pop();
+
+          bool isUserExisting = await checkUserWithPhoneExistenceInDb(phoneNumber);
+          if (isUserExisting == false) {
+            showSnackbar(context, 'Aucun compte n\'existe avec numéro...', null);
+            return false;
+          }
+          return true;
+        } else if (authType == 'signup') {
+          // Sign up : create new user
+          log('Signing up...');
+
+          // Check if any user exists with this phone number
+          bool isUserExisting = await checkUserExistenceInDb(value.user!.uid);
+
+          if (isUserExisting == false) {
+            log('[GO] User does not exist, so continue...');
+            await AuthMethods.modelingNewUser(
+              context: context,
+            );
+
+            // Set ShowIntroductionPagesHandler to: true
+            await UserSimplePreferences.setShowIntroductionPagesHandler(true);
+            Navigator.of(context).pop();
+            return true;
+          } else {
+            log('Can\'t signup: $value');
+            Navigator.of(context).pop();
+            return false;
+          }
+        }
+      } else {
+        Navigator.of(context).pop();
+        return false;
+      }
+
+      return false;
     } on FirebaseAuthException catch (e) {
       Navigator.of(context).pop();
       switch (e.code) {
@@ -615,7 +644,7 @@ class AuthMethods {
   }
 
   // CONTINUE LOGIN WITH GOOGLE
-  Future<List> continueWithGoogle(context, authType) async {
+  static Future<List> continueWithGoogle(context, authType) async {
     showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
@@ -685,7 +714,7 @@ class AuthMethods {
                 await UserSimplePreferences.setGoogleID(googleUser.id);
 
                 // Create a new user
-                AuthMethods().modelingNewUser(
+                AuthMethods.modelingNewUser(
                   context: context,
                 );
 
@@ -710,7 +739,7 @@ class AuthMethods {
   }
 
   // CONTINUE LOGIN WITH FACEBOOK
-  Future<List> continueWithFacebook(context, authType) async {
+  static Future<List> continueWithFacebook(context, authType) async {
     showFullPageLoader(context: context);
 
     // Check code availability and redirect to HomePage
@@ -788,7 +817,7 @@ class AuthMethods {
                   await UserSimplePreferences.setFacebookId(userData['id']);
 
                   // Create a new user
-                  AuthMethods().modelingNewUser(
+                  AuthMethods.modelingNewUser(
                     context: context,
                   );
 
@@ -820,6 +849,7 @@ class AuthMethods {
         return [false, 'Une erreur s\'est produite...'];
       }
     } on FirebaseAuthException catch (e) {
+      log('Error: $e');
       Navigator.of(context).pop();
 
       return [false, 'Une erreur s\'est produite...'];
@@ -831,7 +861,7 @@ class AuthMethods {
   //////////////////
 
   // UPDATE EMAIL :  [Password Provider]
-  Future<List> updateCurrentUserEmail(context, email) async
+  static Future<List> updateCurrentUserEmail(context, email) async
   //
   {
     showFullPageLoader(context: context);
@@ -844,7 +874,7 @@ class AuthMethods {
       await FirebaseAuth.instance.currentUser?.updateEmail(email).then(
         (value) async {
           // Update current user email [Firestore]
-          Map<String, Object?> userFieldToUpdate = {
+          Map<String, dynamic> userFieldToUpdate = {
             'email': email,
           };
 
@@ -921,7 +951,7 @@ class AuthMethods {
                               Navigator.push(
                                   context,
                                   SwipeablePageRoute(
-                                    builder: (context) => LoginPage(
+                                    builder: (context) => const LoginPage(
                                       redirectToAddEmailandPasswordPage: false,
                                       redirectToAddEmailPage: true,
                                       redirectToUpdatePasswordPage: false,
@@ -965,7 +995,7 @@ class AuthMethods {
   }
 
   // UPDATE PASSWORD : [Password Provider]
-  Future<List> updateCurrentUserPassword(context, psw) async
+  static Future<List> updateCurrentUserPassword(context, psw) async
   //
   {
     showFullPageLoader(context: context);
@@ -990,7 +1020,7 @@ class AuthMethods {
 
       List<UserInfo> passwordProvider =
           FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
-      if (passwordProvider.length > 0) {
+      if (passwordProvider.isNotEmpty) {
         emailAccountEmail = passwordProvider[0].email!;
       }
 
@@ -1094,7 +1124,7 @@ class AuthMethods {
   }
 
   // LINK CREDENTIALS : by email account [+password]
-  Future<List> linkCredentialsbyEmailAccount(context, email, psw) async
+  static Future<List> linkCredentialsbyEmailAccount(context, email, psw) async
   //
   {
     showFullPageLoader(context: context);
@@ -1115,7 +1145,7 @@ class AuthMethods {
         (value) async {
           if (value.user != null) {
             // Update current user email [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'email': email,
             };
 
@@ -1133,7 +1163,7 @@ class AuthMethods {
 
       List<UserInfo> passwordProvider =
           FirebaseAuth.instance.currentUser!.providerData.where((element) => element.providerId == 'password').toList();
-      if (passwordProvider.length > 0) {
+      if (passwordProvider.isNotEmpty) {
         emailAccountEmail = passwordProvider[0].email!;
       }
 
@@ -1237,7 +1267,7 @@ class AuthMethods {
   }
 
   // LINK CREDENTIALS : by phone number
-  Future<bool> linkCredentialsbyPhoneNumber(context, authType, phoneNumber, pin) async
+  static Future<bool> linkCredentialsbyPhoneNumber(context, authType, phoneNumber, pin) async
   //
   {
     showFullPageLoader(context: context);
@@ -1246,7 +1276,9 @@ class AuthMethods {
     try {
       try {
         await FirebaseAuth.instance.currentUser?.unlink(PhoneAuthProvider.PROVIDER_ID);
-      } catch (e) {}
+      } catch (e) {
+        //
+      }
       await FirebaseAuth.instance.currentUser
           ?.linkWithCredential(PhoneAuthProvider.credential(
               verificationId: UserSimplePreferences.getPhoneCodeVerification()!, smsCode: pin))
@@ -1257,7 +1289,7 @@ class AuthMethods {
             UserSimplePreferences.setPhoneCodeVerification('');
 
             // Update current user phoneNumber [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'phone': phoneNumber,
             };
 
@@ -1297,7 +1329,7 @@ class AuthMethods {
   }
 
   // LINK CREDENTIALS : by google account
-  Future<List> linkCredentialsbyGoogleAccount(context) async
+  static Future<List> linkCredentialsbyGoogleAccount(context) async
   //
   {
     showFullPageLoader(context: context);
@@ -1319,7 +1351,7 @@ class AuthMethods {
         List<UserInfo> googleProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'google.com')
             .toList();
-        if (googleProvider.length > 0) {
+        if (googleProvider.isNotEmpty) {
           googleAccountEmail = googleProvider[0].email!;
         }
 
@@ -1338,7 +1370,7 @@ class AuthMethods {
         List<UserInfo> googleProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'google.com')
             .toList();
-        if (googleProvider.length > 0) {
+        if (googleProvider.isNotEmpty) {
           googleAccountEmail = googleProvider[0].email!;
         }
 
@@ -1356,11 +1388,11 @@ class AuthMethods {
       googleProvider = FirebaseAuth.instance.currentUser!.providerData
           .where((element) => element.providerId == 'google.com')
           .toList();
-      if (googleProvider.length > 0) {
+      if (googleProvider.isNotEmpty) {
         await FirebaseAuth.instance.currentUser?.unlink(GoogleAuthProvider.PROVIDER_ID);
 
         // Update current user googleID [Firestore]
-        Map<String, Object?> userFieldToUpdate = {
+        Map<String, dynamic> userFieldToUpdate = {
           'googleID': '',
         };
 
@@ -1373,7 +1405,7 @@ class AuthMethods {
         (value) async {
           if (value.user != null) {
             // Update current user googleID [Firestore]
-            Map<String, Object?> userFieldToUpdate = {
+            Map<String, dynamic> userFieldToUpdate = {
               'googleID': googleUser.id,
             };
 
@@ -1392,7 +1424,7 @@ class AuthMethods {
       googleProvider = FirebaseAuth.instance.currentUser!.providerData
           .where((element) => element.providerId == 'google.com')
           .toList();
-      if (googleProvider.length > 0) {
+      if (googleProvider.isNotEmpty) {
         googleAccountEmail = googleProvider[0].email!;
       }
 
@@ -1433,7 +1465,7 @@ class AuthMethods {
   }
 
   // LINK CREDENTIALS : by facebook account
-  Future<List> linkCredentialsbyFacebookAccount(context) async
+  static Future<List> linkCredentialsbyFacebookAccount(context) async
   //
   {
     showFullPageLoader(context: context);
@@ -1461,7 +1493,7 @@ class AuthMethods {
         List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'facebook.com')
             .toList();
-        if (facebookProvider.length > 0) {
+        if (facebookProvider.isNotEmpty) {
           facebookAccountName = facebookProvider[0].displayName!;
         }
 
@@ -1492,7 +1524,7 @@ class AuthMethods {
           List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
               .where((element) => element.providerId == 'facebook.com')
               .toList();
-          if (facebookProvider.length > 0) {
+          if (facebookProvider.isNotEmpty) {
             facebookAccountName = facebookProvider[0].displayName!;
           }
 
@@ -1510,7 +1542,7 @@ class AuthMethods {
           (value) async {
             if (value.user != null) {
               // Update current user facebookID [Firestore]
-              Map<String, Object?> userFieldToUpdate = {
+              Map<String, dynamic> userFieldToUpdate = {
                 'facebookID': userData['id'],
               };
 
@@ -1529,7 +1561,7 @@ class AuthMethods {
         List<UserInfo> facebookProvider = FirebaseAuth.instance.currentUser!.providerData
             .where((element) => element.providerId == 'facebook.com')
             .toList();
-        if (facebookProvider.length > 0) {
+        if (facebookProvider.isNotEmpty) {
           facebookAccountName = facebookProvider[0].displayName!;
         }
       }

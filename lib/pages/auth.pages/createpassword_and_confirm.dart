@@ -66,7 +66,7 @@ class _CreatePasswordState extends State<CreatePassword> {
     // UPDATING PASSWORD
     if (widget.isUpdatingEmail) {
       // Link Password Provider
-      List result = await AuthMethods().updateCurrentUserPassword(context, psw);
+      List result = await AuthMethods.updateCurrentUserPassword(context, psw);
       if (result[0]) {
         // Redirect to Settings Security Page
         Navigator.of(context).pop();
@@ -78,7 +78,7 @@ class _CreatePasswordState extends State<CreatePassword> {
       passwordConfirmationController.clear();
 
       String? emailCached = UserSimplePreferences.getEmail() ?? '';
-      var result = await AuthMethods().createUserWithEmailAndPassword(context, emailCached, password);
+      var result = await AuthMethods.createUserWithEmailAndPassword(context, emailCached, password);
 
       if (result) {
         Navigator.pushAndRemoveUntil(

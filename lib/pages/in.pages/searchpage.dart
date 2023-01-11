@@ -67,7 +67,7 @@ class _SearchPageState extends State<SearchPage> {
                   // TO DO
                   // Handle empty query
                   setState(() {
-                    _searchQuery = value;
+                    _searchQuery = removeDiacritics(value.trim());
                   });
                 }),
                 onSubmitted: ((value) {
@@ -79,7 +79,7 @@ class _SearchPageState extends State<SearchPage> {
                 prefixIcon: Container(),
                 style: TextStyle(color: Colors.black87, fontSize: 15.sp),
                 placeholderStyle: TextStyle(color: Colors.black54, fontSize: 15.sp),
-                placeholder: "Rechercher un  évenement, une personne...",
+                placeholder: "Rechercher un  évènement, une personne...",
                 backgroundColor: const Color(0xFFF0F0F0),
               ),
             ),
@@ -258,11 +258,11 @@ class _SearchPageState extends State<SearchPage> {
                           if (snapshot.hasData) {
                             List<Event> result = snapshot.data!
                                 .where((event) =>
-                                    event.title.toString().toLowerCase().contains(_searchQuery.toLowerCase()))
+                                    removeDiacritics(event.title).toLowerCase().contains(_searchQuery.toLowerCase()))
                                 .toList();
 
                             // ADD FILTER 1: dayFilter
-                            if (dayFilter != null && monthsFilters.isEmpty) {
+                            if (showFilters && dayFilter != null && monthsFilters.isEmpty) {
                               result = result.where((event) {
                                 // Get Current Event Durations
                                 for (var eventDuration in event.eventDurations) {
@@ -286,7 +286,7 @@ class _SearchPageState extends State<SearchPage> {
                             }
 
                             // ADD FILTER 2: monthsFilters
-                            if (dayFilter == null && monthsFilters.isNotEmpty) {
+                            if (showFilters && dayFilter == null && monthsFilters.isNotEmpty) {
                               result = result.where((event) {
                                 // Get Current Event Durations
                                 for (var eventDuration in event.eventDurations) {
@@ -346,7 +346,7 @@ class _SearchPageState extends State<SearchPage> {
                                       height: 10,
                                     ),
                                     const Text(
-                                      'Aucun évenement trouvé !',
+                                      'Aucun évènement trouvé !',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.black45,
@@ -373,7 +373,7 @@ class _SearchPageState extends State<SearchPage> {
                             height: 300,
                             child: Center(
                               child: Text(
-                                'Saisissez le nom d\'un évenement',
+                                'Saisissez le nom d\'un évènement',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14.sp,
@@ -413,12 +413,12 @@ class _SearchPageState extends State<SearchPage> {
                           if (snapshot.hasData) {
                             List<usermodel.User?> result = snapshot.data!
                                 .where((user) =>
-                                    user.name.toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                                    user.username.toString().toLowerCase().contains(_searchQuery.toLowerCase()))
+                                    removeDiacritics(user.name).toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                                    removeDiacritics(user.username).toLowerCase().contains(_searchQuery.toLowerCase()))
                                 .toList();
 
                             // ADD FILTER 1: dayFilter
-                            if (dayFilter != null && monthsFilters.isEmpty) {
+                            if (showFilters && dayFilter != null && monthsFilters.isEmpty) {
                               result = result.where((user) {
                                 if (user != null) {
                                   // Get Current User Birthday
@@ -433,7 +433,7 @@ class _SearchPageState extends State<SearchPage> {
                             }
 
                             // ADD FILTER 2: monthsFilters
-                            if (dayFilter == null && monthsFilters.isNotEmpty) {
+                            if (showFilters && dayFilter == null && monthsFilters.isNotEmpty) {
                               result = result.where((user) {
                                 if (user != null) {
                                   //

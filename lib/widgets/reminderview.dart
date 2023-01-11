@@ -8,6 +8,7 @@ import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import '../models/reminder.dart';
 import '../utils/constants.dart';
+import '../utils/functions.dart';
 import 'button.dart';
 
 class ReminderView extends StatefulWidget {
@@ -37,6 +38,10 @@ class _ReminderViewState extends State<ReminderView> {
 
         if (snapshot.hasData && snapshot.data != null) {
           Reminder reminder = snapshot.data!;
+
+          //
+          // setCurrentActivePageFromIndex(index: 7, userId: reminder.reminderId);
+
           return Padding(
             padding: const EdgeInsets.all(10),
             child: Column(

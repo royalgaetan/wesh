@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // FIELDS
+
 class NotificationFields {
   static final List<String> values = [
     'notificationId',
@@ -32,12 +35,12 @@ class Notification {
   });
 
   // toJson
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         NotificationFields.notificationId: notificationId,
         NotificationFields.uid: uid,
         NotificationFields.contentId: contentId,
         NotificationFields.type: type,
-        NotificationFields.createdAt: createdAt.toIso8601String(),
+        NotificationFields.createdAt: createdAt,
       };
 
   // fromJson
@@ -47,8 +50,8 @@ class Notification {
         contentId: json[NotificationFields.contentId] ?? '',
         type: json[NotificationFields.type] ?? '',
         //
-        createdAt: json[NotificationFields.createdAt] != null
-            ? DateTime.parse(json[NotificationFields.createdAt])
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
             : DateTime.now(),
       );
 }

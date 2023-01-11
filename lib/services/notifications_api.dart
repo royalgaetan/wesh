@@ -1,5 +1,9 @@
+import 'dart:developer';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class NotificationChannel {
   final String channelId;
@@ -7,6 +11,7 @@ class NotificationChannel {
   final String channelDescription;
   final Importance channelImportance;
   final Priority channelPriority;
+  final AudioAttributesUsage audioAttributesUsage;
 
   NotificationChannel({
     required this.channelId,
@@ -14,6 +19,7 @@ class NotificationChannel {
     required this.channelDescription,
     required this.channelPriority,
     required this.channelImportance,
+    required this.audioAttributesUsage,
   });
 }
 
@@ -23,17 +29,31 @@ class NotificationApi {
 
   // Init Notification Api
   static Future init({bool initScheduled = false}) async {
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('@drawable/ic_notification');
     const ios = IOSInitializationSettings();
     const settings = InitializationSettings(android: android, iOS: ios);
+
+    // When app is closed
+    final details = await notification.getNotificationAppLaunchDetails();
+
+    if (details != null && details.didNotificationLaunchApp) {
+      onNotification.add(details.payload);
+    }
 
     await notification.initialize(settings, onSelectNotification: (payload) async {
       onNotification.add(payload);
     });
+
+    if (initScheduled) {
+      tz.initializeTimeZones();
+      final locationName = await FlutterNativeTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(locationName));
+    }
   }
 
   // Notification Details
-  static Future notificationDetails({required NotificationChannel channel, required largeIconPath}) async {
+  static Future notificationDetails(
+      {required NotificationChannel channel, required largeIconPath, int? badgeNumber}) async {
     // final styleInformation = BigPictureStyleInformation(const FilePathAndroidBitmap(''), largeIcon: largeIconPath);
 
     return NotificationDetails(
@@ -43,7 +63,11 @@ class NotificationApi {
         channelDescription: channel.channelDescription,
         importance: channel.channelImportance,
         priority: channel.channelPriority,
+        channelShowBadge: true,
+        audioAttributesUsage: channel.audioAttributesUsage,
+        number: badgeNumber,
         // styleInformation: styleInformation,
+        styleInformation: const BigTextStyleInformation(''),
         largeIcon: FilePathAndroidBitmap(largeIconPath),
       ),
       iOS: const IOSNotificationDetails(),
@@ -58,15 +82,40 @@ class NotificationApi {
     required String title,
     required String body,
     required String payload,
+    int? badgeNumber,
   }) async {
+    log('#Notification ID: $id');
     notification.show(
       id,
       title,
       body,
-      await notificationDetails(channel: channel, largeIconPath: largeIconPath),
+      await notificationDetails(channel: channel, largeIconPath: largeIconPath, badgeNumber: badgeNumber),
       payload: payload,
     );
   }
 
   // Show Scheduled Notification
+  static Future showScheduledNotification({
+    required NotificationChannel channel,
+    required String largeIconPath,
+    required int id,
+    required String title,
+    required String body,
+    required String payload,
+    required tz.TZDateTime tzDateTime,
+    DateTimeComponents? dateTimeComponents,
+  }) async {
+    log('#Notification [Scheduled] ID: $id');
+    notification.zonedSchedule(
+      id,
+      title,
+      body,
+      tzDateTime,
+      await notificationDetails(channel: channel, largeIconPath: largeIconPath),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+      matchDateTimeComponents: dateTimeComponents,
+    );
+  }
 }

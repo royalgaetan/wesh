@@ -16,10 +16,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { 
-            url "http://maven.usehover.com/releases"
-            allowInsecureProtocol = true 
-        }
     }
 }
 

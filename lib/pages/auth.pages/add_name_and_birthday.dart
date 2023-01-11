@@ -116,15 +116,15 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
               : Container(),
           Center(
             child: ListView(
-              padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+              padding: EdgeInsets.fromLTRB(0.1.sw, 0.03.sw, 0.1.sw, 0.1.sw),
               shrinkWrap: true,
               reverse: true,
               children: [
                 Column(
                   children: [
                     Container(
-                      height: 0.14.sh,
-                      width: 0.14.sh,
+                      height: 0.12.sh,
+                      width: 0.12.sh,
                       decoration: const BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage(gift),
@@ -205,7 +205,19 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
                     ),
                   ),
                 ),
-                SizedBox(height: 0.07.sw),
+
+                Wrap(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(top: 12, bottom: 0.09.sw),
+                      child: Text(
+                        'Votre date d\'anniversaire ne pourra plus être changée après',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black87, fontSize: 11.sp),
+                      ),
+                    )
+                  ],
+                ),
                 // Button Action : Update Name and Birthday
                 Button(
                   height: 0.12.sw,
@@ -217,7 +229,7 @@ class _AddNameAndBirthdayPageState extends State<AddNameAndBirthdayPage> {
                     updateName_Birthday();
                   },
                 ),
-                SizedBox(height: 0.07.sw),
+                SizedBox(height: 0.09.sw),
               ].reversed.toList(),
             ),
           ),

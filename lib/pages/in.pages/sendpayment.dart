@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl_phone_field/helpers.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_number/phone_number.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:telephony/telephony.dart';
@@ -42,6 +44,8 @@ class SendPayment extends StatefulWidget {
 }
 
 class _SendPaymentState extends State<SendPayment> with WidgetsBindingObserver {
+  //
+  bool? needPermission;
   //
   final Telephony telephony = Telephony.instance;
   StreamSubscription? ussdStreamSubscription;
@@ -108,6 +112,8 @@ class _SendPaymentState extends State<SendPayment> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     //
+    requestPermission();
+    //
     telephony.listenIncomingSms(
         onNewMessage: (SmsMessage message) async {
           // Handle Airtel Incoming Message
@@ -143,6 +149,18 @@ class _SendPaymentState extends State<SendPayment> with WidgetsBindingObserver {
           }
         },
         listenInBackground: false);
+  }
+
+  Future requestPermission() async {
+    if (await Permission.sms.request().isGranted) {
+      setState(() {
+        needPermission = false;
+      });
+    } else {
+      setState(() {
+        needPermission = true;
+      });
+    }
   }
 
   @override
@@ -194,239 +212,271 @@ class _SendPaymentState extends State<SendPayment> with WidgetsBindingObserver {
           style: TextStyle(color: Colors.black),
         ),
       ),
-      body: Form(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // FIELDS
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.only(top: 5, bottom: 0.12.sh, left: 15, right: 15),
-                children: [
-                  // Add Payment Method
-                  Column(children: [
-                    buildTextFormField(
-                      controller: emptyController,
-                      isReadOnly: true,
-                      hintText: 'Mode de paiement',
-                      icon: Icon(Icons.add_card_outlined, size: 22.sp),
-                      validateFn: (_) {
-                        return;
-                      },
-                      onChanged: (value) async {
-                        return;
-                      },
-                    ),
-                  ]),
-                  // All Payment methods available
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        buildPaymentMethodWidget(
-                          logoPath: mtnMobileMoneyLogo,
-                          label: mtnMobileMoneyLabel,
-                          isSelected: paymentMethodSelected == mtnMobileMoneyLabel ? true : false,
-                          onTap: () {
-                            if (paymentMethodSelected == mtnMobileMoneyLabel) {
-                              setState(() {
-                                paymentMethodSelected = '';
-                              });
-                            } else {
-                              setState(() {
-                                paymentMethodSelected = mtnMobileMoneyLabel;
-                              });
-                            }
-                          },
-                        ),
-                        buildPaymentMethodWidget(
-                          logoPath: airtelMoneyLogo,
-                          label: airtelMoneyLabel,
-                          isSelected: paymentMethodSelected == airtelMoneyLabel ? true : false,
-                          onTap: () {
-                            if (paymentMethodSelected == airtelMoneyLabel) {
-                              setState(() {
-                                paymentMethodSelected = '';
-                              });
-                            } else {
-                              setState(() {
-                                paymentMethodSelected = airtelMoneyLabel;
-                              });
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  paymentMethodSelected.isNotEmpty
-                      ? Container(
-                          margin: const EdgeInsets.only(top: 40, bottom: 20),
-                          child: buildDividerWithLabel(label: 'Continuer avec $paymentMethodSelected'),
-                        )
-                      : Container(),
-
-                  // Payment Method OPTIONS
-                  () {
-                    // MTN Mobile Money || Airtel Money
-                    if (paymentMethodSelected == mtnMobileMoneyLabel || paymentMethodSelected == airtelMoneyLabel) {
-                      return Column(
-                        children: [
-                          // MESSAGE TO REPLY || EVENT ATTACHED || STORY ATTACHED
-                          Visibility(
-                            visible: widget.messageToReply == null &&
-                                    widget.eventAttached == null &&
-                                    widget.storyAttached == null
-                                ? false
-                                : true,
-                            child: Container(
-                              constraints: BoxConstraints(minWidth: 0.1.sw, maxWidth: 0.7.sw),
-                              padding: const EdgeInsets.only(right: 5, bottom: 5),
-                              margin: const EdgeInsets.only(bottom: 10),
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(255, 228, 227, 227),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: () {
-                                // Display Message to reply
-                                if (widget.messageToReply != null &&
-                                    widget.eventAttached == null &&
-                                    widget.storyAttached == null) {
-                                  return Wrap(
-                                    children: [
-                                      getMessageToReplyGridPreview(
-                                        messageToReplyId: widget.messageToReply!.messageId,
-                                        messageToReplySenderId: widget.messageToReply!.senderId,
-                                        messageToReplyType: widget.messageToReply!.type,
-                                        messageToReplyCaption: widget.messageToReply!.caption,
-                                        messageToReplyFilename: widget.messageToReply!.filename,
-                                        messageToReplyData: widget.messageToReply!.data,
-                                        messageToReplyThumbnail: widget.messageToReply!.thumbnail,
-                                      ),
-                                    ],
-                                  );
-                                }
-
-                                // Display Event Attached
-                                else if (widget.eventAttached != null &&
-                                    widget.storyAttached == null &&
-                                    widget.messageToReply == null) {
-                                  return InkWell(
-                                    borderRadius: BorderRadius.circular(20),
-                                    onTap: () {
-                                      // Show EventViewer Modal
-                                      showModalBottomSheet(
-                                        enableDrag: true,
-                                        isScrollControlled: true,
-                                        context: context,
-                                        backgroundColor: Colors.transparent,
-                                        builder: ((context) => Modal(
-                                              minHeightSize: MediaQuery.of(context).size.height / 1.4,
-                                              maxHeightSize: MediaQuery.of(context).size.height,
-                                              child: EventView(eventId: widget.eventAttached!.eventId),
-                                            )),
-                                      );
-                                    },
-                                    child:
-                                        getEventGridPreview(eventId: widget.eventAttached!.eventId, hasDivider: false),
-                                  );
-                                }
-
-                                // Display Story Attached
-                                else if (widget.storyAttached != null &&
-                                    widget.eventAttached == null &&
-                                    widget.messageToReply == null) {
-                                  return getStoryGridPreview(storyId: widget.storyAttached!.storyId, hasDivider: false);
-                                }
-
-                                return Container();
-                              }(),
-                            ),
-                          ),
-
-                          // Add Payment Message
-                          buildTextFormField(
-                            controller: paymentMessageController,
-                            hintText: 'Ecrivez un message... (facultatif)',
-                            icon: Icon(Icons.messenger_outline_sharp, size: 22.sp),
-                            textInputType: TextInputType.text,
-                            validateFn: (_) {
-                              return;
-                            },
-                            onChanged: (value) async {
-                              return;
-                            },
-                          ),
-
-                          // Add Receiver Phone Number
-                          buildTextFormField(
-                            controller: receiverPhoneNumberController,
-                            hintText: 'Ajouter le numéro du receveur',
-                            icon: Icon(Icons.contact_phone, size: 22.sp),
-                            textInputType: TextInputType.phone,
-                            validateFn: (_) {
-                              return;
-                            },
-                            onChanged: (value) async {
-                              return;
-                            },
-                          ),
-
-                          // Add Amount
-                          buildTextFormField(
-                            controller: amountController,
-                            hintText: 'Ajouter le montant',
-                            icon: Icon(Icons.monetization_on_rounded, size: 22.sp),
-                            textInputType: TextInputType.number,
-                            validateFn: (_) {
-                              return;
-                            },
-                            onChanged: (value) async {
-                              return;
-                            },
-                          ),
-
-                          // Add Pin Code
-                          buildTextFormField(
-                            controller: pinCodeController,
-                            hintText: 'Ajoutez votre code pin',
-                            icon: Icon(Icons.lock_outline_rounded, size: 22.sp),
-                            textInputType: TextInputType.number,
-                            validateFn: (_) {
-                              return;
-                            },
-                            onChanged: (value) async {
-                              return;
-                            },
-                          ),
-                        ],
-                      );
-                    }
-
-                    // Default
-                    return Container();
-                    // return Container(
-                    //   padding: const EdgeInsets.all(20),
-                    //   height: 300,
-                    //   child: const Center(
-                    //     child: Text(
-                    //       'Veuillez selectionner un mode de payment avant de continuer...',
-                    //       textAlign: TextAlign.center,
-                    //       style: TextStyle(
-                    //         color: Colors.black54,
-                    //       ),
-                    //     ),
-                    //   ),
-                    // );
-                  }(),
-                ],
+      body: needPermission == null
+          ? Center(
+              child: Container(
+                padding: const EdgeInsets.all(50),
+                height: 100,
+                child: const CupertinoActivityIndicator(),
               ),
+            )
+          : needPermission == true
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child: Text(
+                        'Nous avons besoin d\'une permission pour continuer !',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black87, fontSize: 13.sp),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () async {
+                        // Request for permission in Settings
+                        await openAppSettings();
+                      },
+                      child: const Text('Accorder la permission'),
+                    )
+                  ],
+                )
+              : Form(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // FIELDS
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.only(top: 5, bottom: 0.12.sh, left: 15, right: 15),
+                          children: [
+                            // Add Payment Method
+                            Column(children: [
+                              buildTextFormField(
+                                controller: emptyController,
+                                isReadOnly: true,
+                                hintText: 'Mode de paiement',
+                                icon: Icon(Icons.add_card_outlined, size: 22.sp),
+                                validateFn: (_) {
+                                  return;
+                                },
+                                onChanged: (value) async {
+                                  return;
+                                },
+                              ),
+                            ]),
+                            // All Payment methods available
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  buildPaymentMethodWidget(
+                                    logoPath: mtnMobileMoneyLogo,
+                                    label: mtnMobileMoneyLabel,
+                                    isSelected: paymentMethodSelected == mtnMobileMoneyLabel ? true : false,
+                                    onTap: () {
+                                      if (paymentMethodSelected == mtnMobileMoneyLabel) {
+                                        setState(() {
+                                          paymentMethodSelected = '';
+                                        });
+                                      } else {
+                                        setState(() {
+                                          paymentMethodSelected = mtnMobileMoneyLabel;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  buildPaymentMethodWidget(
+                                    logoPath: airtelMoneyLogo,
+                                    label: airtelMoneyLabel,
+                                    isSelected: paymentMethodSelected == airtelMoneyLabel ? true : false,
+                                    onTap: () {
+                                      if (paymentMethodSelected == airtelMoneyLabel) {
+                                        setState(() {
+                                          paymentMethodSelected = '';
+                                        });
+                                      } else {
+                                        setState(() {
+                                          paymentMethodSelected = airtelMoneyLabel;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
 
-              //
-            ),
-          ],
-        ),
-      ),
+                            paymentMethodSelected.isNotEmpty
+                                ? Container(
+                                    margin: const EdgeInsets.only(top: 40, bottom: 20),
+                                    child: buildDividerWithLabel(label: 'Continuer avec $paymentMethodSelected'),
+                                  )
+                                : Container(),
+
+                            // Payment Method OPTIONS
+                            () {
+                              // MTN Mobile Money || Airtel Money
+                              if (paymentMethodSelected == mtnMobileMoneyLabel ||
+                                  paymentMethodSelected == airtelMoneyLabel) {
+                                return Column(
+                                  children: [
+                                    // MESSAGE TO REPLY || EVENT ATTACHED || STORY ATTACHED
+                                    Visibility(
+                                      visible: widget.messageToReply == null &&
+                                              widget.eventAttached == null &&
+                                              widget.storyAttached == null
+                                          ? false
+                                          : true,
+                                      child: Container(
+                                        constraints: BoxConstraints(minWidth: 0.1.sw, maxWidth: 0.7.sw),
+                                        padding: const EdgeInsets.only(right: 5, bottom: 5),
+                                        margin: const EdgeInsets.only(bottom: 10),
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(255, 228, 227, 227),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: () {
+                                          // Display Message to reply
+                                          if (widget.messageToReply != null &&
+                                              widget.eventAttached == null &&
+                                              widget.storyAttached == null) {
+                                            return Wrap(
+                                              children: [
+                                                getMessageToReplyGridPreview(
+                                                  messageToReplyId: widget.messageToReply!.messageId,
+                                                  messageToReplySenderId: widget.messageToReply!.senderId,
+                                                  messageToReplyType: widget.messageToReply!.type,
+                                                  messageToReplyCaption: widget.messageToReply!.caption,
+                                                  messageToReplyFilename: widget.messageToReply!.filename,
+                                                  messageToReplyData: widget.messageToReply!.data,
+                                                  messageToReplyThumbnail: widget.messageToReply!.thumbnail,
+                                                ),
+                                              ],
+                                            );
+                                          }
+
+                                          // Display Event Attached
+                                          else if (widget.eventAttached != null &&
+                                              widget.storyAttached == null &&
+                                              widget.messageToReply == null) {
+                                            return InkWell(
+                                              borderRadius: BorderRadius.circular(20),
+                                              onTap: () {
+                                                // Show EventViewer Modal
+                                                showModalBottomSheet(
+                                                  enableDrag: true,
+                                                  isScrollControlled: true,
+                                                  context: context,
+                                                  backgroundColor: Colors.transparent,
+                                                  builder: ((context) => Modal(
+                                                        minHeightSize: MediaQuery.of(context).size.height / 1.4,
+                                                        maxHeightSize: MediaQuery.of(context).size.height,
+                                                        child: EventView(eventId: widget.eventAttached!.eventId),
+                                                      )),
+                                                );
+                                              },
+                                              child: getEventGridPreview(
+                                                  eventId: widget.eventAttached!.eventId, hasDivider: false),
+                                            );
+                                          }
+
+                                          // Display Story Attached
+                                          else if (widget.storyAttached != null &&
+                                              widget.eventAttached == null &&
+                                              widget.messageToReply == null) {
+                                            return getStoryGridPreview(
+                                                storyId: widget.storyAttached!.storyId, hasDivider: false);
+                                          }
+
+                                          return Container();
+                                        }(),
+                                      ),
+                                    ),
+
+                                    // Add Payment Message
+                                    buildTextFormField(
+                                      controller: paymentMessageController,
+                                      hintText: 'Ecrivez un message... (facultatif)',
+                                      icon: Icon(Icons.messenger_outline_sharp, size: 22.sp),
+                                      textInputType: TextInputType.text,
+                                      validateFn: (_) {
+                                        return;
+                                      },
+                                      onChanged: (value) async {
+                                        return;
+                                      },
+                                    ),
+
+                                    // Add Receiver Phone Number
+                                    buildTextFormField(
+                                      controller: receiverPhoneNumberController,
+                                      hintText: 'Ajouter le numéro du receveur',
+                                      icon: Icon(Icons.contact_phone, size: 22.sp),
+                                      textInputType: TextInputType.phone,
+                                      validateFn: (_) {
+                                        return;
+                                      },
+                                      onChanged: (value) async {
+                                        return;
+                                      },
+                                    ),
+
+                                    // Add Amount
+                                    buildTextFormField(
+                                      controller: amountController,
+                                      hintText: 'Ajouter le montant',
+                                      icon: Icon(Icons.monetization_on_rounded, size: 22.sp),
+                                      textInputType: TextInputType.number,
+                                      validateFn: (_) {
+                                        return;
+                                      },
+                                      onChanged: (value) async {
+                                        return;
+                                      },
+                                    ),
+
+                                    // Add Pin Code
+                                    buildTextFormField(
+                                      controller: pinCodeController,
+                                      hintText: 'Ajoutez votre code pin',
+                                      icon: Icon(Icons.lock_outline_rounded, size: 22.sp),
+                                      textInputType: TextInputType.number,
+                                      validateFn: (_) {
+                                        return;
+                                      },
+                                      onChanged: (value) async {
+                                        return;
+                                      },
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              // Default
+                              return Container();
+                              // return Container(
+                              //   padding: const EdgeInsets.all(20),
+                              //   height: 300,
+                              //   child: const Center(
+                              //     child: Text(
+                              //       'Veuillez selectionner un mode de payment avant de continuer...',
+                              //       textAlign: TextAlign.center,
+                              //       style: TextStyle(
+                              //         color: Colors.black54,
+                              //       ),
+                              //     ),
+                              //   ),
+                              // );
+                            }(),
+                          ],
+                        ),
+
+                        //
+                      ),
+                    ],
+                  ),
+                ),
       floatingActionButton:
           // [ACTION BUTTON] Add Event Button
           FloatingActionButton.extended(

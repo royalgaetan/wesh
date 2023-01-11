@@ -82,6 +82,8 @@ class _AddNameAndBirthdayPageState extends State<AddProfilePicture> {
                   context: context,
                   backgroundColor: Colors.transparent,
                   builder: ((context) => const Modal(
+                        minHeightSize: 200,
+                        maxHeightSize: 200,
                         child: ImagePickerModal(),
                       )),
                 );

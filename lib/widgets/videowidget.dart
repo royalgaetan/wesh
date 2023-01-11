@@ -82,27 +82,27 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 class _ControlsOverlay extends StatelessWidget {
   const _ControlsOverlay({Key? key, required this.controller}) : super(key: key);
 
-  static const List<Duration> _exampleCaptionOffsets = <Duration>[
-    Duration(seconds: -10),
-    Duration(seconds: -3),
-    Duration(seconds: -1, milliseconds: -500),
-    Duration(milliseconds: -250),
-    Duration.zero,
-    Duration(milliseconds: 250),
-    Duration(seconds: 1, milliseconds: 500),
-    Duration(seconds: 3),
-    Duration(seconds: 10),
-  ];
-  static const List<double> _examplePlaybackRates = <double>[
-    0.25,
-    0.5,
-    1.0,
-    1.5,
-    2.0,
-    3.0,
-    5.0,
-    10.0,
-  ];
+  // static const List<Duration> _exampleCaptionOffsets = <Duration>[
+  //   Duration(seconds: -10),
+  //   Duration(seconds: -3),
+  //   Duration(seconds: -1, milliseconds: -500),
+  //   Duration(milliseconds: -250),
+  //   Duration.zero,
+  //   Duration(milliseconds: 250),
+  //   Duration(seconds: 1, milliseconds: 500),
+  //   Duration(seconds: 3),
+  //   Duration(seconds: 10),
+  // ];
+  // static const List<double> _examplePlaybackRates = <double>[
+  //   0.25,
+  //   0.5,
+  //   1.0,
+  //   1.5,
+  //   2.0,
+  //   3.0,
+  //   5.0,
+  //   10.0,
+  // ];
 
   final VideoPlayerController controller;
 

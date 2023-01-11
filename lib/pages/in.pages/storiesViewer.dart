@@ -1,5 +1,7 @@
+// ignore: file_names
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:screenshot/screenshot.dart';
@@ -41,6 +43,9 @@ class _StoriesViewerState extends State<StoriesViewer> {
   void initState() {
     super.initState();
     //
+    setSuitableStatusBarColor(Colors.black87);
+
+    //
     controller = PageController(initialPage: widget.indexInStoriesHandlerList);
 
     // build All Stories Pages
@@ -63,6 +68,9 @@ class _StoriesViewerState extends State<StoriesViewer> {
   void dispose() {
     //
     super.dispose();
+    //
+    setSuitableStatusBarColor(Colors.white);
+    //
     controller.dispose();
     storyController.dispose();
   }
@@ -71,6 +79,9 @@ class _StoriesViewerState extends State<StoriesViewer> {
   Widget build(BuildContext context) {
     return DismissiblePage(
       onDismissed: () {
+        //
+        setSuitableStatusBarColor(Colors.white);
+        //
         Navigator.of(context).pop();
         storyController.pause();
         storyController.dispose();
@@ -334,7 +345,7 @@ class buildStoryViewerHeaderAndFooter extends StatelessWidget {
           children: [
             // HEADER
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 22),
+              padding: const EdgeInsets.symmetric(vertical: 17),
               child: Row(
                 children: [
                   //
@@ -344,7 +355,6 @@ class buildStoryViewerHeaderAndFooter extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Hero avatar
-
                         Padding(
                           padding: const EdgeInsets.only(left: 16),
                           child: GestureDetector(
@@ -366,12 +376,12 @@ class buildStoryViewerHeaderAndFooter extends StatelessWidget {
                         const SizedBox(
                           width: 10,
                         ),
-                        // Forever title && Story info
+                        // StoryPoster name  && Story info
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              // 1st ROW : Forever title + Story time
+                              // 1st ROW : StoryPoster name  + Story time
                               Row(
                                 children: [
                                   Flexible(
@@ -431,6 +441,8 @@ class buildStoryViewerHeaderAndFooter extends StatelessWidget {
                                 builder: ((context) => Scaffold(
                                       backgroundColor: Colors.transparent,
                                       body: Modal(
+                                        minHeightSize: 200,
+                                        maxHeightSize: 200,
                                         child: StoryMoreOptionsModal(
                                           story: storiesHandler.stories[currentStoryDisplayed.value],
                                           storySreenshotController: storySreenshotController,

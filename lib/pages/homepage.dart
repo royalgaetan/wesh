@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -63,7 +64,6 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin 
     streamCurrentUser = FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid);
     streamCurrentUserSubscription = streamCurrentUser.asBroadcastStream().listen((event) {
       isUpdating.value = true;
-      log('isUpdating: ${isUpdating.value}');
       currentUser = event;
 
       currentUserFollowings = event.followings?.map((userId) => userId.toString()).toList() ?? [];
@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin 
   }
 
   Future initAppointments({required List<Event> eventsList, required List<Reminder> remindersList}) async {
-    List<Appointment> _appointmentItems = [];
+    List<Appointment> appointmentItems = [];
     // FETCH EVENTS
     for (Event eventGet in eventsList) {
       // Split Event by EventDurationType => return CalendarItem
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin 
           recurrenceRule: reccurenceRule,
         );
 
-        _appointmentItems.add(appointment);
+        appointmentItems.add(appointment);
       }
     }
 
@@ -190,15 +190,14 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin 
         recurrenceRule: reccurenceRule,
       );
 
-      _appointmentItems.add(appointment);
+      appointmentItems.add(appointment);
     }
 
     setState(() {
-      appointmentList = _appointmentItems;
+      appointmentList = appointmentItems;
     });
 
     isUpdating.value = false;
-    log('isUpdating: ${isUpdating.value}');
   }
 
   @override
@@ -428,6 +427,7 @@ class _buildEventContainerState extends State<buildEventContainer> {
               child:
                   // For my birthday only
                   widget.currentUser != null &&
+                          widget.currentUser!.id == userPosterId &&
                           itemType == 'event' &&
                           eventType == 'birthday' &&
                           DateUtils.dateOnly(DateTime(widget.currentUser!.birthday.year,

@@ -112,7 +112,7 @@ class SearchEventCard extends StatelessWidget {
                                 DateFormat(isEventWithRecurrence(event) ? 'dd MMMM' : 'EEE, d MMM yyyy', 'fr_Fr')
                                     .format(
                                   event.eventDurations.isNotEmpty
-                                      ? (event.eventDurations[0]['date'] as Timestamp).toDate()
+                                      ? (event.eventDurations[0]['date'] as Timestamp).toDate().toLocal()
                                       : DateTime.now(),
                                 ),
                                 overflow: TextOverflow.ellipsis,

@@ -107,25 +107,14 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
     emptyController.dispose();
   }
 
-  DateTime getCompleteDateTimeFromFirstEventDuration() {
-    EventDurationType eventDurationGet = EventDurationType.fromJson(eventController!.eventDurations[0]);
-
-    return DateTime(
-      isEventWithRecurrence(eventController) ? DateTime.now().year : eventDurationGet.date.year,
-      eventDurationGet.date.month,
-      eventDurationGet.date.day,
-      eventDurationGet.startTime.hour,
-      eventDurationGet.startTime.minute,
-    );
-  }
-
   createOrUpdateReminder() async {
     bool result = false;
     //
     // Get Reminder Duration Label
     if (eventController != null && customDateTime == null) {
       //
-      reminderDelay = getDurationLabel(getCompleteDateTimeFromFirstEventDuration(), reminderDateController!);
+      reminderDelay =
+          getDurationLabel(getCompleteDateTimeFromFirstEventDuration(eventController), reminderDateController!);
     } else if (eventController == null && customDateTime != null) {
       //
       reminderDelay = getDurationLabel(customDateTime!, reminderDateController!);
@@ -137,7 +126,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
     if (widget.reminder == null) {
       // Modeling an event
 
-      Map<String, Object?> newReminder = Reminder(
+      Map<String, dynamic> newReminder = Reminder(
         title: nameReminderController.text,
         uid: FirebaseAuth.instance.currentUser!.uid,
         reminderId: '',
@@ -160,9 +149,13 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
     // UPDATE AN EXISTING ONE
 
     if (widget.reminder != null) {
-      // Modeling a reminder
+      // Remove recurrence when possible
+      if (eventController != null && !getEventRecurrence(eventController!.type)) {
+        recurrenceController = '';
+      }
 
-      Map<String, Object?> reminderToUpdate = Reminder(
+      // Modeling a reminder
+      Map<String, dynamic> reminderToUpdate = Reminder(
         title: nameReminderController.text,
         uid: FirebaseAuth.instance.currentUser!.uid,
         reminderId: widget.reminder!.reminderId,
@@ -361,7 +354,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                     child: Text(
                                       (() {
                                         if (eventController == null && customDateTime == null) {
-                                          return 'Attacher un évenement ou une date';
+                                          return 'Attacher un évènement ou une date';
                                         }
 
                                         if (eventController != null && customDateTime == null) {
@@ -371,7 +364,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                         if (eventController == null && customDateTime != null) {
                                           return '${DateFormat('EEE, d MMM yyyy', 'fr_Fr').format(customDateTime!)} à ${DateFormat('HH:mm', 'fr_Fr').format(customDateTime!)}';
                                         }
-                                        return 'Attacher un évenement ou une date';
+                                        return 'Attacher un évènement ou une date';
                                       }()),
                                       style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
                                     ),
@@ -505,8 +498,8 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                   if (eventController != null && customDateTime == null) {
                                     //  BUILD COMPLETE DATETIME
 
-                                    reminderDateController =
-                                        getCompleteDateTimeFromFirstEventDuration().subtract(selectedDuration);
+                                    reminderDateController = getCompleteDateTimeFromFirstEventDuration(eventController)
+                                        .subtract(selectedDuration);
                                   }
                                   //
                                   else if (eventController == null && customDateTime != null) {
@@ -519,7 +512,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                 dev.log('selected duration is: $reminderDateController');
                               }
                             } else {
-                              showSnackbar(context, 'Veuillez d\'abord attacher un évenement ou une date', null);
+                              showSnackbar(context, 'Veuillez d\'abord attacher un évènement ou une date', null);
                             }
                           },
                           child: Container(
@@ -534,7 +527,8 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                   : (() {
                                       if (eventController != null && customDateTime == null) {
                                         return getDurationLabel(
-                                            getCompleteDateTimeFromFirstEventDuration(), reminderDateController!);
+                                            getCompleteDateTimeFromFirstEventDuration(eventController),
+                                            reminderDateController!);
                                       }
                                       if (eventController == null && customDateTime != null) {
                                         return getDurationLabel(customDateTime!, reminderDateController!);
@@ -595,7 +589,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                   dev.log('Recurrence is setted at: $recurrenceController');
                                 }
                               } else {
-                                showSnackbar(context, 'Veuillez d\'abord attacher un évenement ou une date', null);
+                                showSnackbar(context, 'Veuillez d\'abord attacher un évènement ou une date', null);
                               }
                             },
                             child: Container(
@@ -647,7 +641,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                       // Get ReminderFrom DateTIme
                       if (eventController != null && customDateTime == null) {
                         //
-                        reminderFrom = getCompleteDateTimeFromFirstEventDuration();
+                        reminderFrom = getCompleteDateTimeFromFirstEventDuration(eventController);
                       } else if (eventController == null && customDateTime != null) {
                         //
                         reminderFrom = customDateTime!;
@@ -668,7 +662,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                                   recurrenceController == 'Chaque mois') {
                                 showSnackbar(
                                     context,
-                                    'Impossible de vous rappeler cet évenement ${recurrenceController.toLowerCase()}',
+                                    'Impossible de vous rappeler cet évènement ${recurrenceController.toLowerCase()}, essayez chaque année !',
                                     null);
                                 return;
                               }
@@ -704,7 +698,7 @@ class _CreateOrUpdateReminderPageState extends State<CreateOrUpdateReminderPage>
                           }
                         } else {
                           // Content Attached error handler
-                          showSnackbar(context, 'Veuillez attacher un évenement ou une date', null);
+                          showSnackbar(context, 'Veuillez attacher un évènement ou une date', null);
                         }
                       } else {
                         // Name error handler

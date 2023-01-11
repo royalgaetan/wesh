@@ -143,11 +143,6 @@ class UsernameChecker extends StatefulWidget {
 }
 
 class _UsernameCheckerState extends State<UsernameChecker> {
-  void dispose() {
-    //
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(

@@ -26,11 +26,11 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       p1: const Padding(
         padding: EdgeInsets.only(bottom: 15),
         child: Text(
-            'Vous pouvez créer n\'importe quel type d\'évenement (mariage, soirée, anniversaire, etc.) pour prevenir vos amis et vos abonnés'),
+            'Vous pouvez créer n\'importe quel type d\'évènement (mariage, soirée, anniversaire, etc.) pour prevenir vos amis et vos abonnés'),
       ),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
-          child: Text('😏 Vous pouvez ainsi envoyer un message ou une story associé à votre évenement')),
+          child: Text('😏 Vous pouvez ainsi envoyer un message ou une story associé à votre évènement')),
       p3: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text('Les événements grisés sont des événements qui se sont déjà déroulés')),
@@ -47,7 +47,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       p1: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text(
-              'Les rappels sont là pour vous simplifier la vie, ils vous permettent de vous rappeler un évenement 1 heure, 1 jour ou 1 mois avant que l\'évenement ne commence')),
+              'Les rappels sont là pour vous simplifier la vie, ils vous permettent de vous rappeler un évènement 1 heure, 1 jour ou 1 mois avant que l\'évènement ne commence')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text('Vous pouvez aussi automatiser vos rappels pour chaque jour, chaque année, etc. 😎')),
@@ -67,7 +67,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       p1: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text(
-              'Les stories sont des videos, images ou tout simplement du texte que vous partagez avec vos amis et abonnés pour leur montrer comment se déroule votre évenement, votre journée ou les coulisses de votre business')),
+              'Les stories sont des videos, images ou tout simplement du texte que vous partagez avec vos amis et abonnés pour leur montrer comment se déroule votre évènement, votre journée ou les coulisses de votre business')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text('😌 Malheureusement les stories ne durent que 24 heures ⌚, puis elles disparaissent')),
@@ -91,7 +91,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text(
-              'Plus encore ! Vous pouvez également envoyer ou recevoir de l\'argent 💸 concernant un évenement quelconque, cela peut être les frais d\'entrée d\'un concert par exemple')),
+              'Plus encore ! Vous pouvez également envoyer ou recevoir de l\'argent 💸 concernant un évènement quelconque, cela peut être les frais d\'entrée d\'un concert par exemple')),
     ),
 
     // Help about account
@@ -105,7 +105,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       p1: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text(
-              'Vous pouvez suivre une personne ou un compte qui vous interesse pour ne jamais manquer ses évenements ou ses stories ❤')),
+              'Vous pouvez suivre une personne ou un compte qui vous intéresse pour ne jamais manquer ses évènements ou ses stories ❤')),
       p2: const Padding(
           padding: EdgeInsets.only(bottom: 15),
           child: Text('Les autres comptes peuvent à leur tour vous suivre aussi')),

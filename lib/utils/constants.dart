@@ -26,29 +26,36 @@ const int fileLimitSize2MB = 2000000;
 
 List<NotificationChannel> notificationsChannelList = [
   NotificationChannel(
-      channelId: '0',
-      channelName: 'Messages',
-      channelDescription: 'Recevez les notifications sur les messages qui vous sont destinés',
-      channelImportance: Importance.max,
-      channelPriority: Priority.defaultPriority),
+    channelId: '0',
+    channelName: 'Messages',
+    channelDescription: 'Recevez les notifications sur les messages qui vous sont destinés',
+    channelImportance: Importance.max,
+    channelPriority: Priority.defaultPriority,
+    audioAttributesUsage: AudioAttributesUsage.notification,
+  ),
   NotificationChannel(
       channelId: '1',
-      channelName: 'Evenements',
-      channelDescription: 'Recevez les notifications sur les évenements qui vous concernent',
+      channelName: 'Evènements',
+      channelDescription: 'Recevez les notifications sur les évènements qui vous concernent',
       channelImportance: Importance.max,
-      channelPriority: Priority.high),
+      channelPriority: Priority.high,
+      audioAttributesUsage: AudioAttributesUsage.notificationEvent),
   NotificationChannel(
-      channelId: '2',
-      channelName: 'Rappels',
-      channelDescription: 'Recevez les notifications sur les rappels que vous mettez en place',
-      channelImportance: Importance.max,
-      channelPriority: Priority.max),
+    channelId: '2',
+    channelName: 'Rappels',
+    channelDescription: 'Recevez les notifications sur les rappels que vous mettez en place',
+    channelImportance: Importance.max,
+    channelPriority: Priority.max,
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+  ),
   NotificationChannel(
-      channelId: '3',
-      channelName: 'Stories',
-      channelDescription: 'Recevez les notifications sur les nouvelles stories',
-      channelImportance: Importance.max,
-      channelPriority: Priority.defaultPriority),
+    channelId: '3',
+    channelName: 'Stories',
+    channelDescription: 'Recevez les notifications sur les nouvelles stories',
+    channelImportance: Importance.max,
+    channelPriority: Priority.defaultPriority,
+    audioAttributesUsage: AudioAttributesUsage.notification,
+  ),
 ];
 
 // Colors
@@ -79,6 +86,8 @@ const String defaultProfilePicture = 'assets/images/core.assets/default_profile_
 const String darkBackground = 'assets/images/core.assets/dark_background.png';
 const String gift = 'assets/images/core.assets/gift.png';
 const String music = 'assets/images/core.assets/music.png';
+const String ballons = 'assets/images/core.assets/ballons.png';
+const String bell = 'assets/images/core.assets/bell.png';
 const String soundWaves = 'assets/images/core.assets/sound_waves.png';
 
 // Audio Assets
@@ -503,7 +512,7 @@ List<PageViewModel> listPagesViewModel = [
     title: "Bienvenue sur $appName",
     bodyWidget: const buildIntroductionPageContent(
       animationPath: star,
-      title: 'Créez vos évenements',
+      title: 'Créez vos évènements',
       description:
           'Alertez vos amis sur les dates qui comptent beaucoup pour vous comme votre date d\'anniversaire 🎉🎈',
     ),
@@ -513,7 +522,7 @@ List<PageViewModel> listPagesViewModel = [
     bodyWidget: const buildIntroductionPageContent(
       animationPath: selfie,
       title: 'Partagez les moments les plus forts dans votre Story',
-      description: 'Montrez en direct à vos amis comment se déroule votre évenement 🔥',
+      description: 'Montrez en direct à vos amis comment se déroule votre évènement 🔥',
     ),
   ),
   PageViewModel(
@@ -522,7 +531,7 @@ List<PageViewModel> listPagesViewModel = [
       animationPath: smartPhoneMoney,
       title: 'Discutez rapidement avec vos amis',
       description:
-          'Recevez des cadeaux, des messages ou de l\'argent 💰 de la part de vos amis concernant votre évenement ',
+          'Recevez des cadeaux, des messages ou de l\'argent 💰 de la part de vos amis concernant votre évènement ',
     ),
   ),
 ];

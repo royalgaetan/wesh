@@ -54,24 +54,26 @@ class _ContactsPageState extends State<PeoplePage> {
             style: TextStyle(color: Colors.black),
           ),
           actions: [
-            IconButton(
-              splashRadius: 22,
-              onPressed: () {
-                //
-                Navigator.push(
-                  context,
-                  SwipeablePageRoute(
-                    builder: (_) => const SearchPage(
-                      initialPageIndex: 1,
+            widget.uid != FirebaseAuth.instance.currentUser!.uid
+                ? Container()
+                : IconButton(
+                    splashRadius: 22,
+                    onPressed: () {
+                      //
+                      Navigator.push(
+                        context,
+                        SwipeablePageRoute(
+                          builder: (_) => const SearchPage(
+                            initialPageIndex: 1,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.person_add,
+                      color: Colors.black87,
                     ),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.person_add,
-                color: Colors.black87,
-              ),
-            )
+                  )
           ],
 
           // Tab bar
@@ -127,27 +129,31 @@ class _ContactsPageState extends State<PeoplePage> {
                                 // Handle Errors
                                 if (snapshot.hasError) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
+                                      children: const [
                                         CircleAvatar(
                                           radius: 23,
-                                          backgroundColor: Colors.grey.shade200,
+                                          backgroundColor: kGreyColor,
                                         ),
-                                        const SizedBox(
-                                          width: 5,
+                                        SizedBox(
+                                          width: 10,
                                         ),
-                                        const Text('Une erreur s\'est produite'),
+                                        Text(
+                                          'Une erreur s\'est produite',
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
                                       ],
                                     ),
                                   );
                                 }
 
+                                // Handle Data
                                 if (snapshot.hasData) {
                                   usermodel.User? currentUser = snapshot.data!;
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
                                     child: UserCard(
                                       user: currentUser,
                                       status: 'remove',
@@ -158,7 +164,7 @@ class _ContactsPageState extends State<PeoplePage> {
 
                                 // Loader
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
@@ -167,33 +173,41 @@ class _ContactsPageState extends State<PeoplePage> {
                                         highlightColor: Colors.grey.shade400,
                                         child: const CircleAvatar(
                                           radius: 23,
+                                          backgroundColor: kGreyColor,
                                         ),
                                       ),
                                       const SizedBox(
-                                        width: 7,
+                                        width: 10,
                                       ),
                                       Column(
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Shimmer.fromColors(
-                                            baseColor: Colors.grey.shade200,
-                                            highlightColor: Colors.grey.shade400,
-                                            child: Container(
+                                              baseColor: Colors.grey.shade200,
+                                              highlightColor: Colors.grey.shade400,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: kGreyColor,
+                                                  borderRadius: BorderRadius.circular(7),
+                                                ),
                                                 margin: const EdgeInsets.only(bottom: 2),
                                                 width: 150,
                                                 height: 15,
-                                                color: Colors.grey.shade400),
-                                          ),
+                                              )),
                                           const SizedBox(height: 5),
                                           Shimmer.fromColors(
                                             baseColor: Colors.grey.shade200,
                                             highlightColor: Colors.grey.shade400,
                                             child: Container(
-                                                margin: const EdgeInsets.only(bottom: 2),
-                                                width: 100,
-                                                height: 15,
-                                                color: Colors.grey.shade400),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade400,
+                                                borderRadius: BorderRadius.circular(7),
+                                              ),
+                                              margin: const EdgeInsets.only(bottom: 2),
+                                              width: 100,
+                                              height: 10,
+                                            ),
                                           )
                                         ],
                                       ),
@@ -269,11 +283,23 @@ class _ContactsPageState extends State<PeoplePage> {
                 builder: (context, snapshot) {
                   // Handle Errors
                   if (snapshot.hasError) {
-                    return SizedBox(
-                      height: 300,
-                      width: MediaQuery.of(context).size.width,
-                      child: const Center(
-                        child: buildErrorWidget(onWhiteBackground: true),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: const [
+                          CircleAvatar(
+                            radius: 23,
+                            backgroundColor: kGreyColor,
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          Text(
+                            'Une erreur s\'est produite',
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -316,7 +342,7 @@ class _ContactsPageState extends State<PeoplePage> {
                                 if (snapshot.hasData) {
                                   usermodel.User? currentUser = snapshot.data!;
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
                                     child: UserCard(
                                       user: currentUser,
                                       status: 'followUnfollow',
@@ -327,7 +353,7 @@ class _ContactsPageState extends State<PeoplePage> {
 
                                 // Loader
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
@@ -336,33 +362,41 @@ class _ContactsPageState extends State<PeoplePage> {
                                         highlightColor: Colors.grey.shade400,
                                         child: const CircleAvatar(
                                           radius: 23,
+                                          backgroundColor: kGreyColor,
                                         ),
                                       ),
                                       const SizedBox(
-                                        width: 7,
+                                        width: 10,
                                       ),
                                       Column(
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Shimmer.fromColors(
-                                            baseColor: Colors.grey.shade200,
-                                            highlightColor: Colors.grey.shade400,
-                                            child: Container(
+                                              baseColor: Colors.grey.shade200,
+                                              highlightColor: Colors.grey.shade400,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: kGreyColor,
+                                                  borderRadius: BorderRadius.circular(7),
+                                                ),
                                                 margin: const EdgeInsets.only(bottom: 2),
                                                 width: 150,
                                                 height: 15,
-                                                color: Colors.grey.shade400),
-                                          ),
+                                              )),
                                           const SizedBox(height: 5),
                                           Shimmer.fromColors(
                                             baseColor: Colors.grey.shade200,
                                             highlightColor: Colors.grey.shade400,
                                             child: Container(
-                                                margin: const EdgeInsets.only(bottom: 2),
-                                                width: 100,
-                                                height: 15,
-                                                color: Colors.grey.shade400),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade400,
+                                                borderRadius: BorderRadius.circular(7),
+                                              ),
+                                              margin: const EdgeInsets.only(bottom: 2),
+                                              width: 100,
+                                              height: 10,
+                                            ),
                                           )
                                         ],
                                       ),

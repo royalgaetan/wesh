@@ -38,7 +38,7 @@ class _EventSelectorState extends State<EventSelector> {
               padding: EdgeInsets.symmetric(horizontal: 0.04.sw, vertical: 0.04.sw),
               style: TextStyle(color: Colors.black87, fontSize: 15.sp),
               placeholderStyle: TextStyle(color: Colors.black54, fontSize: 15.sp),
-              placeholder: "Rechercher un évenement...",
+              placeholder: "Rechercher un évènement...",
               backgroundColor: const Color(0xFFF0F0F0),
               onChanged: (text) {
                 setState(() {
@@ -77,7 +77,7 @@ class _EventSelectorState extends State<EventSelector> {
                   ),
                   Expanded(
                     child: Text(
-                      'Retirer l\'évenement attaché',
+                      'Retirer l\'évènement attaché',
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.w700,
@@ -152,7 +152,7 @@ class _EventSelectorState extends State<EventSelector> {
                             height: 10,
                           ),
                           const Text(
-                            'Aucun évenement trouvé !',
+                            'Aucun évènement trouvé !',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.black45,
@@ -179,7 +179,7 @@ class _EventSelectorState extends State<EventSelector> {
                   height: 300,
                   child: Center(
                     child: Text(
-                      'Saisissez le nom d\'un évenement',
+                      'Saisissez le nom d\'un évènement',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,

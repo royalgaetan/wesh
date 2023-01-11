@@ -84,7 +84,7 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
         Event? birthday = await FirestoreMethods.getEventByIdAsFuture(widget.user.events!.first);
 
         if (birthday != null) {
-          Map<String, Object?> eventToUpdate = Event(
+          Map<String, dynamic> eventToUpdate = Event(
             eventId: birthday.eventId,
             uid: FirebaseAuth.instance.currentUser!.uid,
             title: 'Anniversaire de ${nameController.text}',
@@ -111,7 +111,7 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
       // UPDATE AN EXISTING ONE
       if (widget.user != null && downloadUrl.isNotEmpty) {
         // Modeling an user with personal informations
-        Map<String, Object?> userFieldToUpdate = {
+        Map<String, dynamic> userFieldToUpdate = {
           'profilePicture': downloadUrl,
           'username': usernameController.text,
           'name': nameController.text,
@@ -218,8 +218,10 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                   isScrollControlled: true,
                                   context: context,
                                   backgroundColor: Colors.transparent,
-                                  builder: ((context) => Modal(
-                                        child: const ImagePickerModal(),
+                                  builder: ((context) => const Modal(
+                                        minHeightSize: 200,
+                                        maxHeightSize: 200,
+                                        child: ImagePickerModal(),
                                       )),
                                 );
 
@@ -309,6 +311,8 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                   builder: ((context) => Scaffold(
                                         backgroundColor: Colors.transparent,
                                         body: Modal(
+                                          minHeightSize: 190,
+                                          maxHeightSize: 190,
                                           child: AddTextModal(
                                               checkUsername: true,
                                               textfieldMaxLines: 1,
@@ -363,6 +367,8 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                   builder: ((context) => Scaffold(
                                         backgroundColor: Colors.transparent,
                                         body: Modal(
+                                          minHeightSize: 190,
+                                          maxHeightSize: 190,
                                           child: AddTextModal(
                                               textfieldMaxLines: 1,
                                               textfieldMaxLength: 45,
@@ -417,6 +423,8 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                   builder: ((context) => Scaffold(
                                         backgroundColor: Colors.transparent,
                                         body: Modal(
+                                          minHeightSize: 190,
+                                          maxHeightSize: 190,
                                           child: AddTextModal(
                                               hintText: 'Votre bio ici...',
                                               modalTitle: 'Ajouter votre bio',
@@ -468,6 +476,8 @@ class _CreateOrUpdatePersonalInformationsState extends State<CreateOrUpdatePerso
                                   builder: ((context) => Scaffold(
                                         backgroundColor: Colors.transparent,
                                         body: Modal(
+                                          minHeightSize: 190,
+                                          maxHeightSize: 190,
                                           child: AddTextModal(
                                               textfieldMaxLines: 1,
                                               textfieldMaxLength: 45,

@@ -58,7 +58,7 @@ class _AddEmailPageState extends State<AddEmailPage> {
         return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
       }
 
-      bool isEmailUsed = await checkIfEmailInUse(context, emailController.text);
+      bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
 
       if (isEmailUsed == true) {
         // ignore: use_build_context_synchronously
@@ -67,7 +67,7 @@ class _AddEmailPageState extends State<AddEmailPage> {
 
       // IF ALL CHECKERS VALIDATED : [CONTINUE]
       // Link Password Provider
-      List result = await AuthMethods().updateCurrentUserEmail(context, email);
+      List result = await AuthMethods.updateCurrentUserEmail(context, email);
       if (result[0]) {
         // Redirect to Settings Security Page
         Navigator.of(context).pop();

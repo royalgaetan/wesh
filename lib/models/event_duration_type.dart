@@ -38,7 +38,9 @@ class EventDurationType {
 
   // From Json
   static EventDurationType fromJson(Map<String, dynamic> json) => EventDurationType(
-        date: json['date'] != null && json['date'] != '' ? (json['date'] as Timestamp).toDate() : DateTime.now(),
+        date: json['date'] != null && json['date'] != ''
+            ? (json['date'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
         //
         startTime: TimeOfDay(
             hour: int.parse((json['startTime'] as String).split(':')[0]),

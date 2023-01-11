@@ -1,35 +1,50 @@
+// ignore: file_names
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_information/device_information.dart';
+import 'package:dismissible_page/dismissible_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as localnotification;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:telephony/telephony.dart';
+import 'package:timezone/timezone.dart';
+import 'package:wesh/models/celebration.dart';
+import 'package:wesh/models/stories_handler.dart';
 import 'package:wesh/pages/addpage.dart';
 import 'package:wesh/pages/homePage.dart';
 import 'package:wesh/pages/discussions.dart';
 import 'package:wesh/pages/in.pages/happy_birthday_page.dart';
+import 'package:wesh/pages/in.pages/inbox.dart';
 import 'package:wesh/pages/in.pages/introductionpages.dart';
 import 'package:wesh/pages/in.pages/settings.dart';
 import 'package:wesh/pages/profile.dart';
-import 'package:wesh/pages/stories.dart';
+import 'package:wesh/pages/stories.dart' as storiespage;
 import 'package:wesh/utils/constants.dart';
+import '../models/event.dart';
 import '../models/feedback.dart';
-import '../models/message.dart';
+import '../models/reminder.dart';
+import '../models/story.dart';
 import '../models/user.dart' as usermodel;
+import '../services/background.service.dart';
 import '../services/firestore.methods.dart';
 import '../services/notifications_api.dart';
 import '../services/sharedpreferences.service.dart';
 import '../utils/functions.dart';
+import '../widgets/eventview.dart';
+import '../widgets/modal.dart';
+import '../widgets/reminderView.dart';
 import 'in.pages/forward_to.dart';
+import 'in.pages/storiesViewer.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class StartPage extends StatefulWidget {
   final int? initTabIndex;
@@ -41,7 +56,7 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
-  int currentPageIndex = 4;
+  int currentPageIndex = 0;
   bool showIntroductionPages = false;
   bool _shouldRequestPermission = true;
   late PageController pageController;
@@ -52,7 +67,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     const HomePage(),
     const MessagesPage(),
     const AddPage(),
-    const StoriesPage(),
+    const storiespage.StoriesPage(),
     ProfilePage(uid: FirebaseAuth.instance.currentUser!.uid, showBackButton: false),
   ];
 
@@ -60,66 +75,317 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
   late StreamSubscription _intentDataStreamSubscription;
   List<SharedMediaFile> _sharedFiles = [];
   String _sharedText = '';
+  //
+  late Stream<usermodel.User> streamCurrentUser;
+  late StreamSubscription<usermodel.User> streamCurrentUserSubscription;
+  usermodel.User? currentUser;
+  List<String> currentUserFollowings = [];
+
+  late StreamSubscription<String?> streamNotificationSubscription;
 
   listenNotification() {
-    NotificationApi.onNotification.stream.listen((payload) {
-      log('Payload: ${payload ?? ''}');
+    streamNotificationSubscription = NotificationApi.onNotification.stream.listen((payloadReceived) async {
+      String payload = payloadReceived ?? '';
+      log('Payload: $payload');
+
+      // CELEBRATIONS CASE
+      if (payload.contains('celebration')) {
+        // String payloadCelebrationId = payload.split(':').last;
+
+        // ...
+
+      }
+
+      // EVENTS CASE
+      if (payload.contains('event')) {
+        String payloadEventId = payload.split(':').last;
+        log('EventViewer with: $payloadEventId');
+        showFullPageLoader(context: context);
+
+        // Show EventView Modal
+        Navigator.pop(context);
+        showModalBottomSheet(
+          enableDrag: true,
+          isScrollControlled: true,
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: ((context) => Modal(
+                minHeightSize: MediaQuery.of(context).size.height / 1.4,
+                maxHeightSize: MediaQuery.of(context).size.height,
+                child: EventView(eventId: payloadEventId),
+              )),
+        );
+      }
+
+      // REMINDERS CASE
+      if (payload.contains('reminder')) {
+        String payloadReminderId = payload.split(':').last;
+        log('ReminderViewer with: $payloadReminderId');
+        showFullPageLoader(context: context);
+
+        // Show ReminderView Modal
+        Navigator.pop(context);
+        showModalBottomSheet(
+          enableDrag: true,
+          isScrollControlled: true,
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: ((context) => Scaffold(
+                backgroundColor: Colors.transparent,
+                body: Modal(
+                  child: ReminderView(reminderId: payloadReminderId),
+                ),
+              )),
+        );
+      }
+
+      // MESSAGES CASE
+      if (payload.contains('inbox')) {
+        String payloadUserId = payload.split(':').last;
+        log('Inbox with: $payloadUserId');
+        showFullPageLoader(context: context);
+        // Redirect to the InboxPage
+
+        Navigator.pop(context);
+        context.pushTransparentRoute(InboxPage(
+          userReceiverId: payloadUserId,
+        ));
+      }
+
+      // STORIES CASE
+      if (payload.contains('storiespage')) {
+        String payloadUserId = payload.split(':').last;
+        log('Show Stories of: $payloadUserId');
+
+        // Sort [UserGet] Stories
+        showFullPageLoader(context: context);
+        usermodel.User? userGet = await FirestoreMethods.getUser(payloadUserId);
+        if (userGet != null) {
+          List<Story> userGetStories =
+              await FirestoreMethods.getNonExpiredStoriesByUserPosterIdInList([userGet.id]).first;
+
+          userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+          userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          if (userGetStories.isNotEmpty) {
+            // Build [UserGet] StoriesHandler
+            StoriesHandler userStoriesHandler = StoriesHandler(
+              origin: 'userStories',
+              posterId: userGet.id,
+              avatarPath: userGet.profilePicture,
+              title: userGet.name,
+              lastStoryDateTime: getLastStoryOfStoriesList(userGetStories).createdAt,
+              stories: userGetStories,
+            );
+
+            // Story Page View
+            // ignore: use_build_context_synchronously
+            Navigator.pop(context);
+            // ignore: use_build_context_synchronously
+            context.pushTransparentRoute(StoriesViewer(
+              storiesHandlerList: [userStoriesHandler],
+              indexInStoriesHandlerList: 0,
+            ));
+          } else {
+            // ignore: use_build_context_synchronously
+            Navigator.pop(context);
+          }
+        } else {
+          // ignore: use_build_context_synchronously
+          // Navigator.pop(context);
+        }
+      }
     });
   }
 
-  Future listenToIncomingMessages() async {
-    // Get Current Active Page
-    String currentActivePage = UserSimplePreferences.getCurrentActivePageHandler() ?? '';
-    log('currentActivePage: $currentActivePage');
+  Future initAllCelebrationsAndReminders() async {
+    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-    // DON'T SHOW INCOMING MESSAGE NOTIFICATIONS WHEN MESSAGEPAGE IS ACTIVE
-    if (currentActivePage != 'MessagesPage') {
-      // Listen to Incoming Messages
-      FirebaseFirestore.instance.collection('messages').snapshots().listen((event) async {
-        // Remove unexistent messages
-        event.docChanges.where((change) {
-          return change.doc.exists;
-        });
-        List<Message> receivedMessagesList =
-            event.docChanges.map((change) => Message.fromJson(change.doc.data()!)).toList();
+    // Build Celebrations
+    List<Celebration> allYearlyCelebrations = [];
+    usermodel.User? currentUser = await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
 
-        // Sort Received Messages
-        receivedMessagesList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        // Get Last Message
-        Message lastMessage = receivedMessagesList.first;
+    // Add Common Celebrations
+    if (currentUser != null) {
+      // Happy New Year
+      Celebration happyNewYear = Celebration(
+          title: appName,
+          description: '🎉 Bonne année, de la part de $appName 🎈🎊',
+          type: 'happynewyear',
+          id: 'happynewyear',
+          userPoster: currentUser,
+          dateTime: DateTime(now.year, 1, 1));
 
-        // Trigger Notification for that message
-        // Get Current User | + Infos, settings
-        usermodel.User? currentUser = await FirestoreMethods.getUser(FirebaseAuth.instance.currentUser!.uid);
+      // Merry Christmas
+      Celebration merryChristmas = Celebration(
+          title: appName,
+          description: '🎉 Joyeux Noël, de la part de $appName 🎈🎄',
+          type: 'merrychristmas',
+          id: 'merrychristmas',
+          userPoster: currentUser,
+          dateTime: DateTime(now.year, 12, 25));
 
-        // Filter Message received
-        if (currentUser != null && currentUser.settingShowMessagesNotifications == true) {
-          // Get User Sender Name
-          usermodel.User? userSender = await FirestoreMethods.getUser(lastMessage.senderId);
+      allYearlyCelebrations.addAll([happyNewYear, merryChristmas]);
+      log('Celebration [With Commons]: $allYearlyCelebrations');
 
-          if (userSender != null &&
-              lastMessage.status == 1 &&
-              lastMessage.receiverId == FirebaseAuth.instance.currentUser!.uid) {
-            // SenderUser is not [ME]
+      // Get all User Birthdays
+      List<String> allConcernedUsersIds = [];
 
-            String payload = 'inbox:${lastMessage.senderId}';
-            String largeIconPath = await getMessageNotificationLargeIconPath(
-                filename: '${userSender.id}.png', url: userSender.profilePicture, type: 'thumbnail');
+      allConcernedUsersIds.add(currentUser.id);
+
+      if (currentUser.followings != null && currentUser.followings!.isNotEmpty) {
+        List<String> currentUserFollowings = currentUser.followings!.map((id) => id.toString()).toList();
+        allConcernedUsersIds.addAll(currentUserFollowings);
+        log('currentUserFollowings: $currentUserFollowings');
+      }
+
+      log('Trigger Celebration of: $currentUserFollowings');
+
+      // Get Users data
+      List<usermodel.User> allConcernedUsers = [];
+      if (allConcernedUsersIds.isNotEmpty) {
+        allConcernedUsers = await FirestoreMethods.getUserByIdInList(allConcernedUsersIds).first;
+      }
+
+      // Users birthdays --> to Celebrations
+      if (allConcernedUsers.isNotEmpty) {
+        for (usermodel.User user in allConcernedUsers) {
+          Celebration userBirthday = Celebration(
+            id: user.id,
+            title: FirebaseAuth.instance.currentUser!.uid == user.id ? 'Aujourd\'hui c\'est votre jour 🤩' : user.name,
+            description: FirebaseAuth.instance.currentUser!.uid == user.id
+                ? '🎉 Joyeux anniversaire ${user.name} 🎈🎁 de la part de $appName'
+                : 'C\'est l\'anniversaire de ${user.name}\n▶ Envoyez lui un message 💬 ou un cadeau 🎁',
+            type: 'birthday',
+            userPoster: user,
+            dateTime: user.birthday,
+          );
+          //
+          allYearlyCelebrations.add(userBirthday);
+        }
+      }
+
+      //
+      log('########### LOG CELEBRATIONS ###########\n${allYearlyCelebrations.map((c) => '${c.toJson()}\n')}');
+
+      // UserSimplePreferences.setNotificationList([]);
+      List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
+      log('########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
+
+      // Create local_notifications for Celebrations
+      for (Celebration celebration in allYearlyCelebrations) {
+        // Check if Celebration already exist
+        String notifMatch = '${FirebaseAuth.instance.currentUser!.uid}:celebration:${celebration.id}';
+
+        if (notificationList.isEmpty || !notificationList.any((element) => element.startsWith(notifMatch))) {
+          // GENERATE NOTIFICATION
+          List result = [true, generateNotificationToUse(notifMatch)];
+
+          log('Engine: $result');
+
+          if (result[0] == true) {
+            // NEW [SCHEDULED] NOTIFICATION
+
+            String payload = 'celebration:${celebration.id}';
+            String largeIconPath = await getNotificationLargeIconPath(
+              url: '',
+              type: 'celebration',
+              uid: '',
+            );
+
             log('Payload from: $payload && largeIconPath: $largeIconPath');
-            log('Body is: ${getMessageNotificationBody(lastMessage)}');
-            NotificationApi.showSimpleNotification(
-              id: userSender.id.hashCode,
-              title: userSender.name,
-              body: getMessageNotificationBody(lastMessage),
+            // tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+            int randomHour = getRandomNumberBetween(7, 10);
+            int randomMinute = getRandomNumberBetween(0, 59);
+
+            tz.TZDateTime scheduledDate = TZDateTime(
+              tz.local,
+              celebration.dateTime.year,
+              celebration.dateTime.month,
+              celebration.dateTime.day,
+              now.hour,
+              now.minute,
+              randomHour,
+              randomMinute,
+            );
+
+            NotificationApi.showScheduledNotification(
+              id: int.parse((result[1] as String).split(':').last),
+              title: celebration.title,
+              body: celebration.description,
               payload: payload,
-              channel: notificationsChannelList[0],
+              channel: notificationsChannelList[2],
               largeIconPath: largeIconPath,
+              tzDateTime: scheduleDaily(scheduledDate),
+              dateTimeComponents: localnotification.DateTimeComponents.dateAndTime,
             );
           }
-
-          //
+        } else {
+          log('[Already exist] Skip: $notifMatch');
         }
-      });
+      }
+
+      //
+      // PROCESS WITH USER REMINDERS
+      //
+      List<Reminder> userReminders = await FirestoreMethods.getUserReminders(currentUser.id).first;
+      log('########### LOG USER REMINDERS ###########\n${userReminders.map((r) => '${r.toJson()}\n')}');
+
+      // Create local_notifications for Reminders
+      for (Reminder reminder in userReminders) {
+        // Check if Reminder already exist
+        String notifMatch = '${FirebaseAuth.instance.currentUser!.uid}:reminder:${reminder.reminderId}';
+
+        if (notificationList.isEmpty || !notificationList.any((element) => element.startsWith(notifMatch))) {
+          // GENERATE NOTIFICATION
+          List result = [true, generateNotificationToUse(notifMatch)];
+
+          log('Engine: $result');
+
+          if (result[0] == true) {
+            // NEW [SCHEDULED] NOTIFICATION
+
+            String payload = 'reminder:${reminder.reminderId}';
+            String largeIconPath = await getNotificationLargeIconPath(
+              url: '',
+              type: 'reminder',
+              uid: '',
+            );
+
+            // Get Attached Event
+            Event? eventAttached;
+            if (reminder.eventId.isNotEmpty) {
+              eventAttached = await FirestoreMethods.getEventByIdAsFuture(reminder.eventId);
+            }
+            String reminderBody = await getReminderNotificationBody(reminder, eventAttached);
+
+            log('Payload from: $payload && largeIconPath: $largeIconPath');
+            // tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+
+            NotificationApi.showScheduledNotification(
+              id: int.parse((result[1] as String).split(':').last),
+              title: reminder.title,
+              body: reminderBody,
+              payload: payload,
+              channel: notificationsChannelList[2],
+              largeIconPath: largeIconPath,
+              tzDateTime: scheduleDaily(
+                TZDateTime(
+                  tz.local,
+                  reminder.remindAt.year,
+                  reminder.remindAt.month,
+                  reminder.remindAt.day,
+                  reminder.remindAt.hour,
+                  reminder.remindAt.minute,
+                ),
+              ),
+              dateTimeComponents: getDateTimeComponentsFromRecurrence(reminder.recurrence),
+            );
+          }
+        } else {
+          log('[Already exist] Skip: $notifMatch');
+        }
+      }
     }
   }
 
@@ -129,15 +395,26 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
     super.initState();
     //
-    wishHappyBirthday();
-
-    listenToIncomingMessages();
+    setSuitableStatusBarColor(Colors.white);
     //
-    NotificationApi.init();
+
+    //
+    wishHappyBirthday();
+    //
+    streamCurrentUser = FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid);
+    streamCurrentUserSubscription = streamCurrentUser.asBroadcastStream().listen((event) {
+      //  Assign values
+      currentUser = event;
+      currentUserFollowings = event.followings?.map((userId) => userId.toString()).toList() ?? [];
+    });
+    //
+    FlutterBackgroundService().invoke(BackgroundTaskHandler.initBackgroundTasks);
+    //
+    NotificationApi.init(initScheduled: true);
     listenNotification();
 
     //
-    pageController = PageController(initialPage: widget.initTabIndex ?? 4);
+    pageController = PageController(initialPage: widget.initTabIndex ?? 0);
     widget.initTabIndex != null ? navigateThroughTab(widget.initTabIndex!) : null;
     //
     WidgetsBinding.instance.addObserver(this);
@@ -172,6 +449,10 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
   void dispose() {
     //
     super.dispose();
+    //
+    streamCurrentUserSubscription.cancel();
+    streamNotificationSubscription.cancel();
+    //
 
     _intentDataStreamSubscription.cancel();
     WidgetsBinding.instance.removeObserver(this);
@@ -207,7 +488,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
           // Send 'THANK YOU AS FEEDBACK'
 
           // Modeling a new feedback model
-          Map<String, Object?> feedbackToSend = FeedBack(
+          Map<String, dynamic> feedbackToSend = FeedBack(
             feedbackId: '',
             uid: FirebaseAuth.instance.currentUser!.uid,
             name: currentUser.name,
@@ -351,10 +632,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
       }
     }
 
-    if (await Permission.storage.request().isGranted &&
-        await Permission.phone.request().isGranted &&
-        await Permission.sms.request().isGranted &&
-        await Permission.microphone.request().isGranted) {
+    if (await Permission.storage.request().isGranted && await Permission.phone.request().isGranted) {
       try {
         List directories = await getDirectories();
         // Stories
@@ -376,9 +654,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
       _shouldRequestPermission = false;
     } else if (await Permission.storage.request().isPermanentlyDenied ||
-        await Permission.phone.request().isPermanentlyDenied ||
-        await Permission.sms.request().isPermanentlyDenied ||
-        await Permission.microphone.request().isPermanentlyDenied) {
+        await Permission.phone.request().isPermanentlyDenied) {
       _shouldRequestPermission = true;
       Navigator.pop(context);
       await openAppSettings();
@@ -460,6 +736,8 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
       currentPageIndex = index;
       pageController.jumpToPage(index);
     });
+
+    setCurrentActivePageFromIndex(index: index);
   }
 
   @override

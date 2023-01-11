@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Question {
   final String questionId;
   final String uid;
@@ -15,12 +17,12 @@ class Question {
 
   // ToJson
 
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         'questionId': questionId,
         'uid': uid,
         'name': name,
         'content': content,
-        'createdAt': createdAt.toIso8601String(),
+        'createdAt': createdAt,
       };
 
   // From Json
@@ -30,8 +32,8 @@ class Question {
         name: json['name'] ?? '',
         content: json['content'] ?? '',
         //
-        createdAt: json['createdAt'] != null
-            ? DateTime.parse(json['createdAt'])
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
             : DateTime.now(),
         //
       );

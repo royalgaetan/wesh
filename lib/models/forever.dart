@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // FIELDS
+
 class ForeverFields {
   static final List<String> values = [
     'foreverId',
@@ -36,12 +39,12 @@ class Forever {
   });
 
   // toJson
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         ForeverFields.title: title,
         ForeverFields.foreverId: foreverId,
         ForeverFields.uid: uid,
-        ForeverFields.createdAt: createdAt.toIso8601String(),
-        ForeverFields.modifiedAt: modifiedAt.toIso8601String(),
+        ForeverFields.createdAt: createdAt,
+        ForeverFields.modifiedAt: modifiedAt,
         ForeverFields.stories: stories,
       };
 
@@ -51,9 +54,16 @@ class Forever {
         foreverId: json[ForeverFields.foreverId] ?? '',
         uid: json[ForeverFields.uid] ?? '',
         //
-        createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime(0),
         //
-        modifiedAt: json['modifiedAt'] != null ? DateTime.parse(json['modifiedAt']) : DateTime(0),
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
+
+        //
+        modifiedAt: json['modifiedAt'] != null && json['modifiedAt'] != ''
+            ? (json['modifiedAt'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
+        //
         //
         stories: json[ForeverFields.stories] ?? [],
       );

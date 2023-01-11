@@ -7,11 +7,11 @@ import 'dart:ui';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:flutter_isolate/flutter_isolate.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -23,6 +23,7 @@ import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/providers/user.provider.dart';
 import 'package:wesh/services/background.service.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
+import 'package:wesh/widgets/buildWidgets.dart';
 import 'pages/login.dart';
 import 'utils/constants.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -31,13 +32,13 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
 
-  /// OPTIONAL, using custom notification channel id
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'my_foreground', // id
-    'MY FOREGROUND SERVICE', // title
-    description: 'This channel is used for important notifications.', // description
-    importance: Importance.low, // importance must be at low or higher level
-  );
+  // /// OPTIONAL, using custom notification channel id
+  // const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  //   'my_foreground', // id
+  //   'Service d\'arrière-plan', // title
+  //   description: 'This channel is used for important notifications.', // description
+  //   importance: Importance.low, // importance must be at low or higher level
+  // );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -49,9 +50,9 @@ Future<void> initializeBackgroundService() async {
     );
   }
 
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
+  // await flutterLocalNotificationsPlugin
+  //     .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+  //     ?.createNotificationChannel(channel);
 
   await service.configure(
     androidConfiguration: AndroidConfiguration(
@@ -60,10 +61,9 @@ Future<void> initializeBackgroundService() async {
 
       // auto start service
       autoStart: true,
-      isForegroundMode: true,
-
-      // notificationChannelId: 'my_foreground',
-      // initialNotificationTitle: 'AWESOME SERVICE',
+      isForegroundMode: false,
+      // notificationChannelId: 'Service d\'arrière-plan',
+      // initialNotificationTitle: 'En attente de nouveaux événements, messages, etc.',
       // initialNotificationContent: 'Initializing',
       // foregroundServiceNotificationId: 888,
     ),
@@ -105,19 +105,13 @@ void onStart(ServiceInstance service) async {
 
   if (service is AndroidServiceInstance) {
     //
-    service.on(BackgroundTaskHandler.updateMessagesToStatus2Key).listen((event) async {
-      List messagesIds = event?['messages'] ?? [];
-      // final isolate = await FlutterIsolate.spawn(performUpdateMessagesToStatus2inIsolate, {'messages': messagesIds});
-      // isolate.kill();
+
+    service.on(BackgroundTaskHandler.initBackgroundTasks).listen((event) async {
+      await FlutterIsolate.spawn(BackgroundTaskHandler.listenServerChanges(), {});
+
       service.setAsBackgroundService();
     });
     //
-    service.on(BackgroundTaskHandler.updateMessagesToStatus3Key).listen((event) async {
-      List messagesIds = event?['messages'] ?? [];
-      // final isolate = await FlutterIsolate.spawn(performUpdateMessagesToStatus3inIsolate, {'messages': messagesIds});
-      // isolate.kill();
-      service.setAsBackgroundService();
-    });
 
     service.on('setAsBackground').listen((event) {
       service.setAsBackgroundService();
@@ -137,21 +131,11 @@ class TestClass {
   }
 }
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-
-  debugPrint("Handling a background message: ${message.messageId}");
-}
-
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await UserSimplePreferences.init();
 
@@ -161,7 +145,6 @@ void main() async {
       debug: true, // optional: set to false to disable printing logs to console (default: true)
       ignoreSsl: true // option: set to false to disable working with http links (default: false)
       );
-
   FlutterDownloader.registerCallback(TestClass.downloadCallback);
 
   await initializeBackgroundService();
@@ -169,6 +152,38 @@ void main() async {
   //   webRecaptchaSiteKey:
   //       'recaptcha-v3-site-key', // <-- only needed for reCAPTCHA v3
   // );
+
+  // Build Error Widget
+  ErrorWidget.builder = (details) {
+    bool inDebug = false;
+    assert(() {
+      inDebug = true;
+      return true;
+    }());
+
+    if (inDebug) {
+      return Center(
+        child: Text(
+          'Une erreur s\'est produite !\n${details.exception}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: kSecondColor,
+          ),
+        ),
+      );
+    }
+
+    return FittedBox(
+      child: Container(
+        margin: const EdgeInsets.all(40),
+        height: 90,
+        width: 200,
+        child: const buildErrorWidget(
+          onWhiteBackground: true,
+        ),
+      ),
+    );
+  };
 
   runApp(MultiProvider(
     providers: [
@@ -204,6 +219,10 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+
     return ScreenUtilInit(
         designSize: const Size(320, 568),
         minTextAdapt: true,
@@ -219,6 +238,7 @@ class _AppState extends State<App> {
               ...GlobalMaterialLocalizations.delegates,
             ],
             theme: ThemeData.light().copyWith(
+              primaryColor: const Color(0xFF242526),
               appBarTheme: AppBarTheme(
                 iconTheme: IconThemeData(
                   size: 22.sp,
@@ -289,58 +309,52 @@ class _AppState extends State<App> {
               ),
             ),
             debugShowCheckedModeBanner: false,
-            home: AnnotatedRegion<SystemUiOverlayStyle>(
-              // ignore: prefer_const_constructors
-              value: SystemUiOverlayStyle(
-                statusBarBrightness: Brightness.dark,
-              ),
-              child: SafeArea(
-                child: StreamBuilder(
-                  stream: FirebaseAuth.instance.authStateChanges(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Scaffold(
-                        backgroundColor: Colors.white,
-                        body: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              CircularProgressIndicator(
-                                color: kSecondColor,
-                              ),
-                              SizedBox(
-                                height: 20,
-                              ),
-                              Text(
-                                'Chargement...',
-                                style: TextStyle(color: Colors.black45),
-                              ),
-                            ],
-                          ),
+            home: SafeArea(
+              child: StreamBuilder(
+                stream: FirebaseAuth.instance.authStateChanges(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Scaffold(
+                      backgroundColor: Colors.white,
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: const [
+                            CircularProgressIndicator(
+                              color: kSecondColor,
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Text(
+                              'Chargement...',
+                              style: TextStyle(color: Colors.black45),
+                            ),
+                          ],
                         ),
-                      );
-                    }
-                    if (snapshot.hasData) {
-                      return StartPage(context: context);
-                    } else if (snapshot.hasError) {
-                      return Scaffold(
-                        appBar: MorphingAppBar(
-                          heroTag: 'mainPageAppBar',
-                        ),
-                        body: const Center(
-                          child: Text("Une erreur s'est produite"),
-                        ),
-                      );
-                    } else {
-                      return const LoginPage(
-                        redirectToAddEmailandPasswordPage: false,
-                        redirectToAddEmailPage: false,
-                        redirectToUpdatePasswordPage: false,
-                      );
-                    }
-                  },
-                ),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    return StartPage(context: context);
+                  } else if (snapshot.hasError) {
+                    return Scaffold(
+                      appBar: MorphingAppBar(
+                        heroTag: 'mainPageAppBar',
+                      ),
+                      body: const Center(
+                        child: Text("Une erreur s'est produite"),
+                      ),
+                    );
+                  } else {
+                    return const LoginPage(
+                      redirectToAddEmailandPasswordPage: false,
+                      redirectToAddEmailPage: false,
+                      redirectToUpdatePasswordPage: false,
+                    );
+                  }
+                },
               ),
             ),
           );

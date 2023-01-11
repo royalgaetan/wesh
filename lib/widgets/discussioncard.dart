@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,8 @@ import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 
+import '../models/message.dart';
+
 class DiscussionCard extends StatefulWidget {
   final Discussion discussion;
 
@@ -24,7 +27,10 @@ class DiscussionCard extends StatefulWidget {
   State<DiscussionCard> createState() => _DiscussionCardState();
 }
 
-class _DiscussionCardState extends State<DiscussionCard> {
+class _DiscussionCardState extends State<DiscussionCard> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => false;
+
   //
   bool isConnected = false;
   StreamSubscription? internetSubscription;
@@ -42,9 +48,15 @@ class _DiscussionCardState extends State<DiscussionCard> {
       debugPrint('isConnected: $isConnected');
     });
     //
+    updateMessagesAsReadForThisDiscussion();
+  }
 
-    //
-    FirestoreMethods.updateMessagesToStatus2(widget.discussion.messages.map((m) => m as String).toList());
+  updateMessagesAsReadForThisDiscussion() async {
+    // Set All Discussion'Messages as Read
+    List<Message>? discussionMessages =
+        await FirestoreMethods.getMessagesByDiscussionId(widget.discussion.discussionId).first;
+    log('Mark all as read: ${widget.discussion.discussionId}');
+    FirestoreMethods.updateMessagesAsRead(discussionMessages ?? []);
   }
 
   @override
@@ -57,6 +69,9 @@ class _DiscussionCardState extends State<DiscussionCard> {
 
   @override
   Widget build(BuildContext context) {
+    //Notice the super-call here.
+    super.build(context);
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -102,6 +117,7 @@ class _DiscussionCardState extends State<DiscussionCard> {
                               userId != FirebaseAuth.instance.currentUser!.uid && !(userId as String).contains('_'))
                           .toList()
                           .first,
+                      hasShimmerLoader: true,
                     ),
                     buildNumberOfUnreadMessages(discussion: widget.discussion),
                   ],
@@ -167,13 +183,18 @@ class _DiscussionCardState extends State<DiscussionCard> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Shimmer.fromColors(
-                            baseColor: Colors.grey.shade200,
-                            highlightColor: Colors.grey.shade400,
-                            child: Container(
-                                margin: const EdgeInsets.only(bottom: 2),
-                                width: 100,
-                                height: 12,
-                                color: Colors.grey.shade400)),
+                          baseColor: Colors.grey.shade200,
+                          highlightColor: Colors.grey.shade400,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade400,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            margin: const EdgeInsets.only(bottom: 2),
+                            width: 70,
+                            height: 10,
+                          ),
+                        ),
                       ],
                     );
                   },

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // FIELDS
 class MessageFields {
   static final List<String> values = [
@@ -10,6 +12,8 @@ class MessageFields {
     'createdAt',
     'status',
     'deleteFor',
+    'read',
+    'seen',
     'type',
     'data',
     'thumbnail',
@@ -34,6 +38,8 @@ class MessageFields {
   static const String createdAt = 'createdAt';
   static const String status = 'status';
   static const String deleteFor = 'deleteFor';
+  static const String read = 'read';
+  static const String seen = 'seen';
   static const String type = 'type';
   static const String data = 'data';
   static const String thumbnail = 'thumbnail';
@@ -60,6 +66,8 @@ class Message {
   final int status;
   final String type;
   final List deleteFor;
+  final List read;
+  final List seen;
   final String data;
   final String thumbnail;
   final String filename;
@@ -84,6 +92,8 @@ class Message {
     required this.type,
     required this.data,
     required this.deleteFor,
+    required this.read,
+    required this.seen,
     required this.caption,
     required this.eventId,
     required this.thumbnail,
@@ -107,7 +117,7 @@ class Message {
         MessageFields.storyId: storyId,
         MessageFields.senderId: senderId,
         MessageFields.receiverId: receiverId,
-        MessageFields.createdAt: createdAt.toIso8601String(),
+        MessageFields.createdAt: createdAt,
         MessageFields.type: type,
         MessageFields.data: data,
         MessageFields.caption: caption,
@@ -115,6 +125,8 @@ class Message {
         MessageFields.filename: filename,
         MessageFields.status: status,
         MessageFields.deleteFor: deleteFor,
+        MessageFields.read: read,
+        MessageFields.seen: seen,
         MessageFields.paymentId: paymentId,
         MessageFields.messageToReplyId: messageToReplyId,
         MessageFields.messageToReplyType: messageToReplyType,
@@ -140,9 +152,13 @@ class Message {
         thumbnail: json['thumbnail'] ?? '',
         filename: json['filename'] ?? '',
         deleteFor: json['deleteFor'] ?? [],
+        read: json['read'] ?? [],
+        seen: json['seen'] ?? [],
         //
-        createdAt:
-            json['createdAt'] != null && json['createdAt'] != '' ? DateTime.parse(json['createdAt']) : DateTime.now(),
+
+        createdAt: json['createdAt'] != null && json['createdAt'] != ''
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
+            : DateTime.now(),
         //
         paymentId: json['paymentId'] ?? '',
         //

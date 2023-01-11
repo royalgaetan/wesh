@@ -1,10 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import '../../models/question.dart';
-import '../../providers/user.provider.dart';
 import '../../services/firestore.methods.dart';
 import '../../services/internet_connection_checker.dart';
 import '../../utils/constants.dart';
@@ -43,7 +42,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
     showFullPageLoader(context: context);
 
     // Modeling a question model
-    Map<String, Object?> questionToSend = Question(
+    Map<String, dynamic> questionToSend = Question(
       questionId: '',
       uid: currentUser.value!.id,
       name: currentUser.value!.name,
@@ -103,7 +102,7 @@ class _AskUsQuestionPageState extends State<AskUsQuestionPage> {
                 )
               : Container(),
           StreamBuilder<usermodel.User?>(
-              stream: Provider.of<UserProvider>(context).getCurrentUser(),
+              stream: FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid),
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data != null) {
                   // Update current user

@@ -10,7 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:uuid/uuid.dart';
 import '../models/story.dart';
 import '../pages/settings.pages/bug_report_page.dart';
 import '../services/dynamiclink.service.dart';
@@ -60,7 +59,7 @@ class _StoryAllViewerModalState extends State<StoryMoreOptionsModal> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Delete story
+            // Bug report
 
             widget.isSuppressionBtnAllowed && widget.story.uid == FirebaseAuth.instance.currentUser!.uid
                 ? Expanded(

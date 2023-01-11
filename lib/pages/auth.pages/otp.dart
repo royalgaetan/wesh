@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -19,8 +22,11 @@ class OTPverificationPage extends StatefulWidget {
 
 class _OTPverificationPageState extends State<OTPverificationPage> {
   String phoneNumber = '';
+  bool canRefresh = false;
+  bool isLoading = true;
+  Timer? checker;
   // late String _verificationCode;
-  // final TextEditingController _pinPutController = TextEditingController();
+  final TextEditingController pinPutController = TextEditingController();
 
   @override
   void initState() {
@@ -29,14 +35,47 @@ class _OTPverificationPageState extends State<OTPverificationPage> {
 
     phoneNumber = UserSimplePreferences.getPhone()!;
     _verifyPhone(phoneNumber);
+    //
+  }
+
+  checkVerificationCode() {
+    String verifCode = UserSimplePreferences.getPhoneCodeVerification() ?? '';
+    log('Waiting for verifcode...$verifCode');
+    if (verifCode.isNotEmpty) {
+      log('Verifcode: $verifCode');
+
+      setState(
+        () {
+          isLoading = false;
+          canRefresh = true;
+        },
+      );
+      checker != null ? checker!.cancel() : null;
+    }
   }
 
   _verifyPhone(kphoneNumber) async {
     try {
-      await AuthMethods().sendPhoneVerificationCode(phoneNumber);
+      log('Sending phone verification to: $kphoneNumber');
+      //
+      await AuthMethods.sendPhoneVerificationCode(kphoneNumber);
+
+      log('Can continue with $kphoneNumber');
+
+      // START TIMER
+      checker = Timer.periodic(const Duration(seconds: 3), (_) {
+        checkVerificationCode();
+      });
     } catch (e) {
-      showSnackbar(context, 'Une erreur s\'est produite', null);
+      log('Error while sending phone verification code: $e');
+      showSnackbar(context, 'Une erreur s\'est produite lors de la vérification', null);
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    checker != null ? checker!.cancel() : null;
   }
 
   @override
@@ -59,151 +98,198 @@ class _OTPverificationPageState extends State<OTPverificationPage> {
               color: Colors.black,
             ),
           ),
+          actions: [
+            IconButton(
+              splashRadius: 0.06.sw,
+              onPressed: !canRefresh && isLoading
+                  ? null
+                  : () {
+                      //
+                      setState(() {
+                        canRefresh = false;
+                        isLoading = true;
+                      });
+
+                      pinPutController.clear();
+                      phoneNumber = UserSimplePreferences.getPhone()!;
+                      _verifyPhone(phoneNumber);
+
+                      log('isLoading: $isLoading\ncanRefresh: $canRefresh');
+                    },
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: canRefresh && !isLoading ? Colors.black : Colors.black54,
+              ),
+            ),
+          ],
         ),
       ),
       backgroundColor: Colors.white,
       extendBodyBehindAppBar: true,
       body: Center(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
-          shrinkWrap: true,
-          reverse: true,
-          children: [
-            Text(
-              'Vérification du code',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22.sp),
-            ),
-            SizedBox(height: 0.12.sw),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                text: 'Un code de vérification a été envoyé au numéro ',
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 14.sp,
-                ),
-                children: <TextSpan>[
-                  TextSpan(text: phoneNumber, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-            SizedBox(height: 0.12.sw),
-            PinCodeTextField(
-              appContext: context,
-              length: 6,
-              obscureText: false,
-              animationType: AnimationType.scale,
-              pinTheme: PinTheme(
-                  shape: PinCodeFieldShape.underline,
-                  borderRadius: BorderRadius.circular(5),
-                  fieldHeight: 50,
-                  fieldWidth: 40,
-                  activeFillColor: kGreyColor,
-                  activeColor: Colors.black,
-                  inactiveColor: Colors.black,
-                  selectedFillColor: kGreyColor,
-                  disabledColor: Colors.white,
-                  inactiveFillColor: kGreyColor,
-                  selectedColor: kSecondColor),
-              animationDuration: const Duration(milliseconds: 180),
-              enableActiveFill: true,
-              // errorAnimationController: errorController,
-              // controller: textEditingController,
-              onCompleted: (pin) async {
-                debugPrint("Completed, the final code is: $pin");
-                debugPrint("Auth type: ${widget.authType}");
-                //
-                if (widget.authType == 'updatePhoneNumber') {
-                  bool isAllowedToContinue =
-                      await AuthMethods().linkCredentialsbyPhoneNumber(context, widget.authType, phoneNumber, pin);
-
-                  debugPrint("Update phone number [isAllowedToContinue]: $isAllowedToContinue");
-
-                  if (isAllowedToContinue) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-
-                    // Redirect to AccountSecuritySettingsPage
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                    // ignore: use_build_context_synchronously
-                    showSnackbar(context, 'Votre numéro de téléphone s\'est bien ajouté', kSuccessColor);
-                  } else {
-                    // ignore: use_build_context_synchronously
-                    Navigator.of(context).pop();
-                    // ignore: use_build_context_synchronously
-                    showSnackbar(context, 'Une erreur s\'est produite ', null);
-                  }
-                }
-
-                //
-                else if (widget.authType == 'login') {
-                  bool isAllowedToContinue =
-                      await AuthMethods().continueWithPhone(context, widget.authType, phoneNumber, pin);
-
-                  debugPrint("Login with phone number [isAllowedToContinue]: $isAllowedToContinue");
-
-                  if (isAllowedToContinue) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-
-                    // Redirect to StartPage
-                    // ignore: use_build_context_synchronously
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        SwipeablePageRoute(
-                          builder: (context) => StartPage(context: context),
+          child: !isLoading
+              ? ListView(
+                  padding: EdgeInsets.fromLTRB(0.1.sw, 0.1.sw, 0.1.sw, 0.1.sw),
+                  shrinkWrap: true,
+                  reverse: true,
+                  children: [
+                    Text(
+                      'Vérification du code',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22.sp),
+                    ),
+                    SizedBox(height: 0.12.sw),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        text: 'Un code de vérification a été envoyé au numéro ',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14.sp,
                         ),
-                        (route) => false);
-                  } else {
-                    // ignore: use_build_context_synchronously
-                    showSnackbar(context, 'Une erreur s\'est produite', null);
-                  }
-                } else if (widget.authType == 'signup') {
-                  //
-                  bool isAllowedToContinue =
-                      await AuthMethods().continueWithPhone(context, widget.authType, phoneNumber, pin);
+                        children: <TextSpan>[
+                          TextSpan(text: phoneNumber, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 0.12.sw),
+                    PinCodeTextField(
+                      // controller: pinPutController,
+                      appContext: context,
+                      length: 6,
+                      obscureText: false,
+                      animationType: AnimationType.scale,
+                      pinTheme: PinTheme(
+                          shape: PinCodeFieldShape.underline,
+                          borderRadius: BorderRadius.circular(5),
+                          fieldHeight: 50,
+                          fieldWidth: 40,
+                          activeFillColor: kGreyColor,
+                          activeColor: Colors.black,
+                          inactiveColor: Colors.black,
+                          selectedFillColor: kGreyColor,
+                          disabledColor: Colors.white,
+                          inactiveFillColor: kGreyColor,
+                          selectedColor: kSecondColor),
+                      animationDuration: const Duration(milliseconds: 180),
+                      enableActiveFill: true,
+                      // errorAnimationController: errorController,
+                      // controller: textEditingController,
+                      onCompleted: (pin) async {
+                        debugPrint("Completed, the final code is: $pin");
+                        debugPrint("Auth type: ${widget.authType}");
+                        //
+                        if (widget.authType == 'updatePhoneNumber') {
+                          bool isAllowedToContinue = await AuthMethods.linkCredentialsbyPhoneNumber(
+                              context, widget.authType, phoneNumber, pin);
 
-                  debugPrint("Sign up with phone number [isAllowedToContinue]: $isAllowedToContinue");
+                          debugPrint("Update phone number [isAllowedToContinue]: $isAllowedToContinue");
 
-                  if (isAllowedToContinue) {
-                    // IF [redirectToAddEmailandPasswordPage == true]
+                          if (isAllowedToContinue) {
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
 
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                            // Redirect to AccountSecuritySettingsPage
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            showSnackbar(context, 'Votre numéro de téléphone s\'est bien ajouté', kSuccessColor);
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            showSnackbar(context, 'Une erreur s\'est produite ', null);
+                          }
+                        }
 
-                    // Redirect to StartPage
-                    // ignore: use_build_context_synchronously
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        SwipeablePageRoute(
-                          builder: (context) => StartPage(context: context),
-                        ),
-                        (route) => false);
-                  } else {
-                    // ignore: use_build_context_synchronously
-                    showSnackbar(context, 'Une erreur s\'est produite avec votre code', null);
-                  }
-                }
-              },
-              onChanged: (value) {
-                // NONE
-              },
-              beforeTextPaste: (text) {
-                debugPrint("Allowing to paste $text");
-                //if you return true then it will show the paste confirmation dialog. Otherwise if false, then nothing will happen.
-                //but you can show anything you want here, like your pop up saying wrong paste format or etc
-                return false;
-              },
-            ),
-          ].reversed.toList(),
-        ),
-      ),
+                        //
+                        else if (widget.authType == 'login') {
+                          bool isAllowedToContinue =
+                              await AuthMethods.continueWithPhone(context, widget.authType, phoneNumber, pin);
+
+                          log("Login with phone number [isAllowedToContinue]: $isAllowedToContinue");
+
+                          if (isAllowedToContinue) {
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
+                            // Redirect to StartPage
+                            // ignore: use_build_context_synchronously
+                            Navigator.pushAndRemoveUntil(
+                                context,
+                                SwipeablePageRoute(
+                                  builder: (context) => StartPage(context: context),
+                                ),
+                                (route) => false);
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            showSnackbar(context, 'Une erreur s\'est produite', null);
+                          }
+                        } else if (widget.authType == 'signup') {
+                          //
+                          bool isAllowedToContinue =
+                              await AuthMethods.continueWithPhone(context, widget.authType, phoneNumber, pin);
+
+                          log("Sign up with phone number [isAllowedToContinue]: $isAllowedToContinue");
+
+                          if (isAllowedToContinue) {
+                            // IF [redirectToAddEmailandPasswordPage == true]
+
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
+                            // Redirect to StartPage
+                            // ignore: use_build_context_synchronously
+                            Navigator.pushReplacement(
+                              context,
+                              SwipeablePageRoute(
+                                builder: (context) => StartPage(context: context),
+                              ),
+                            );
+                          } else {
+                            log('Can\'t signup with PIN: $pin');
+                            // ignore: use_build_context_synchronously
+                            // showSnackbar(context, 'Votre code est incorrect ou n\'est plus valide. Veuillez réessayer !', null);
+                            pinPutController.clear();
+                          }
+                        }
+                      },
+                      onChanged: (value) {
+                        // NONE
+                      },
+                      beforeTextPaste: (text) {
+                        debugPrint("Allowing to paste $text");
+                        //if you return true then it will show the paste confirmation dialog. Otherwise if false, then nothing will happen.
+                        //but you can show anything you want here, like your pop up saying wrong paste format or etc
+                        return false;
+                      },
+                    ),
+                  ].reversed.toList(),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Envoi du code...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp),
+                    ),
+                    const SizedBox(height: 10),
+                    const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                )),
     );
   }
 }

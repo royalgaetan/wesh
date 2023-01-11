@@ -7,7 +7,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
-import 'package:uuid/uuid.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/services/internet_connection_checker.dart';
 import '../utils/constants.dart';
@@ -207,7 +206,7 @@ class FireStorageMethods {
       if (cancelValue == true) {
         log("Uploading Cancelled !");
         try {
-          bool valuePutFileTask = await putFileTask.cancel();
+          await putFileTask.cancel();
           // bool valuePutThumbnailFileTask = await putThumbnailFileTask.cancel();
           debugPrint('Put File Task: $putFileTask');
           // debugPrint('Put Thumbnail File Task: $valuePutThumbnailFileTask');

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -200,8 +202,8 @@ class _AddPhonePageState extends State<AddPhonePage> {
                         if (isPhoneValid) {
                           // UPDATE PHONE NUMBER
                           if (widget.isUpdatingPhoneNumber) {
-                            bool isUserExisting = await AuthMethods()
-                                .checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
+                            bool isUserExisting =
+                                await AuthMethods.checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
                             if (isUserExisting == true) {
                               // ignore: use_build_context_synchronously
                               showSnackbar(context, 'Ce numéro est déjà pris...', null);
@@ -211,7 +213,7 @@ class _AddPhonePageState extends State<AddPhonePage> {
                               Navigator.push(
                                 context,
                                 SwipeablePageRoute(
-                                  builder: (_) => OTPverificationPage(
+                                  builder: (_) => const OTPverificationPage(
                                     authType: 'updatePhoneNumber',
                                   ),
                                 ),
@@ -221,8 +223,9 @@ class _AddPhonePageState extends State<AddPhonePage> {
 
                           // LOGIN WITH PHONE NUMBER
                           else {
-                            bool isUserExisting = await AuthMethods()
-                                .checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
+                            bool isUserExisting =
+                                await AuthMethods.checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
+                            log('isUserExisting: $isUserExisting');
                             if (isUserExisting == false) {
                               // ignore: use_build_context_synchronously
                               showSnackbar(context, 'Aucun compte n\'existe avec numéro...', null);

@@ -121,7 +121,7 @@ class _NonExpiredStoriesListPageState extends State<NonExpiredStoriesListPage> {
               else {
                 // GRID : display stories in grid
                 return GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
+                  // physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   padding: const EdgeInsets.all(0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

@@ -54,6 +54,8 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
     super.initState();
     _tabController = TabController(vsync: this, length: 3, animationDuration: Duration.zero);
     _tabController.addListener(_handleTabSelection);
+
+    setSuitableStatusBarColor(Colors.black87);
   }
 
   void _handleTabSelection() {
@@ -72,6 +74,8 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
     storyTextController.dispose();
     _tabController.dispose();
     super.dispose();
+
+    setSuitableStatusBarColor(Colors.white);
   }
 
   attachEvent() async {
@@ -162,7 +166,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
         debugPrint('Processing with Text story...');
         if (storyTextController.text.isNotEmpty) {
           // Modeling a new Text Story
-          Map<String, Object?> newTextStory = Story(
+          Map<String, dynamic> newTextStory = Story(
               storyId: '',
               content: storyTextController.text,
               uid: FirebaseAuth.instance.currentUser!.uid,
@@ -207,7 +211,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
 
           if (isAllowToContinue && downloadUrl.isNotEmpty) {
             // Modeling a new Image Story
-            Map<String, Object?> newImageStory = Story(
+            Map<String, dynamic> newImageStory = Story(
                 storyId: '',
                 content: downloadUrl,
                 uid: FirebaseAuth.instance.currentUser!.uid,
@@ -285,7 +289,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
 
           if (isAllowToContinue && downloadUrl.isNotEmpty && thumbnailVideoDownloadUrl.isNotEmpty) {
             // Modeling a new Video Story
-            Map<String, Object?> newVideoStory = Story(
+            Map<String, dynamic> newVideoStory = Story(
                 storyId: '',
                 content: downloadUrl,
                 uid: FirebaseAuth.instance.currentUser!.uid,
@@ -671,6 +675,8 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                                       builder: ((context) => Scaffold(
                                             backgroundColor: Colors.transparent,
                                             body: Modal(
+                                              minHeightSize: 190,
+                                              maxHeightSize: 190,
                                               child: AddTextModal(
                                                   hintText: 'Votre description ici...',
                                                   modalTitle: 'Ajouter une description',
@@ -857,6 +863,8 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                                       builder: ((context) => Scaffold(
                                             backgroundColor: Colors.transparent,
                                             body: Modal(
+                                              minHeightSize: 190,
+                                              maxHeightSize: 190,
                                               child: AddTextModal(
                                                   hintText: 'Votre description ici...',
                                                   modalTitle: 'Ajouter une description',

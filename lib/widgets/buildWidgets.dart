@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'dart:developer';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:story_view/controller/story_controller.dart';
@@ -25,10 +25,8 @@ import '../models/message.dart';
 import '../models/stories_handler.dart';
 import '../models/story.dart';
 import '../models/user.dart' as usermodel;
-import 'package:timeago/timeago.dart' as timeago;
 import '../pages/profile.dart';
 import '../pages/settings.pages/bug_report_page.dart';
-import '../providers/user.provider.dart';
 import '../services/firestore.methods.dart';
 import '../utils/constants.dart';
 import '../utils/functions.dart';
@@ -446,7 +444,7 @@ class _buildAvatarAndUsernameState extends State<buildAvatarAndUsername> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<usermodel.User?>(
-      stream: getUserById(context, widget.uidPoster),
+      stream: FirestoreMethods.getUserById(widget.uidPoster),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Row(
@@ -532,7 +530,7 @@ class _buildAttachedEventRowState extends State<buildAttachedEventRow> {
   Widget build(BuildContext context) {
     return widget.eventId.isNotEmpty
         ? FutureBuilder(
-            future: Provider.of<UserProvider>(context).getEventByIdAsFuture(widget.eventId),
+            future: FirestoreMethods.getEventByIdAsFuture(widget.eventId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Row(
@@ -777,7 +775,7 @@ class _buildUserNameStateToDisplay extends State<buildUserNameToDisplay> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<usermodel.User?>(
-      stream: Provider.of<UserProvider>(context).getUserById(widget.userId),
+      stream: FirestoreMethods.getUserById(widget.userId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Text('...');
@@ -826,7 +824,15 @@ class _buildUserNameStateToDisplay extends State<buildUserNameToDisplay> {
                   baseColor: Colors.grey.shade200,
                   highlightColor: Colors.grey.shade400,
                   child: Container(
-                      margin: const EdgeInsets.only(bottom: 2), width: 200, height: 15, color: Colors.grey.shade400))
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    margin: const EdgeInsets.only(bottom: 2),
+                    width: 120,
+                    height: 13,
+                  ),
+                )
               : const Text('...');
         }
 
@@ -962,11 +968,10 @@ class buildNumberOfUnreadMessagesState extends State<buildNumberOfUnreadMessages
 
           // Get messages by messageById
           for (Message message in discussionMessages) {
-            // Check if message if Unread
-            if (message != null &&
-                    message.receiverId == FirebaseAuth.instance.currentUser!.uid &&
-                    message.status == 1 ||
-                message.status == 2) {
+            // Check if message if Unread && Isn't mine && Status =! 0
+            if (message.status != 0 &&
+                !message.seen.contains(FirebaseAuth.instance.currentUser!.uid) &&
+                message.receiverId == FirebaseAuth.instance.currentUser!.uid) {
               messagesList.add(message);
             }
           }
@@ -994,10 +999,18 @@ class buildNumberOfUnreadMessagesState extends State<buildNumberOfUnreadMessages
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Shimmer.fromColors(
-                  baseColor: Colors.grey.shade200,
-                  highlightColor: Colors.grey.shade400,
-                  child: Container(
-                      margin: const EdgeInsets.only(bottom: 2), width: 20, height: 15, color: Colors.grey.shade400)),
+                baseColor: Colors.grey.shade200,
+                highlightColor: Colors.grey.shade400,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.only(bottom: 2),
+                  width: 15,
+                  height: 15,
+                ),
+              ),
             ],
           );
         }
@@ -1025,6 +1038,7 @@ class _buildLastMessageInDiscussionCardState extends State<buildLastMessageInDis
   void initState() {
     //
     super.initState();
+    //
   }
 
   @override
@@ -1045,8 +1059,8 @@ class _buildLastMessageInDiscussionCardState extends State<buildLastMessageInDis
         if (snapshot.hasData && snapshot.data != null) {
           List<Message> discussionMessages = snapshot.data as List<Message>;
           Message? messageToDisplay = getLastMessageOfDiscussion(discussionMessages);
-
-          // // DISPLAY LAST MESSAGE
+          //
+          // DISPLAY LAST MESSAGE
           return messageToDisplay != null
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1055,7 +1069,7 @@ class _buildLastMessageInDiscussionCardState extends State<buildLastMessageInDis
                     messageToDisplay.status != 0 && messageToDisplay.senderId == FirebaseAuth.instance.currentUser!.uid
                         ? Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: getMessageStatusIcon(messageToDisplay.status),
+                            child: getMessageStatusIcon(messageToDisplay),
                           )
                         : Container(),
 
@@ -1114,10 +1128,18 @@ class _buildLastMessageInDiscussionCardState extends State<buildLastMessageInDis
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Shimmer.fromColors(
-                  baseColor: Colors.grey.shade200,
-                  highlightColor: Colors.grey.shade400,
-                  child: Container(
-                      margin: const EdgeInsets.only(bottom: 2), width: 100, height: 14, color: Colors.grey.shade400)),
+                baseColor: Colors.grey.shade200,
+                highlightColor: Colors.grey.shade400,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  margin: const EdgeInsets.only(bottom: 2),
+                  width: 70,
+                  height: 10,
+                ),
+              ),
             ],
           );
         }
@@ -1152,7 +1174,7 @@ class _buildUserProfilePictureState extends State<buildUserProfilePicture> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<usermodel.User?>(
-      stream: Provider.of<UserProvider>(context).getUserById(widget.userId),
+      stream: FirestoreMethods.getUserById(widget.userId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return CircleAvatar(
@@ -1173,8 +1195,9 @@ class _buildUserProfilePictureState extends State<buildUserProfilePicture> {
         }
         return Shimmer.fromColors(
           baseColor: Colors.grey.shade200,
-          highlightColor: Colors.grey.shade400,
+          highlightColor: kGreyColor,
           child: CircleAvatar(
+            backgroundColor: kGreyColor,
             radius: widget.radius ?? 0.07.sw,
           ),
         );

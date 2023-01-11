@@ -13,6 +13,7 @@ import 'package:wesh/widgets/audiowidget.dart';
 import 'package:wesh/widgets/upload_or_download_button.dart';
 import 'package:widget_size/widget_size.dart';
 import '../pages/in.pages/fileviewer.dart';
+import '../services/firestore.methods.dart';
 import '../utils/functions.dart';
 import 'buildWidgets.dart';
 import 'eventview.dart';
@@ -51,6 +52,8 @@ class _MessageCardState extends State<MessageCard> {
   @override
   void initState() {
     super.initState();
+    //
+    FirestoreMethods.updateMessagesAsSeen(widget.message);
   }
 
   @override
@@ -263,9 +266,9 @@ class _MessageCardState extends State<MessageCard> {
                                         width: 5,
                                       ),
 
-                                      // Status: doubleticks, seen, sent, pending
+                                      // Status: seen, read, sent, pending
                                       widget.message.senderId == FirebaseAuth.instance.currentUser!.uid
-                                          ? getMessageStatusIcon(widget.message.status)
+                                          ? getMessageStatusIcon(widget.message)
                                           : Container()
                                     ],
                                   ),

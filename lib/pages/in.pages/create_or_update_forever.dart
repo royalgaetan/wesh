@@ -71,7 +71,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
     // CREATE A NEW ONE
     if (widget.forever == null) {
       // Modeling an forever
-      Map<String, Object?> forever = Forever(
+      Map<String, dynamic> forever = Forever(
         foreverId: '',
         title: titleForeverController.text,
         uid: FirebaseAuth.instance.currentUser!.uid,
@@ -90,7 +90,7 @@ class _CreateOrUpdateForeverPageState extends State<CreateOrUpdateForeverPage> {
     if (widget.forever != null) {
       // Modeling a forever
 
-      Map<String, Object?> foreverToUpdate = Forever(
+      Map<String, dynamic> foreverToUpdate = Forever(
         foreverId: widget.forever!.foreverId,
         title: titleForeverController.text,
         uid: FirebaseAuth.instance.currentUser!.uid,

@@ -62,7 +62,7 @@ class Story {
   });
 
   // toJson
-  Map<String, Object?> toJson() => {
+  Map<String, dynamic> toJson() => {
         StoryFields.storyId: storyId,
         StoryFields.content: content,
         StoryFields.uid: uid,
@@ -90,10 +90,12 @@ class Story {
         eventId: json[StoryFields.eventId] ?? '',
         //
         createdAt: json['createdAt'] != null && json['createdAt'] != ''
-            ? (json['createdAt'] as Timestamp).toDate()
+            ? (json['createdAt'] as Timestamp).toDate().toLocal()
             : DateTime(0),
         //
-        endAt: json['endAt'] != null && json['endAt'] != '' ? (json['endAt'] as Timestamp).toDate() : DateTime(0),
+        endAt: json['endAt'] != null && json['endAt'] != ''
+            ? (json['endAt'] as Timestamp).toDate().toLocal()
+            : DateTime(0),
 
         //
         viewers: json[StoryFields.viewers] ?? [],

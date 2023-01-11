@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,15 +20,17 @@ class StoriesPage extends StatefulWidget {
   State<StoriesPage> createState() => _StoriesPageState();
 }
 
-class _StoriesPageState extends State<StoriesPage> {
+class _StoriesPageState extends State<StoriesPage> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   //
   List<String> currentUserFollowingsIds = [FirebaseAuth.instance.currentUser!.uid];
   usermodel.User? currentUser;
   List<usermodel.User> currentUserFollowingsUser = [];
   List<Story> storiesList = [];
   List<StoriesHandler> storiesHandlerList = [];
-
   //
+
   late Stream<usermodel.User> streamCurrentUser;
   late Stream<List<usermodel.User>> streamCurrentUserFollowingsUser;
   late Stream<List<Story>> streamStories;
@@ -41,7 +44,6 @@ class _StoriesPageState extends State<StoriesPage> {
     //
     super.initState();
     //
-
     // INIT STORIES /+ Listen to incoming events
     streamCurrentUser = FirestoreMethods.getUserById(FirebaseAuth.instance.currentUser!.uid);
     streamCurrentUserSubscription = streamCurrentUser.asBroadcastStream().listen((event) {
@@ -72,7 +74,6 @@ class _StoriesPageState extends State<StoriesPage> {
 
         storiesList = event;
         // .where((event) => !hasStoryExpired(event.endAt)).toList();
-
         initStories(
             storiesList: storiesList, currentUser: currentUser, currentUserFollowingsUser: currentUserFollowingsUser);
       });
@@ -83,7 +84,7 @@ class _StoriesPageState extends State<StoriesPage> {
       {required List<Story> storiesList,
       required usermodel.User? currentUser,
       required List<usermodel.User> currentUserFollowingsUser}) {
-    List<StoriesHandler> _storiesHandlerList = [];
+    List<StoriesHandler> storiesHandlerListLocal = [];
 
     // Manage first of all [My] Stories
     List<Story> myStories = storiesList.where((story) => story.uid == FirebaseAuth.instance.currentUser!.uid).toList();
@@ -93,7 +94,7 @@ class _StoriesPageState extends State<StoriesPage> {
       myStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
       // Build [My] StoriesHandler
-      _storiesHandlerList = [
+      storiesHandlerListLocal = [
         StoriesHandler(
           origin: 'userStories',
           posterId: FirebaseAuth.instance.currentUser!.uid,
@@ -105,7 +106,7 @@ class _StoriesPageState extends State<StoriesPage> {
       ];
     } else {
       // Build [ADD STORY] StoriesHandler
-      _storiesHandlerList = [
+      storiesHandlerListLocal = [
         StoriesHandler(
           origin: 'addStories',
           posterId: FirebaseAuth.instance.currentUser!.uid,
@@ -150,12 +151,10 @@ class _StoriesPageState extends State<StoriesPage> {
     }
 
     // Sort StoriesHandler by already seen
-
-    //
-
     setState(() {
-      storiesHandlerList =
-          _storiesHandlerList + storiesHandlerWithStoriesUnseenList + storiesHandlerWithStoriesSeenList;
+      storiesHandlerList = storiesHandlerListLocal
+        ..addAll(storiesHandlerWithStoriesUnseenList)
+        ..addAll(storiesHandlerWithStoriesSeenList);
     });
   }
 
@@ -170,6 +169,9 @@ class _StoriesPageState extends State<StoriesPage> {
 
   @override
   Widget build(BuildContext context) {
+    //Notice the super-call here.
+    super.build(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: NestedScrollView(

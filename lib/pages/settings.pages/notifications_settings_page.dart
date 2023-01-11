@@ -70,7 +70,7 @@ class _NotificationsSettingsPageState extends State<NotificationsSettingsPage> {
     // UPDATE USER
     if (widget.user != null) {
       // Modeling an user with notifications preferences
-      Map<String, Object?> userFieldToUpdate = {
+      Map<String, dynamic> userFieldToUpdate = {
         'settingShowEventsNotifications': showEventsNotifications,
         'settingShowRemindersNotifications': showRemindersNotifications,
         'settingShowStoriesNotifications': showStoriesNotifications,
