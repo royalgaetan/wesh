@@ -42,7 +42,7 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 ![App Screenshot](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
 
-## Createurs
+## Créateurs
 
 - [@royalgaetan](https://github.com/royalgaetan)
 - [@Jodel M](https://www.facebook.com/mjdubuzz.lenfantzeutre)
