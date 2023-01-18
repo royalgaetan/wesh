@@ -45,6 +45,7 @@ import '../widgets/reminderView.dart';
 import 'in.pages/forward_to.dart';
 import 'in.pages/storiesViewer.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class StartPage extends StatefulWidget {
   final int? initTabIndex;
@@ -83,6 +84,8 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
   late StreamSubscription<String?> streamNotificationSubscription;
 
+  int tripToDisplayEventViewModal = 1;
+
   listenNotification() {
     streamNotificationSubscription = NotificationApi.onNotification.stream.listen((payloadReceived) async {
       String payload = payloadReceived ?? '';
@@ -93,28 +96,40 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         // String payloadCelebrationId = payload.split(':').last;
 
         // ...
-
       }
 
       // EVENTS CASE
       if (payload.contains('event')) {
         String payloadEventId = payload.split(':').last;
+
         log('EventViewer with: $payloadEventId');
         showFullPageLoader(context: context);
 
-        // Show EventView Modal
+        //
         Navigator.pop(context);
-        showModalBottomSheet(
-          enableDrag: true,
-          isScrollControlled: true,
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: ((context) => Modal(
-                minHeightSize: MediaQuery.of(context).size.height / 1.4,
-                maxHeightSize: MediaQuery.of(context).size.height,
-                child: EventView(eventId: payloadEventId),
-              )),
-        );
+
+        if (tripToDisplayEventViewModal == 1) {
+          tripToDisplayEventViewModal++;
+          log('Trip for event modal: $tripToDisplayEventViewModal');
+
+          // Show EventView Modal
+          await showModalBottomSheet(
+            enableDrag: true,
+            isScrollControlled: true,
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: ((context) => Modal(
+                  minHeightSize: MediaQuery.of(context).size.height / 1.4,
+                  maxHeightSize: MediaQuery.of(context).size.height,
+                  child: EventView(eventId: payloadEventId),
+                )),
+          );
+          //
+
+          tripToDisplayEventViewModal = 1;
+        } else {
+          log('Can\'t show anymore !!!');
+        }
       }
 
       // REMINDERS CASE
@@ -124,6 +139,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         showFullPageLoader(context: context);
 
         // Show ReminderView Modal
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
         showModalBottomSheet(
           enableDrag: true,
@@ -146,7 +162,9 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         showFullPageLoader(context: context);
         // Redirect to the InboxPage
 
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
+        // ignore: use_build_context_synchronously
         context.pushTransparentRoute(InboxPage(
           userReceiverId: payloadUserId,
         ));
@@ -159,51 +177,61 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
         // Sort [UserGet] Stories
         showFullPageLoader(context: context);
-        usermodel.User? userGet = await FirestoreMethods.getUser(payloadUserId);
-        if (userGet != null) {
-          List<Story> userGetStories =
-              await FirestoreMethods.getNonExpiredStoriesByUserPosterIdInList([userGet.id]).first;
+        FirestoreMethods.getUser(payloadUserId).then((value) {
+          usermodel.User? userGet = value;
 
-          userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          if (userGet != null) {
+            FirestoreMethods.getNonExpiredStoriesByUserPosterIdInList([userGet.id]).first.then((value) {
+              List<Story> userGetStories = value;
 
-          userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          if (userGetStories.isNotEmpty) {
-            // Build [UserGet] StoriesHandler
-            StoriesHandler userStoriesHandler = StoriesHandler(
-              origin: 'userStories',
-              posterId: userGet.id,
-              avatarPath: userGet.profilePicture,
-              title: userGet.name,
-              lastStoryDateTime: getLastStoryOfStoriesList(userGetStories).createdAt,
-              stories: userGetStories,
-            );
+              userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-            // Story Page View
-            // ignore: use_build_context_synchronously
-            Navigator.pop(context);
-            // ignore: use_build_context_synchronously
-            context.pushTransparentRoute(StoriesViewer(
-              storiesHandlerList: [userStoriesHandler],
-              indexInStoriesHandlerList: 0,
-            ));
+              userGetStories.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+              if (userGetStories.isNotEmpty) {
+                // Build [UserGet] StoriesHandler
+                StoriesHandler userStoriesHandler = StoriesHandler(
+                  origin: 'userStories',
+                  posterId: userGet.id,
+                  avatarPath: userGet.profilePicture,
+                  title: userGet.name,
+                  lastStoryDateTime: getLastStoryOfStoriesList(userGetStories).createdAt,
+                  stories: userGetStories,
+                );
+
+                // Story Page View
+                // ignore: use_build_context_synchronously
+                Navigator.pop(context);
+                // ignore: use_build_context_synchronously
+                context.pushTransparentRoute(StoriesViewer(
+                  storiesHandlerList: [userStoriesHandler],
+                  indexInStoriesHandlerList: 0,
+                ));
+              } else {
+                // ignore: use_build_context_synchronously
+                Navigator.pop(context);
+              }
+            });
           } else {
             // ignore: use_build_context_synchronously
-            Navigator.pop(context);
+            // Navigator.pop(context);
           }
-        } else {
-          // ignore: use_build_context_synchronously
-          // Navigator.pop(context);
-        }
+        });
       }
     });
   }
 
   Future initAllCelebrationsAndReminders() async {
+    // UserSimplePreferences.setNotificationList([]);
+    tz.initializeTimeZones();
+    NotificationApi.init(initScheduled: true);
+
     tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
     // Build Celebrations
     List<Celebration> allYearlyCelebrations = [];
     usermodel.User? currentUser = await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
+
+    List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
 
     // Add Common Celebrations
     if (currentUser != null) {
@@ -239,8 +267,6 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         log('currentUserFollowings: $currentUserFollowings');
       }
 
-      log('Trigger Celebration of: $currentUserFollowings');
-
       // Get Users data
       List<usermodel.User> allConcernedUsers = [];
       if (allConcernedUsersIds.isNotEmpty) {
@@ -255,7 +281,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
             title: FirebaseAuth.instance.currentUser!.uid == user.id ? 'Aujourd\'hui c\'est votre jour 🤩' : user.name,
             description: FirebaseAuth.instance.currentUser!.uid == user.id
                 ? '🎉 Joyeux anniversaire ${user.name} 🎈🎁 de la part de $appName'
-                : 'C\'est l\'anniversaire de ${user.name}\n▶ Envoyez lui un message 💬 ou un cadeau 🎁',
+                : '🎉 C\'est l\'anniversaire de ${user.name}🎈🎁\n▶ Envoyez lui un message 💬 ou un cadeau 🎁',
             type: 'birthday',
             userPoster: user,
             dateTime: user.birthday,
@@ -265,60 +291,58 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
         }
       }
 
-      //
-      log('########### LOG CELEBRATIONS ###########\n${allYearlyCelebrations.map((c) => '${c.toJson()}\n')}');
-
-      // UserSimplePreferences.setNotificationList([]);
-      List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
-      log('########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
-
       // Create local_notifications for Celebrations
       for (Celebration celebration in allYearlyCelebrations) {
         // Check if Celebration already exist
+
         String notifMatch = '${FirebaseAuth.instance.currentUser!.uid}:celebration:${celebration.id}';
 
         if (notificationList.isEmpty || !notificationList.any((element) => element.startsWith(notifMatch))) {
           // GENERATE NOTIFICATION
-          List result = [true, generateNotificationToUse(notifMatch)];
+          try {
+            List result = [true, generateNotificationToUse(notifMatch)];
 
-          log('Engine: $result');
+            log('Engine: $result');
 
-          if (result[0] == true) {
-            // NEW [SCHEDULED] NOTIFICATION
+            if (result[0] == true) {
+              // NEW [SCHEDULED] NOTIFICATION
 
-            String payload = 'celebration:${celebration.id}';
-            String largeIconPath = await getNotificationLargeIconPath(
-              url: '',
-              type: 'celebration',
-              uid: '',
-            );
+              String payload = 'celebration:${celebration.id}';
+              String largeIconPath = await getNotificationLargeIconPath(
+                url: '',
+                type: 'celebration',
+                uid: '',
+              );
 
-            log('Payload from: $payload && largeIconPath: $largeIconPath');
-            // tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-            int randomHour = getRandomNumberBetween(7, 10);
-            int randomMinute = getRandomNumberBetween(0, 59);
+              log('Payload from: $payload && largeIconPath: $largeIconPath');
+              // tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+              int randomHour = getRandomNumberBetween(7, 10);
+              int randomMinute = getRandomNumberBetween(0, 59);
 
-            tz.TZDateTime scheduledDate = TZDateTime(
-              tz.local,
-              celebration.dateTime.year,
-              celebration.dateTime.month,
-              celebration.dateTime.day,
-              now.hour,
-              now.minute,
-              randomHour,
-              randomMinute,
-            );
+              tz.TZDateTime scheduledDate = TZDateTime(
+                tz.local,
+                celebration.dateTime.year,
+                celebration.dateTime.month,
+                celebration.dateTime.day,
+                randomHour,
+                randomMinute,
+              );
 
-            NotificationApi.showScheduledNotification(
-              id: int.parse((result[1] as String).split(':').last),
-              title: celebration.title,
-              body: celebration.description,
-              payload: payload,
-              channel: notificationsChannelList[2],
-              largeIconPath: largeIconPath,
-              tzDateTime: scheduleDaily(scheduledDate),
-              dateTimeComponents: localnotification.DateTimeComponents.dateAndTime,
-            );
+              NotificationApi.showScheduledNotification(
+                id: int.parse((result[1] as String).split(':').last),
+                title: celebration.title,
+                body: celebration.description,
+                payload: payload,
+                channel: notificationsChannelList[2],
+                largeIconPath: largeIconPath,
+                tzDateTime: scheduleDaily(
+                    recalibrateDateTimeToFuture(type: 'celebration', dateTimeToRecalibrate: scheduledDate)),
+                dateTimeComponents: localnotification.DateTimeComponents.dateAndTime,
+              );
+            }
+          } catch (e) {
+            //
+            log('Err: $e');
           }
         } else {
           log('[Already exist] Skip: $notifMatch');
@@ -338,55 +362,24 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
 
         if (notificationList.isEmpty || !notificationList.any((element) => element.startsWith(notifMatch))) {
           // GENERATE NOTIFICATION
-          List result = [true, generateNotificationToUse(notifMatch)];
-
-          log('Engine: $result');
-
-          if (result[0] == true) {
-            // NEW [SCHEDULED] NOTIFICATION
-
-            String payload = 'reminder:${reminder.reminderId}';
-            String largeIconPath = await getNotificationLargeIconPath(
-              url: '',
-              type: 'reminder',
-              uid: '',
-            );
-
-            // Get Attached Event
-            Event? eventAttached;
-            if (reminder.eventId.isNotEmpty) {
-              eventAttached = await FirestoreMethods.getEventByIdAsFuture(reminder.eventId);
-            }
-            String reminderBody = await getReminderNotificationBody(reminder, eventAttached);
-
-            log('Payload from: $payload && largeIconPath: $largeIconPath');
-            // tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-
-            NotificationApi.showScheduledNotification(
-              id: int.parse((result[1] as String).split(':').last),
-              title: reminder.title,
-              body: reminderBody,
-              payload: payload,
-              channel: notificationsChannelList[2],
-              largeIconPath: largeIconPath,
-              tzDateTime: scheduleDaily(
-                TZDateTime(
-                  tz.local,
-                  reminder.remindAt.year,
-                  reminder.remindAt.month,
-                  reminder.remindAt.day,
-                  reminder.remindAt.hour,
-                  reminder.remindAt.minute,
-                ),
-              ),
-              dateTimeComponents: getDateTimeComponentsFromRecurrence(reminder.recurrence),
-            );
+          // Create the local_notification [A Scheduled Notification one]
+          log('Creating the local_notification [A Scheduled Notification one], {after celebrations)');
+          try {
+            createOrUpdateReminderLocalNotification(action: 'create', reminderId: reminder.reminderId);
+          } catch (e) {
+            //
+            log('Err: $e');
           }
         } else {
           log('[Already exist] Skip: $notifMatch');
         }
       }
     }
+
+    //
+    log('########### LOG CELEBRATIONS ###########\n${allYearlyCelebrations.map((c) => '${c.toJson()}\n')}');
+
+    log('########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
   }
 
   @override
@@ -396,7 +389,6 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     super.initState();
     //
     setSuitableStatusBarColor(Colors.white);
-    //
 
     //
     wishHappyBirthday();
@@ -411,7 +403,10 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     FlutterBackgroundService().invoke(BackgroundTaskHandler.initBackgroundTasks);
     //
     NotificationApi.init(initScheduled: true);
+    tz.initializeTimeZones();
+
     listenNotification();
+    initAllCelebrationsAndReminders();
 
     //
     pageController = PageController(initialPage: widget.initTabIndex ?? 0);

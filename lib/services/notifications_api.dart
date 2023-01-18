@@ -4,6 +4,7 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:wesh/services/sharedpreferences.service.dart';
 
 class NotificationChannel {
   final String channelId;
@@ -27,6 +28,23 @@ class NotificationApi {
   static final notification = FlutterLocalNotificationsPlugin();
   static final onNotification = BehaviorSubject<String?>();
 
+  // Init Notification Api [Without Listen to OnNotificationTap]
+  static Future initWithoutListenToOnNotificationTap({bool initScheduled = false}) async {
+    const android = AndroidInitializationSettings('@drawable/ic_notification');
+    const ios = IOSInitializationSettings();
+    const settings = InitializationSettings(android: android, iOS: ios);
+
+    await notification.initialize(settings, onSelectNotification: (payload) async {
+      log('Has triggered : initWithoutListenToOnNotificationTap');
+    });
+
+    if (initScheduled) {
+      tz.initializeTimeZones();
+      final locationName = await FlutterNativeTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(locationName));
+    }
+  }
+
   // Init Notification Api
   static Future init({bool initScheduled = false}) async {
     const android = AndroidInitializationSettings('@drawable/ic_notification');
@@ -37,10 +55,12 @@ class NotificationApi {
     final details = await notification.getNotificationAppLaunchDetails();
 
     if (details != null && details.didNotificationLaunchApp) {
+      log('Has triggered Notification when CLOSED');
       onNotification.add(details.payload);
     }
 
     await notification.initialize(settings, onSelectNotification: (payload) async {
+      log('Has triggered Notification');
       onNotification.add(payload);
     });
 
@@ -105,17 +125,22 @@ class NotificationApi {
     required tz.TZDateTime tzDateTime,
     DateTimeComponents? dateTimeComponents,
   }) async {
-    log('#Notification [Scheduled] ID: $id');
-    notification.zonedSchedule(
-      id,
-      title,
-      body,
-      tzDateTime,
-      await notificationDetails(channel: channel, largeIconPath: largeIconPath),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-      matchDateTimeComponents: dateTimeComponents,
-    );
+    log('#Notification [Scheduled] ID: $id | $tzDateTime | $body');
+    try {
+      notification.zonedSchedule(
+        id,
+        title,
+        body,
+        tzDateTime,
+        await notificationDetails(channel: channel, largeIconPath: largeIconPath),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+        matchDateTimeComponents: dateTimeComponents,
+      );
+    } catch (e) {
+      //
+      log('Err: $e');
+    }
   }
 }

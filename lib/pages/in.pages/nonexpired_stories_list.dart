@@ -94,7 +94,7 @@ class _NonExpiredStoriesListPageState extends State<NonExpiredStoriesListPage> {
                         height: 10,
                       ),
                       Text(
-                        'Aucune story retrouvée !',
+                        'Vous n\'avez encore rien partagé aujourd\'hui !',
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: Colors.black45,

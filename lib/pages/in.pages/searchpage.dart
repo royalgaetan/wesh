@@ -52,36 +52,34 @@ class _SearchPageState extends State<SearchPage> {
               color: Colors.black,
             ),
           ),
-          title: Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(right: 10, top: 0),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: CupertinoSearchTextField(
-                controller: _searchtextcontroller,
-                onChanged: ((value) {
-                  // GET SEARCH RESULT
-                  // TO DO
-                  // Handle empty query
-                  setState(() {
-                    _searchQuery = removeDiacritics(value.trim());
-                  });
-                }),
-                onSubmitted: ((value) {
-                  // GET SEARCH RESULT
-                  // TO DO
-                  // Handle empty query
-                }),
-                padding: EdgeInsets.symmetric(horizontal: 0.03.sw, vertical: 0.03.sw),
-                prefixIcon: Container(),
-                style: TextStyle(color: Colors.black87, fontSize: 15.sp),
-                placeholderStyle: TextStyle(color: Colors.black54, fontSize: 15.sp),
-                placeholder: "Rechercher un  évènement, une personne...",
-                backgroundColor: const Color(0xFFF0F0F0),
-              ),
+          title: Container(
+            margin: const EdgeInsets.only(right: 10, top: 0),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F0F0),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: CupertinoSearchTextField(
+              controller: _searchtextcontroller,
+              onChanged: ((value) {
+                // GET SEARCH RESULT
+                // TO DO
+                // Handle empty query
+                setState(() {
+                  _searchQuery = removeDiacritics(value.trim());
+                });
+              }),
+              onSubmitted: ((value) {
+                // GET SEARCH RESULT
+                // TO DO
+                // Handle empty query
+              }),
+              padding: EdgeInsets.symmetric(horizontal: 0.03.sw, vertical: 0.03.sw),
+              prefixIcon: Container(),
+              style: TextStyle(color: Colors.black87, fontSize: 15.sp),
+              placeholderStyle: TextStyle(color: Colors.black54, fontSize: 15.sp),
+              placeholder: "Rechercher un  évènement, une personne...",
+              backgroundColor: const Color(0xFFF0F0F0),
             ),
           ),
           actions: [

@@ -4,6 +4,7 @@ class UserSimplePreferences {
   static late SharedPreferences _preferences;
 
   static const _notificationListKey = 'notificationList';
+  static const _showNotificationContentKey = 'showNotificationContent';
   static const _currentActivePageKey = 'currentActivePage';
   static const _showIntroductionPagesKey = 'showIntroductionPages';
   static const _lastHappyBirthdayDateTimeWishKey = 'happyBirthdayDateTimeWish';
@@ -29,6 +30,13 @@ class UserSimplePreferences {
   }
 
   static List<String>? getNotificationList() => _preferences.getStringList(_notificationListKey);
+
+  // Notification Content View : Handler
+  static Future setNotificationContentViewHandler(bool value) async {
+    _preferences.setBool(_showNotificationContentKey, value);
+  }
+
+  static bool? getNotificationContentViewHandler() => _preferences.getBool(_showNotificationContentKey);
 
   // Current Active Page : Handler
   static Future setCurrentActivePageHandler(String value) async {

@@ -27,7 +27,7 @@ class Celebration {
         'description': description,
         'type': type,
         'userPoster': userPoster,
-        'dateTime': title,
+        'dateTime': dateTime,
       };
 
   // fromJson

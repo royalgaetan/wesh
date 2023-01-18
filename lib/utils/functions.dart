@@ -98,7 +98,7 @@ Future triggerVibration({int? duration}) async {
 }
 
 // SET CURRENT ACTIVE PAGE
-setCurrentActivePageFromIndex({required int? index, String? userId}) {
+setCurrentActivePageFromIndex({required int? index, String? userId}) async {
   String page = '';
   switch (index) {
     case 0:
@@ -150,9 +150,6 @@ setCurrentActivePageFromIndex({required int? index, String? userId}) {
 
 // NOTIFICATION CANCEL ENGINE
 void notificationCancelEngine({required String notifMatchToCancel}) {
-  //
-  NotificationApi.init(initScheduled: true);
-  //
   List<String> notificationList = UserSimplePreferences.getNotificationList() ?? [];
   log('[CANCEL FROM] \n ########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
 
@@ -272,10 +269,10 @@ String generateNotificationToUse(String notifMatch) {
 
     // Checking for missing number
     for (int i = 1; i < lastNotificationIdInList; i++) {
-      log('TRIP: $i');
+      // log('LOOP: $i');
       if (!notificationListWithNotificationIdsOnly.contains(i)) {
         idtoUse = i;
-        log('ASSIGN TRIP: $i');
+        log('Id to use (after loop): $i');
       }
     }
     if (idtoUse == 0) {
@@ -336,13 +333,17 @@ Future createOrUpdateReminderLocalNotification({required String action, required
         channel: notificationsChannelList[2],
         largeIconPath: largeIconPath,
         tzDateTime: scheduleDaily(
-          tz.TZDateTime(
-            tz.local,
-            reminder.remindAt.year,
-            reminder.remindAt.month,
-            reminder.remindAt.day,
-            reminder.remindAt.hour,
-            reminder.remindAt.minute,
+          recalibrateDateTimeToFuture(
+            type: 'reminder',
+            dateTimeToRecalibrate: tz.TZDateTime(
+              tz.local,
+              reminder.remindAt.year,
+              reminder.remindAt.month,
+              reminder.remindAt.day,
+              reminder.remindAt.hour,
+              reminder.remindAt.minute,
+            ),
+            reminderToRecalibrate: reminder,
           ),
         ),
         dateTimeComponents:
@@ -675,10 +676,13 @@ Future resizeImageFile({required String filePath, int? imageWidth}) async {
 
 tz.TZDateTime scheduleDaily(tz.TZDateTime dateTime) {
   final now = tz.TZDateTime.now(tz.local);
-  final scheduledDate = tz.TZDateTime(
+  tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local, dateTime.year, dateTime.month, dateTime.day, dateTime.hour, dateTime.minute, dateTime.second);
 
-  return scheduledDate.isBefore(now) ? scheduledDate.add(const Duration(days: 1)) : scheduledDate;
+  if (scheduledDate.isBefore(now)) {
+    scheduledDate = scheduledDate.add(const Duration(days: 1));
+  }
+  return scheduledDate;
 }
 
 tz.TZDateTime scheduleWeekly(tz.TZDateTime dateTime, {required List<int> days}) {
@@ -687,6 +691,58 @@ tz.TZDateTime scheduleWeekly(tz.TZDateTime dateTime, {required List<int> days}) 
   while (!days.contains(scheduledDate.weekday)) {
     scheduledDate = scheduledDate.add(const Duration(days: 1));
   }
+  return scheduledDate;
+}
+
+// RECALIBRATE DATETIME TO THE FUTURE
+tz.TZDateTime recalibrateDateTimeToFuture(
+    {required String type, required tz.TZDateTime dateTimeToRecalibrate, Reminder? reminderToRecalibrate}) {
+  final now = tz.TZDateTime.now(tz.local);
+  tz.TZDateTime scheduledDate = dateTimeToRecalibrate;
+
+  if (type == 'celebration') {
+    log('>> Recalibrate datetime as CELEBRATION');
+    while (scheduledDate.isBefore(now)) {
+      scheduledDate = tz.TZDateTime(tz.local, scheduledDate.year + 1, scheduledDate.month, scheduledDate.day,
+          scheduledDate.hour, scheduledDate.minute, scheduledDate.second);
+    }
+  } else if (type == 'reminder' && reminderToRecalibrate != null) {
+    log('>> Recalibrate datetime as REMINDER');
+
+    switch (reminderToRecalibrate.recurrence) {
+      case 'Aucune récurrence':
+        break;
+
+      case 'Chaque jour':
+        while (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 1));
+        }
+        break;
+      case 'Chaque semaine':
+        while (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 7));
+        }
+
+        break;
+      case 'Chaque mois':
+        while (scheduledDate.isBefore(now)) {
+          scheduledDate = scheduledDate.add(const Duration(days: 31));
+        }
+
+        break;
+
+      case 'Chaque année':
+        while (scheduledDate.isBefore(now)) {
+          scheduledDate = tz.TZDateTime(tz.local, scheduledDate.year + 1, scheduledDate.month, scheduledDate.day,
+              scheduledDate.hour, scheduledDate.minute, scheduledDate.second);
+        }
+
+        break;
+      default:
+        break;
+    }
+  }
+  log('Recalibrate DateTime to Future:${DateFormat('EEE, d MMM yyyy HH:mm', 'fr_Fr').format(dateTimeToRecalibrate)} --> ${DateFormat('EEE, d MMM yyyy HH:mm', 'fr_Fr').format(scheduledDate)} | $type\n--> ${reminderToRecalibrate?.recurrence ?? ''}');
   return scheduledDate;
 }
 
@@ -2057,8 +2113,7 @@ Widget getStoryGridPreview({
                 showFullPageLoader(context: context, color: Colors.white);
                 //
 
-                usermodel.User? userPoster =
-                    await FirestoreMethods.getUserByIdAsFuture(FirebaseAuth.instance.currentUser!.uid);
+                usermodel.User? userPoster = await FirestoreMethods.getUserByIdAsFuture(storyGet.uid);
 
                 // Dismiss loader
                 // ignore: use_build_context_synchronously

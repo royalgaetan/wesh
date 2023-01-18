@@ -428,7 +428,7 @@ class _buildMessageDataSectionState extends State<buildMessageDataSection> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Hero(
-                                  tag: 'fileviewer_${widget.data}',
+                                  tag: 'fileviewer_${widget.messageId}',
                                   child: ProgressiveImage(
                                     height: getMessagePreviewCardHeight(widget.messageType),
                                     width: double.infinity,
@@ -512,7 +512,7 @@ class _buildMessageDataSectionState extends State<buildMessageDataSection> {
                                 }
                               },
                               child: Hero(
-                                tag: 'fileviewer_${widget.data}',
+                                tag: 'fileviewer_${widget.messageId}',
                                 child: ProgressiveImage(
                                   height: getMessagePreviewCardHeight(widget.messageType),
                                   width: double.infinity,

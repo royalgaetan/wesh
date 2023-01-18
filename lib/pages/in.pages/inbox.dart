@@ -733,10 +733,8 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
             Expanded(
               child: isLoading
                   ? Center(
-                      child: Expanded(
-                        child: CupertinoActivityIndicator(
-                          radius: 12.sp,
-                        ),
+                      child: CupertinoActivityIndicator(
+                        radius: 12.sp,
                       ),
                     )
                   :
@@ -1557,7 +1555,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                                 }
 
                                 // Send Text Message !
-                                await sendMessage(
+                                sendMessage(
                                   context: context,
                                   userReceiverId: widget.userReceiverId,
                                   messageType: 'text',

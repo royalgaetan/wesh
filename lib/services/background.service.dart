@@ -105,25 +105,24 @@ class BackgroundTaskHandler {
               //
               userEventsReceived = userEventsReceived.where((element) {
                 // For birthday only
-                List<int> randomNumbersForBirthdaySuggestion = [1, 2, 3, 4, 5, 6, 7];
+                List<int> randomNumbersForDateSuggestion = [1, 3, 7];
+                bool isEventDateInsideRandomNumbersForDateSuggestion = randomNumbersForDateSuggestion.contains(
+                    daysBetween(
+                        DateTime.now(),
+                        getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType.fromJson(
+                            element.keys.first.eventDurations.first as Map<String, dynamic>))));
                 //
-                log('Watching: ${element.keys.first.title}: in ${daysBetween(DateTime.now(), getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType.fromJson(element.keys.first.eventDurations.first as Map<String, dynamic>)))} days | From: ${user.name}\n --> \nIs user birthday: ${isUserBirthday(element.keys.first, user)}\nIs outdated: ${isOutdatedEvent(element.keys.first)} \nInside randomNumbersForBirthdaySuggestion: ${randomNumbersForBirthdaySuggestion.contains(daysBetween(DateTime.now(), getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType.fromJson(element.keys.first.eventDurations.first as Map<String, dynamic>))))}');
-                if (isUserBirthday(element.keys.first, user) &&
-                    randomNumbersForBirthdaySuggestion.contains(daysBetween(
-                            DateTime.now(),
-                            getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType.fromJson(
-                                element.keys.first.eventDurations.first as Map<String, dynamic>)))) ==
-                        false) {
-                  log('A : So remove it');
-                  return false;
-                }
-                // For Outdated Event: skip birthdays
-                if (isOutdatedEvent(element.keys.first) && !isUserBirthday(element.keys.first, user)) {
-                  log('B: So remove it');
-                  return false;
-                } else {
+                log('Watching: ${element.keys.first.title}: in ${daysBetween(DateTime.now(), getDatetimeToUseFromDatetimeWithRecurrence(EventDurationType.fromJson(element.keys.first.eventDurations.first as Map<String, dynamic>)))} days | From: ${user.name}\n --> \nIs user birthday: ${isUserBirthday(element.keys.first, user)}\nIs outdated: ${isOutdatedEvent(element.keys.first)} \nInside randomNumbersForDateSuggestion: $isEventDateInsideRandomNumbersForDateSuggestion');
+
+                // Skip Outdated | IsHappening | Isn't inside randomNumbersForDateSuggestion : Event
+                if (!isHappeningEvent(element.keys.first) &&
+                    !isOutdatedEvent(element.keys.first) &&
+                    isEventDateInsideRandomNumbersForDateSuggestion == true) {
                   log('C:So keep it');
                   return true;
+                } else {
+                  log('B: So remove it');
+                  return false;
                 }
               }).toList();
               log('userEventsReceived: ${userEventsReceived.map((e) => e.keys.first.title).toList()}');
@@ -283,7 +282,10 @@ class BackgroundTaskHandler {
       usermodel.User? currentUser = await FirestoreMethods.getUser(FirebaseAuth.instance.currentUser!.uid);
       String currentActivePage = UserSimplePreferences.getCurrentActivePageHandler() ?? '';
 
-      if (currentUser != null && currentUser.followings != null && currentUser.settingShowStoriesNotifications) {
+      if (currentActivePage != 'storiespage' &&
+          currentUser != null &&
+          currentUser.followings != null &&
+          currentUser.settingShowStoriesNotifications) {
         // Retain only if
         // --> currentActivePage != storiespage
         // --> userPoster != [Me]

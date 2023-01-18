@@ -193,9 +193,11 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin 
       appointmentItems.add(appointment);
     }
 
-    setState(() {
-      appointmentList = appointmentItems;
-    });
+    if (mounted) {
+      setState(() {
+        appointmentList = appointmentItems;
+      });
+    }
 
     isUpdating.value = false;
   }

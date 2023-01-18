@@ -339,7 +339,9 @@ class buildStoryViewerHeaderAndFooter extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       opacity: isWidgetVisible ? 1 : 0,
-      child: Expanded(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height,
+        width: MediaQuery.of(context).size.width,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

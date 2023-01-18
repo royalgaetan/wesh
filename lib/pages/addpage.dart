@@ -111,7 +111,7 @@ class _AddPageState extends State<AddPage> with AutomaticKeepAliveClientMixin {
               //   isBordered: true,
               //   onTap: () async {
               //     //
-              //     NotificationApi.init(initScheduled: true);
+              //     NotificationApi.initWithoutListenToOnNotificationTap(initScheduled: true);
 
               //     tz.TZDateTime toUse = tz.TZDateTime(
               //       tz.local,
