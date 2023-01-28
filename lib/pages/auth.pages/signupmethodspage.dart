@@ -53,92 +53,124 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
       isPageLoading = true;
     });
 
-    // IF method == Phone
-    if (_tabController.index == 0) {
-      if (phoneController.text.isNotEmpty) {
-        setState(() {
-          isPageLoading = true;
-        });
-        var isConnected = await InternetConnection.isConnected(context);
-        setState(() {
-          isPageLoading = false;
-        });
-        if (isConnected) {
-          // Check phone number
-
-          bool isPhoneValid = await isPhoneNumberValid(
-            context: context,
-            countryName: countryName,
-            phoneCode: phoneCode,
-            phoneContent: phoneController.text,
-            regionCode: regionCode,
-          );
-
-          if (isPhoneValid) {
-            //  Check if the phone is used
-
-            bool isUserExisting =
-                await AuthMethods.checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
-            if (isUserExisting == true) {
-              // ignore: use_build_context_synchronously
-              showSnackbar(context, 'Ce numéro est déjà pris...', null);
-              return;
-            } else {
-              Navigator.push(
-                context,
-                SwipeablePageRoute(
-                  builder: (_) => const OTPverificationPage(authType: 'signup'),
-                ),
-              );
-            }
-          } else {
-            showSnackbar(context, 'Votre numéro est incorrect !', null);
-          }
-
-          debugPrint("Has connection : $isConnected");
-        } else {
-          debugPrint("Has connection : $isConnected");
-          showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
-        }
-      } else {
-        return showSnackbar(context, 'Veuillez entrer un numéro de téléphone valide', null);
-      }
-    }
-
-    // IF method == Email
-    if (_tabController.index == 1) {
-      if (emailController.text.isEmpty || !EmailValidator.validate(emailController.text)) {
-        setState(() {
-          isPageLoading = false;
-        });
-        return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
-      }
-
-      // Returns true if email address is available
-
-      bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
-
-      if (isEmailUsed == true) {
-        setState(() {
-          isPageLoading = false;
-        });
-        return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
-      }
-      // Go to Sign Up OTPverificationPage: Email Verify
-      UserSimplePreferences.setEmail(emailController.text);
+    if (emailController.text.isEmpty || !EmailValidator.validate(emailController.text)) {
       setState(() {
         isPageLoading = false;
       });
-
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      emailController.clear();
-      Navigator.push(
-        context,
-        SwipeablePageRoute(
-          builder: (_) => const CreatePassword(isUpdatingEmail: false),
-        ),
-      );
+      return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
     }
+
+    // Returns true if email address is available
+
+    bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
+
+    if (isEmailUsed == true) {
+      setState(() {
+        isPageLoading = false;
+      });
+      return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
+    }
+    // Go to Sign Up OTPverificationPage: Email Verify
+    UserSimplePreferences.setEmail(emailController.text);
+    setState(() {
+      isPageLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    emailController.clear();
+    Navigator.push(
+      context,
+      SwipeablePageRoute(
+        builder: (_) => const CreatePassword(isUpdatingEmail: false),
+      ),
+    );
+
+    // IF method == Phone
+    // if (_tabController.index == 0) {
+    //   if (phoneController.text.isNotEmpty) {
+    //     setState(() {
+    //       isPageLoading = true;
+    //     });
+    //     var isConnected = await InternetConnection.isConnected(context);
+    //     setState(() {
+    //       isPageLoading = false;
+    //     });
+    //     if (isConnected) {
+    //       // Check phone number
+
+    //       bool isPhoneValid = await isPhoneNumberValid(
+    //         context: context,
+    //         countryName: countryName,
+    //         phoneCode: phoneCode,
+    //         phoneContent: phoneController.text,
+    //         regionCode: regionCode,
+    //       );
+
+    //       if (isPhoneValid) {
+    //         //  Check if the phone is used
+
+    //         bool isUserExisting =
+    //             await AuthMethods.checkUserWithPhoneExistenceInDb('+$phoneCode${phoneController.text}');
+    //         if (isUserExisting == true) {
+    //           // ignore: use_build_context_synchronously
+    //           showSnackbar(context, 'Ce numéro est déjà pris...', null);
+    //           return;
+    //         } else {
+    //           Navigator.push(
+    //             context,
+    //             SwipeablePageRoute(
+    //               builder: (_) => const OTPverificationPage(authType: 'signup'),
+    //             ),
+    //           );
+    //         }
+    //       } else {
+    //         showSnackbar(context, 'Votre numéro est incorrect !', null);
+    //       }
+
+    //       debugPrint("Has connection : $isConnected");
+    //     } else {
+    //       debugPrint("Has connection : $isConnected");
+    //       showSnackbar(context, 'Veuillez vérifier votre connexion internet', null);
+    //     }
+    //   } else {
+    //     return showSnackbar(context, 'Veuillez entrer un numéro de téléphone valide', null);
+    //   }
+    // }
+
+    // // IF method == Email
+    // if (_tabController.index == 1) {
+    //   if (emailController.text.isEmpty || !EmailValidator.validate(emailController.text)) {
+    //     setState(() {
+    //       isPageLoading = false;
+    //     });
+    //     return showSnackbar(context, 'Veuillez entrer une adresse email valide', null);
+    //   }
+
+    //   // Returns true if email address is available
+
+    //   bool isEmailUsed = await AuthMethods.checkIfEmailInUse(context, emailController.text);
+
+    //   if (isEmailUsed == true) {
+    //     setState(() {
+    //       isPageLoading = false;
+    //     });
+    //     return showSnackbar(context, 'Cette adresse email est déjà utilisée', null);
+    //   }
+    //   // Go to Sign Up OTPverificationPage: Email Verify
+    //   UserSimplePreferences.setEmail(emailController.text);
+    //   setState(() {
+    //     isPageLoading = false;
+    //   });
+
+    //   ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    //   emailController.clear();
+    //   Navigator.push(
+    //     context,
+    //     SwipeablePageRoute(
+    //       builder: (_) => const CreatePassword(isUpdatingEmail: false),
+    //     ),
+    //   );
+    // }
   }
 
   // IF method == Google
