@@ -12,6 +12,11 @@
    <uses-permission android:name="android.permission.READ_SMS"/>
    <uses-permission android:name="android.permission.RECORD_AUDIO" />
    <uses-permission android:name="android.permission.VIBRATE" />
+
+   <uses-permission android:name="android.permission.WAKE_LOCK" />
+   <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+   <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
    <application
         android:largeHeap="true"
         android:usesCleartextTraffic="true"
@@ -180,6 +185,5 @@
         </intent>
     </queries>
 
-    <uses-permission android:name="android.permission.INTERNET"/>
         
 </manifest>

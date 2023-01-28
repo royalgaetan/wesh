@@ -8,7 +8,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:wesh/models/event.dart';
-import 'package:wesh/models/event_duration_type.dart';
 import 'package:wesh/models/reminder.dart';
 import 'package:wesh/utils/constants.dart';
 import 'package:wesh/utils/functions.dart';

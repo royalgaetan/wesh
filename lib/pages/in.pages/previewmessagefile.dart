@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:photo_view/photo_view.dart';
@@ -279,40 +278,36 @@ class _PreviewMessageFileState extends State<PreviewMessageFile> {
 
             // VIDEO
             widget.filetype == 'video'
-                ? Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        VideoPlayerWidget(
-                          data: widget.file.path,
-                          togglePlayPause: togglePlayPauseVideo,
-                        )
-                      ],
-                    ),
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      VideoPlayerWidget(
+                        data: widget.file.path,
+                        togglePlayPause: togglePlayPauseVideo,
+                      )
+                    ],
                   )
                 : Container(),
 
             // MUSIC
             widget.filetype == 'music'
-                ? Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Music Artwork
-                          const CircleAvatar(
-                            radius: 100,
-                            backgroundColor: kGreyColor,
-                            backgroundImage: AssetImage(music),
-                          ),
+                ? Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Music Artwork
+                        const CircleAvatar(
+                          radius: 100,
+                          backgroundColor: kGreyColor,
+                          backgroundImage: AssetImage(music),
+                        ),
 
-                          //
-                          const SizedBox(height: 20),
-                          // Audio Slider
-                          AudioWidget(data: widget.file.path, btnTheme: 'white'),
-                        ],
-                      ),
+                        //
+                        const SizedBox(height: 20),
+                        // Audio Slider
+                        AudioWidget(data: widget.file.path, btnTheme: 'white'),
+                      ],
                     ),
                   )
                 : Container(),

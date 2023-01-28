@@ -1,7 +1,5 @@
 // import 'package:firebase_app_check/firebase_app_check.dart';
-import 'dart:async';
 import 'dart:developer';
-import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 import 'package:country_picker/country_picker.dart';
@@ -9,10 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_isolate/flutter_isolate.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,107 +16,10 @@ import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:timeago/timeago.dart';
 import 'package:wesh/pages/startPage.dart';
 import 'package:wesh/providers/user.provider.dart';
-import 'package:wesh/services/background.service.dart';
 import 'package:wesh/services/sharedpreferences.service.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import 'pages/login.dart';
 import 'utils/constants.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
-
-Future<void> initializeBackgroundService() async {
-  final service = FlutterBackgroundService();
-
-  // /// OPTIONAL, using custom notification channel id
-  // const AndroidNotificationChannel channel = AndroidNotificationChannel(
-  //   'my_foreground', // id
-  //   'Service d\'arrière-plan', // title
-  //   description: 'This channel is used for important notifications.', // description
-  //   importance: Importance.low, // importance must be at low or higher level
-  // );
-
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  if (Platform.isIOS) {
-    await flutterLocalNotificationsPlugin.initialize(
-      const InitializationSettings(
-        iOS: IOSInitializationSettings(),
-      ),
-    );
-  }
-
-  // await flutterLocalNotificationsPlugin
-  //     .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-  //     ?.createNotificationChannel(channel);
-
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      // this will be executed when app is in foreground or background in separated isolate
-      onStart: onStart,
-
-      // auto start service
-      autoStart: true,
-      isForegroundMode: false,
-      // notificationChannelId: 'Service d\'arrière-plan',
-      // initialNotificationTitle: 'En attente de nouveaux événements, messages, etc.',
-      // initialNotificationContent: 'Initializing',
-      // foregroundServiceNotificationId: 888,
-    ),
-    iosConfiguration: IosConfiguration(
-      // auto start service
-      autoStart: true,
-
-      // this will be executed when app is in foreground in separated isolate
-      onForeground: onStart,
-
-      // you have to enable background fetch capability on xcode project
-      onBackground: onIosBackground,
-    ),
-  );
-
-  service.startService();
-}
-
-// to ensure this is executed
-// run app from xcode, then from xcode menu, select Simulate Background Fetch
-
-@pragma('vm:entry-point')
-Future<bool> onIosBackground(ServiceInstance service) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  DartPluginRegistrant.ensureInitialized();
-
-  return true;
-}
-
-@pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
-  // Only available for flutter 3.0.0 and later
-  DartPluginRegistrant.ensureInitialized();
-
-  // For flutter prior to version 3.0.0
-  // We have to register the plugin manually
-  /// OPTIONAL when use custom notification
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  if (service is AndroidServiceInstance) {
-    //
-
-    service.on(BackgroundTaskHandler.initBackgroundTasks).listen((event) async {
-      await FlutterIsolate.spawn(BackgroundTaskHandler.listenServerChanges(), {});
-
-      service.setAsBackgroundService();
-    });
-    //
-
-    service.on('setAsBackground').listen((event) {
-      service.setAsBackgroundService();
-    });
-  }
-
-  service.on('stopService').listen((event) {
-    service.stopSelf();
-  });
-}
 
 // BACKGROUND DOWLOAD TASK HANDLER
 class TestClass {
@@ -146,12 +44,6 @@ void main() async {
       ignoreSsl: true // option: set to false to disable working with http links (default: false)
       );
   FlutterDownloader.registerCallback(TestClass.downloadCallback);
-
-  await initializeBackgroundService();
-  // await FirebaseAppCheck.instance.activate(
-  //   webRecaptchaSiteKey:
-  //       'recaptcha-v3-site-key', // <-- only needed for reCAPTCHA v3
-  // );
 
   // Build Error Widget
   ErrorWidget.builder = (details) {

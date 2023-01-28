@@ -94,7 +94,7 @@ dependencies:
   http: ^0.13.5
   internet_connection_checker: ^0.0.1+4
   flutter_downloader: ^1.9.1
-  flutter_background_service: ^2.4.5
+  flutter_background: ^1.2.0
   flutter_isolate: ^2.0.4
   connectivity_plus: ^2.3.7
   flutter_local_notifications: ^9.7.0

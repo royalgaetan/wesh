@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
-import 'package:wesh/pages/auth.pages/add_phone.dart';
 import 'package:wesh/pages/auth.pages/add_username.dart';
 import 'package:wesh/pages/forgotpassword.dart';
 import 'package:wesh/services/auth.methods.dart';
@@ -464,47 +463,48 @@ class _buildOtherSignupMethodsState extends State<buildOtherSignupMethods> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        InkWell(
-          onTap: () async {
-            //  Phone Auth
-            if (widget.redirectToAddEmailandPasswordPage) {
-              debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
-              await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
-            }
+        // InkWell(
+        //   onTap: () async {
+        //     //  Phone Auth
+        //     if (widget.redirectToAddEmailandPasswordPage) {
+        //       debugPrint("Redirect to Setting Page from : ${widget.redirectToAddEmailandPasswordPage}");
+        //       await UserSimplePreferences.setRedirectToAddEmailandPasswordPageValue(true);
+        //     }
 
-            // IF [redirectToAddEmailPage == true]
-            if (widget.redirectToAddEmailPage) {
-              debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
-              await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
-            }
+        //     // IF [redirectToAddEmailPage == true]
+        //     if (widget.redirectToAddEmailPage) {
+        //       debugPrint("Redirect to Add Email Page from : ${widget.redirectToAddEmailPage}");
+        //       await UserSimplePreferences.setRedirectToAddEmailPageValue(true);
+        //     }
 
-            // IF [redirectToUpdatePasswordPage == true]
-            if (widget.redirectToUpdatePasswordPage) {
-              debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
-              await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
-            }
+        //     // IF [redirectToUpdatePasswordPage == true]
+        //     if (widget.redirectToUpdatePasswordPage) {
+        //       debugPrint("Redirect to Update Password Page from : ${widget.redirectToUpdatePasswordPage}");
+        //       await UserSimplePreferences.setRedirectToUpdatePasswordPageValue(true);
+        //     }
 
-            debugPrint('From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
-            debugPrint('From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
-            debugPrint('From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
+        //     debugPrint('From login {redirectToAddEmailandPasswordPage}: ${widget.redirectToAddEmailandPasswordPage}');
+        //     debugPrint('From login {redirectToAddEmailPage}: ${widget.redirectToAddEmailPage}');
+        //     debugPrint('From login {redirectToUpdatePasswordPage}: ${widget.redirectToUpdatePasswordPage}');
 
-            // ignore: use_build_context_synchronously
-            Navigator.push(
-                context,
-                SwipeablePageRoute(
-                  builder: (context) => const AddPhonePage(
-                    isUpdatingPhoneNumber: false,
-                  ),
-                ));
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              phoneLogo,
-              height: 32,
-            ),
-          ),
-        ),
+        //     // ignore: use_build_context_synchronously
+        //     Navigator.push(
+        //         context,
+        //         SwipeablePageRoute(
+        //           builder: (context) => const AddPhonePage(
+        //             isUpdatingPhoneNumber: false,
+        //           ),
+        //         ));
+        //   },
+        //   child: Padding(
+        //     padding: const EdgeInsets.all(8.0),
+        //     child: SvgPicture.asset(
+        //       phoneLogo,
+        //       height: 32,
+        //     ),
+        //   ),
+        // ),
+
         InkWell(
           onTap: widget.continueWithGoogleOnTap,
           child: Padding(

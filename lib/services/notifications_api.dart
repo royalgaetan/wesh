@@ -4,7 +4,6 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:wesh/services/sharedpreferences.service.dart';
 
 class NotificationChannel {
   final String channelId;

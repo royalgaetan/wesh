@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/pages/settings.pages/add_email_and_password_page.dart';
@@ -18,7 +17,6 @@ import '../../utils/constants.dart';
 import '../../utils/functions.dart';
 import '../../widgets/buildWidgets.dart';
 import '../../widgets/setting_card.dart';
-import '../auth.pages/add_phone.dart';
 import 'login_activity_page.dart';
 import '../../models/user.dart' as usermodel;
 
@@ -327,81 +325,81 @@ class _AccountSecuritySettingsPageState extends State<AccountSecuritySettingsPag
                       ),
 
                       // Phone Number
-                      SettingCard(
-                        onTap: () {
-                          //  Phone Update
-                          Navigator.push(
-                              context,
-                              SwipeablePageRoute(
-                                builder: (context) => const AddPhonePage(
-                                  isUpdatingPhoneNumber: true,
-                                ),
-                              ));
-                        },
-                        leading: CircleAvatar(
-                          radius: 0.08.sw,
-                          backgroundColor: kGreyColor,
-                          child: Icon(
-                            FontAwesomeIcons.phone,
-                            color: Colors.black87.withOpacity(.7),
-                            size: 20.sp,
-                          ),
-                        ),
-                        settingTitle: 'Numéro de téléphone',
-                        settingSubTitle: currentUser.value!.phone.isNotEmpty
-                            ? 'Appuyer pour changer de numéro de téléphone'
-                            : 'Appuyer pour ajouter un numéro de téléphone',
-                        settingSubTitle2: currentUser.value!.phone.isNotEmpty
-                            ? RichText(
-                                textAlign: TextAlign.left,
-                                text: TextSpan(
-                                  text: 'Votre numéro actuel : ',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Colors.black54,
-                                  ),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                        text: currentUser.value!.phone,
-                                        style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              )
-                            : Container(),
-                        trailing: currentUser.value!.phone.isNotEmpty
-                            ? CupertinoButton.filled(
-                                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
-                                borderRadius: BorderRadius.circular(10),
-                                child: const Icon(
-                                  FontAwesomeIcons.linkSlash,
-                                  color: Colors.white,
-                                  size: 13,
-                                ),
-                                onPressed: () async {
-                                  // VIBRATE
-                                  triggerVibration();
+                      // SettingCard(
+                      //   onTap: () {
+                      //     //  Phone Update
+                      //     Navigator.push(
+                      //         context,
+                      //         SwipeablePageRoute(
+                      //           builder: (context) => const AddPhonePage(
+                      //             isUpdatingPhoneNumber: true,
+                      //           ),
+                      //         ));
+                      //   },
+                      //   leading: CircleAvatar(
+                      //     radius: 0.08.sw,
+                      //     backgroundColor: kGreyColor,
+                      //     child: Icon(
+                      //       FontAwesomeIcons.phone,
+                      //       color: Colors.black87.withOpacity(.7),
+                      //       size: 20.sp,
+                      //     ),
+                      //   ),
+                      //   settingTitle: 'Numéro de téléphone',
+                      //   settingSubTitle: currentUser.value!.phone.isNotEmpty
+                      //       ? 'Appuyer pour changer de numéro de téléphone'
+                      //       : 'Appuyer pour ajouter un numéro de téléphone',
+                      //   settingSubTitle2: currentUser.value!.phone.isNotEmpty
+                      //       ? RichText(
+                      //           textAlign: TextAlign.left,
+                      //           text: TextSpan(
+                      //             text: 'Votre numéro actuel : ',
+                      //             style: TextStyle(
+                      //               fontSize: 12.sp,
+                      //               color: Colors.black54,
+                      //             ),
+                      //             children: <TextSpan>[
+                      //               TextSpan(
+                      //                   text: currentUser.value!.phone,
+                      //                   style: const TextStyle(color: kSecondColor, fontWeight: FontWeight.bold)),
+                      //             ],
+                      //           ),
+                      //         )
+                      //       : Container(),
+                      //   trailing: currentUser.value!.phone.isNotEmpty
+                      //       ? CupertinoButton.filled(
+                      //           padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 3),
+                      //           borderRadius: BorderRadius.circular(10),
+                      //           child: const Icon(
+                      //             FontAwesomeIcons.linkSlash,
+                      //             color: Colors.white,
+                      //             size: 13,
+                      //           ),
+                      //           onPressed: () async {
+                      //             // VIBRATE
+                      //             triggerVibration();
 
-                                  // Unlink Phone Provider
+                      //             // Unlink Phone Provider
 
-                                  // Show Modal Decision
-                                  List deleteDecision = await showModalDecision(
-                                    context: context,
-                                    header: 'Détacher votre numéro de téléphone',
-                                    content:
-                                        'Vous ne pourrez plus vous connecter à votre compte à partir de votre numéro de téléphone si vous le détachez. Êtes-vous sûr de vouloir continuer ?',
-                                    firstButton: 'Annuler',
-                                    secondButton: 'Détacher',
-                                  );
+                      //             // Show Modal Decision
+                      //             List deleteDecision = await showModalDecision(
+                      //               context: context,
+                      //               header: 'Détacher votre numéro de téléphone',
+                      //               content:
+                      //                   'Vous ne pourrez plus vous connecter à votre compte à partir de votre numéro de téléphone si vous le détachez. Êtes-vous sûr de vouloir continuer ?',
+                      //               firstButton: 'Annuler',
+                      //               secondButton: 'Détacher',
+                      //             );
 
-                                  if (deleteDecision[0] == true) {
-                                    // Detach Phone number
-                                    // ignore: use_build_context_synchronously
-                                    await AuthMethods.unlinkSpecificProvider(context, 'phone');
-                                  }
-                                },
-                              )
-                            : Container(),
-                      ),
+                      //             if (deleteDecision[0] == true) {
+                      //               // Detach Phone number
+                      //               // ignore: use_build_context_synchronously
+                      //               await AuthMethods.unlinkSpecificProvider(context, 'phone');
+                      //             }
+                      //           },
+                      //         )
+                      //       : Container(),
+                      // ),
 
                       // Google Account
                       SettingCard(

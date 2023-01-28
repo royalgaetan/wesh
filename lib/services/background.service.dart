@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/utils/constants.dart';
@@ -15,15 +14,6 @@ import '../services/firestore.methods.dart';
 import '../services/notifications_api.dart';
 import '../services/sharedpreferences.service.dart';
 import '../utils/functions.dart';
-
-class MyWidget extends StatelessWidget {
-  const MyWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-}
 
 class BackgroundTaskHandler {
   //

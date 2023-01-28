@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as localnotification;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -29,7 +29,6 @@ import 'package:wesh/pages/in.pages/settings.dart';
 import 'package:wesh/pages/profile.dart';
 import 'package:wesh/pages/stories.dart' as storiespage;
 import 'package:wesh/utils/constants.dart';
-import '../models/event.dart';
 import '../models/feedback.dart';
 import '../models/reminder.dart';
 import '../models/story.dart';
@@ -382,14 +381,49 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
     log('########### LOG NOTIFICATIONLIST ###########\n${notificationList.map((s) => '$s \n')}');
   }
 
+  // HANDLE BACKGROUND TASKS
+  Future invokeBackgroundTask() async {
+    log('Running Background Handler...');
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: "Wesh",
+      notificationText: "Recherche de nouveaux messages, événements,...",
+      notificationImportance: AndroidNotificationImportance.Default,
+      notificationIcon: AndroidResource(name: '@drawable/ic_notification', defType: 'drawable'),
+    );
+
+// FlutterBackgroundService().invoke(BackgroundTaskHandler.initBackgroundTasks);
+    bool backgroundHandler = await FlutterBackground.hasPermissions;
+    backgroundHandler = await FlutterBackground.initialize(androidConfig: androidConfig);
+    backgroundHandler = await FlutterBackground.initialize(androidConfig: androidConfig);
+
+    if (backgroundHandler) {
+      try {
+        log('Background Handler Status: has permissions...');
+        final backgroundExecution = await FlutterBackground.enableBackgroundExecution();
+        if (backgroundExecution) {
+          //
+          log('Background Handler Status: success...');
+          //
+          BackgroundTaskHandler.listenServerChanges();
+        } else {
+          log('Background Handler Status: excecution failed !');
+        }
+      } catch (e) {
+        log('Background Handler Error: $e');
+      }
+    } else {
+      log('Background Handler Status: no permissions granted !');
+    }
+    //
+  }
+
   @override
   void initState() {
-    //
-
     super.initState();
     //
+    invokeBackgroundTask();
+    //
     setSuitableStatusBarColor(Colors.white);
-
     //
     wishHappyBirthday();
     //
@@ -400,8 +434,7 @@ class _StartPageState extends State<StartPage> with WidgetsBindingObserver {
       currentUserFollowings = event.followings?.map((userId) => userId.toString()).toList() ?? [];
     });
     //
-    FlutterBackgroundService().invoke(BackgroundTaskHandler.initBackgroundTasks);
-    //
+
     NotificationApi.init(initScheduled: true);
     tz.initializeTimeZones();
 

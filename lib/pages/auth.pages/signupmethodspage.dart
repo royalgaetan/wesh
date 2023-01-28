@@ -1,7 +1,5 @@
-import 'package:country_picker/country_picker.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
@@ -264,138 +262,153 @@ class _CheckUsernameState extends State<SignUpMethodPage> with TickerProviderSta
                 ]),
 
                 // Tab Bar
-                TabBar(
-                  indicatorColor: Colors.black,
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.black54,
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(
-                      text: 'Numéro de téléphone',
-                    ),
-                    Tab(
-                      text: 'Email',
-                    ),
-                  ],
-                ),
+                // TabBar(
+                //   indicatorColor: Colors.black,
+                //   labelColor: Colors.black,
+                //   unselectedLabelColor: Colors.black54,
+                //   controller: _tabController,
+                //   tabs: const [
+                //     Tab(
+                //       text: 'Numéro de téléphone',
+                //     ),
+                //     Tab(
+                //       text: 'Email',
+                //     ),
+                //   ],
+                // ),
 
                 SizedBox(height: 0.07.sw),
-
-                // Tab Bar View
-                Container(
-                  padding: EdgeInsets.all(0.01.sw),
-                  height: 0.18.sw,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      //  Phone Field
-
-                      // Phone Field Input
-                      Container(
-                        decoration: BoxDecoration(
-                          color: kGreyColor,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            // Pick  country
-                            FittedBox(
-                              child: InkWell(
-                                onTap: () {
-                                  showCountryPicker(
-                                    context: context,
-                                    showPhoneCode: true,
-                                    countryListTheme: CountryListThemeData(
-                                      flagSize: 25,
-                                      backgroundColor: Colors.white,
-                                      textStyle: TextStyle(fontSize: 14.sp, color: Colors.blueGrey),
-                                      bottomSheetHeight: MediaQuery.of(context).size.height / 1.2,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(20.0),
-                                        topRight: Radius.circular(20.0),
-                                      ),
-                                      //Optional. Styles the search field.
-                                      inputDecoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: kGreyColor,
-                                        prefixIcon: const Icon(Icons.search),
-                                        prefixIconColor: kSecondColor,
-                                        border: OutlineInputBorder(
-                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
-                                          borderRadius: BorderRadius.circular(14),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
-                                          borderRadius: BorderRadius.circular(14),
-                                        ),
-                                        disabledBorder: OutlineInputBorder(
-                                          borderSide: const BorderSide(color: kGreyColor, width: 0),
-                                          borderRadius: BorderRadius.circular(14),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide: const BorderSide(color: Colors.transparent, width: 0),
-                                          borderRadius: BorderRadius.circular(14),
-                                        ),
-                                        contentPadding: const EdgeInsets.all(0),
-                                        hintText: 'Recherchez un pays',
-                                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
-                                      ),
-                                    ),
-                                    favorite: ['CG'],
-                                    onSelect: (Country country) {
-                                      setState(() {
-                                        phoneCode = country.phoneCode;
-                                        regionCode = country.countryCode;
-                                      });
-                                      debugPrint(
-                                        'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
-                                      );
-                                    },
-                                  );
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
-                                  child: Text('+$phoneCode'),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: TextField(
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp("[0-9]")),
-                                ],
-                                keyboardType: TextInputType.phone,
-                                controller: phoneController,
-                                decoration: InputDecoration(
-                                    hintText: 'Numéro de téléphone',
-                                    hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
-                                    contentPadding: EdgeInsets.all(0.04.sw),
-                                    border: InputBorder.none),
-                              ),
-                            ),
-                          ],
-                        ),
+                // Email Field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: TextformContainer(
+                    child: TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                        contentPadding: EdgeInsets.all(0.04.sw),
+                        hintText: 'Email',
+                        border: InputBorder.none,
                       ),
-
-                      // Email Field
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: TextformContainer(
-                          child: TextFormField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
-                              contentPadding: EdgeInsets.all(0.04.sw),
-                              hintText: 'Email',
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
+
+                // Tab Bar View
+                // Container(
+                //   padding: EdgeInsets.all(0.01.sw),
+                //   height: 0.18.sw,
+                //   child: TabBarView(
+                //     controller: _tabController,
+                //     children: [
+
+                //       // Phone Field Input
+                //       Container(
+                //         decoration: BoxDecoration(
+                //           color: kGreyColor,
+                //           borderRadius: BorderRadius.circular(14),
+                //         ),
+                //         child: Row(
+                //           children: [
+                //             // Pick  country
+                //             FittedBox(
+                //               child: InkWell(
+                //                 onTap: () {
+                //                   showCountryPicker(
+                //                     context: context,
+                //                     showPhoneCode: true,
+                //                     countryListTheme: CountryListThemeData(
+                //                       flagSize: 25,
+                //                       backgroundColor: Colors.white,
+                //                       textStyle: TextStyle(fontSize: 14.sp, color: Colors.blueGrey),
+                //                       bottomSheetHeight: MediaQuery.of(context).size.height / 1.2,
+                //                       borderRadius: const BorderRadius.only(
+                //                         topLeft: Radius.circular(20.0),
+                //                         topRight: Radius.circular(20.0),
+                //                       ),
+                //                       //Optional. Styles the search field.
+                //                       inputDecoration: InputDecoration(
+                //                         filled: true,
+                //                         fillColor: kGreyColor,
+                //                         prefixIcon: const Icon(Icons.search),
+                //                         prefixIconColor: kSecondColor,
+                //                         border: OutlineInputBorder(
+                //                           borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                //                           borderRadius: BorderRadius.circular(14),
+                //                         ),
+                //                         enabledBorder: OutlineInputBorder(
+                //                           borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                //                           borderRadius: BorderRadius.circular(14),
+                //                         ),
+                //                         disabledBorder: OutlineInputBorder(
+                //                           borderSide: const BorderSide(color: kGreyColor, width: 0),
+                //                           borderRadius: BorderRadius.circular(14),
+                //                         ),
+                //                         focusedBorder: OutlineInputBorder(
+                //                           borderSide: const BorderSide(color: Colors.transparent, width: 0),
+                //                           borderRadius: BorderRadius.circular(14),
+                //                         ),
+                //                         contentPadding: const EdgeInsets.all(0),
+                //                         hintText: 'Recherchez un pays',
+                //                         hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                //                       ),
+                //                     ),
+                //                     favorite: ['CG'],
+                //                     onSelect: (Country country) {
+                //                       setState(() {
+                //                         phoneCode = country.phoneCode;
+                //                         regionCode = country.countryCode;
+                //                       });
+                //                       debugPrint(
+                //                         'Selected phone Code: ${country.phoneCode} & Selected region : ${country.countryCode}, & Selected country Name : ${country.name}',
+                //                       );
+                //                     },
+                //                   );
+                //                 },
+                //                 child: Container(
+                //                   padding: const EdgeInsets.fromLTRB(20, 10, 0, 10),
+                //                   child: Text('+$phoneCode'),
+                //                 ),
+                //               ),
+                //             ),
+                //             Expanded(
+                //               child: TextField(
+                //                 inputFormatters: [
+                //                   FilteringTextInputFormatter.allow(RegExp("[0-9]")),
+                //                 ],
+                //                 keyboardType: TextInputType.phone,
+                //                 controller: phoneController,
+                //                 decoration: InputDecoration(
+                //                     hintText: 'Numéro de téléphone',
+                //                     hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                //                     contentPadding: EdgeInsets.all(0.04.sw),
+                //                     border: InputBorder.none),
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+
+                //       // Email Field
+                //       Padding(
+                //         padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                //         child: TextformContainer(
+                //           child: TextFormField(
+                //             controller: emailController,
+                //             keyboardType: TextInputType.emailAddress,
+                //             decoration: InputDecoration(
+                //               hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
+                //               contentPadding: EdgeInsets.all(0.04.sw),
+                //               hintText: 'Email',
+                //               border: InputBorder.none,
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
                 // Action Button : SIGN UP BUTTON or Login
                 SizedBox(height: 0.12.sw),

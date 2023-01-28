@@ -8,7 +8,6 @@ import 'package:wesh/services/firestore.methods.dart';
 import 'package:wesh/widgets/buildWidgets.dart';
 import '../models/reminder.dart';
 import '../utils/constants.dart';
-import '../utils/functions.dart';
 import 'button.dart';
 
 class ReminderView extends StatefulWidget {
