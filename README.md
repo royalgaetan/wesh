@@ -2,12 +2,13 @@
 ##
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Wesh-logo.png" height="100" />
 Créer.  Célébrer.  Partager.
-
-
-
-## 
-
 📢 Informez n'importe qui sur les évènements qui comptent pour vous tel que votre anniversaire, et bien plus encore 🎉🎁
+
+
+## Télécharger gratuitement
+
+Vous pouvez essayer Wesh gratuitement en cliquant sur ce lien :
+
 
 
 ## Fonctionnalités - v0.1
@@ -17,7 +18,7 @@ Créer.  Célébrer.  Partager.
 - 💬 Messages
 - ❤ Stories & Forevers
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Multiple-Screen-Wesh.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Multiple-Screen-Wesh.png" height="500" />
 
 ## FAQ
 
@@ -38,11 +39,11 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 
 ## Captures d'écran
 
-### Introduction
+### Introduction ✍️
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Introduction-Sc.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Introduction-Sc.png" height="500" />
 
-### Page d'accueil
+### Page d'accueil 🏡
 
 - Un seul endroit pour consulter tous les événements qui vous concernent
 - Tout savoir sur un événement
@@ -51,7 +52,7 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Homepage-Sc.png" height="600" />
 
 
-### Stories
+### Stories 🔥
 
 - Partagez les moments clés de vos événements via des stories
 - Voyez comment vos amis célèbrent leurs événements
@@ -60,7 +61,7 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Stories-Sc.png" height="600" />
 
 
-### Messagerie instantannée
+### Messagerie instantannée 🚀
 
 - Discutez avec vos amis en temps réel
 - Avec la possibilité de leur envoyer des photos, des vidéos, des cadeaux, ou même de l'argent
@@ -68,12 +69,12 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Inbox-Sc.png" height="600" />
 
 
-### Paramètres
+### Paramètres ⚙️
 
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Settings-Sc.png" height="600" />
 
 
-## Créateurs
+## Créateurs 👥
 
 - [@royalgaetan](https://github.com/royalgaetan)
 - [@Jodel M](https://www.facebook.com/MJ.Ernest4)
