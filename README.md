@@ -1,7 +1,8 @@
 
 ##
 <img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Wesh-logo.png" height="100" />
-Créer.  Célébrer.  Partager.
+Créer.  Célébrer.  Partager.<br />
+<br />
 📢 Informez n'importe qui sur les évènements qui comptent pour vous tel que votre anniversaire, et bien plus encore 🎉🎁
 
 
@@ -49,7 +50,7 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 - Tout savoir sur un événement
 - Rechercher un événement ou une personne
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Homepage-Sc.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Homepage-Sc.png" height="500" />
 
 
 ### Stories 🔥
@@ -58,7 +59,7 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 - Voyez comment vos amis célèbrent leurs événements
 - Avec possibilité de les conserver même après leur disparition au bout de 24 heures
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Stories-Sc.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Stories-Sc.png" height="500" />
 
 
 ### Messagerie instantannée 🚀
@@ -66,12 +67,12 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 - Discutez avec vos amis en temps réel
 - Avec la possibilité de leur envoyer des photos, des vidéos, des cadeaux, ou même de l'argent
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Inbox-Sc.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Inbox-Sc.png" height="500" />
 
 
 ### Paramètres ⚙️
 
-<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Settings-Sc.png" height="600" />
+<img src="http://bigagencytravel.com/wp-content/uploads/2024/05/Settings-Sc.png" height="500" />
 
 
 ## Créateurs 👥
