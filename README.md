@@ -1,5 +1,5 @@
 
-# ![Wesh](http://bigagencytravel.com/wp-content/uploads/2024/05/Wesh-logo.png)
+# ![Wesh](http://bigagencytravel.com/wp-content/uploads/2024/05/Wesh-logo.png =x100)
 
 Créer.  Célébrer.  Partager.
 
