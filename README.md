@@ -37,7 +37,7 @@ Wesh est actuellement disponible sur Android en Français
 R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invitant ou (2) en les recherchant directement dans l'application grace à l'outil "Recherche". En fonction de ce que vous partagez, d'autres personnes peuvent s'abonner également à vous pour ne rien manquer de vos futurs événements, ainsi que vos stories (idéal pour les business)
 
 
-## Capture d'écran
+## Captures d'écran : fonctionnalités
 
 ![App Screenshot](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
@@ -45,5 +45,5 @@ R: Vous pouvez facilement élargir votre nombre d'amis sur Wesh: (1) en les invi
 ## Créateurs
 
 - [@royalgaetan](https://github.com/royalgaetan)
-- [@Jodel M](https://www.facebook.com/mjdubuzz.lenfantzeutre)
+- [@Jodel M](https://www.facebook.com/MJ.Ernest4)
 
