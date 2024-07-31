@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "908401879284",
+    "project_id": "wesh-dev1",
+    "storage_bucket": "wesh-dev1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:908401879284:android:4a0b86946ffa5de54456a1",
+        "android_client_info": {
+          "package_name": "dev.wesh.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "908401879284-6s15lot6nb090h4dc4n7ra4qed836quf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTmPDLIzTiwjflBPiNjgXki_5sGosCkSY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "908401879284-6s15lot6nb090h4dc4n7ra4qed836quf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

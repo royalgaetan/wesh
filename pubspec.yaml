@@ -1,0 +1,179 @@
+name: wesh
+description: Share all your best events with your friends and followers.
+
+version: 0.1.0
+
+environment:
+  sdk: ">=2.17.6 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.1.1
+  firebase_auth: ^5.1.1
+  cloud_firestore: ^5.0.2
+  firebase_storage: ^12.1.0
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^6.0.4
+  firebase_dynamic_links: ^6.0.2
+  # firebase_app_check: ^0.0.7+1
+
+  #Provider, database
+  provider: ^6.0.3
+  shared_preferences: ^2.0.15
+
+  #Calendar Picker, Date formatter, Timezone
+  syncfusion_flutter_calendar: ^26.1.39
+  day_night_time_picker: ^1.1.2
+  intl: ^0.19.0
+  timeago: ^3.3.0
+  flutter_native_timezone: ^2.0.0
+  timezone: ^0.9.3
+  localization: ^2.1.0
+  country_picker: ^2.0.16
+
+  # Forms, Phone, Emails, Contacts
+  intl_phone_field: ^3.1.0
+  pin_code_fields: ^8.0.1
+  phone_number: ^2.1.0
+  validators: ^3.0.0
+  email_validator: ^3.0.0
+  ussd_advanced: ^1.0.0
+  telephony: ^0.2.0
+
+  # Icons, Svg, Badges, Useful Widgets
+  cupertino_icons: ^1.0.2
+  font_awesome_flutter: ^10.1.0
+  flutter_svg: ^2.0.9
+  lottie: ^3.0.0
+  shimmer: ^3.0.0
+  liquid_progress_indicator: ^0.4.0
+  auto_size_text_field: ^2.1.0
+
+  # Media Picker, Recorder
+  emoji_picker_flutter: ^2.2.0
+  microphone: ^0.1.0
+  image_picker: ^1.1.2
+  file_picker: ^8.0.5
+  video_thumbnail: ^0.5.2
+  just_audio: ^0.9.28
+  url_launcher: ^6.1.5
+  video_player: ^2.4.7
+  assets_audio_player: ^3.0.6
+  audioplayers: ^6.0.0
+  record_mp3: ^3.0.0
+  audio_session: ^0.1.19
+  audio_waveforms: ^1.0.5
+  cached_network_image: ^3.2.1
+  flutter_native_image: ^0.0.6
+  share_plus: ^9.0.0
+  receive_sharing_intent: ^1.4.5
+  screenshot: ^3.0.0
+  flutter_share_me: ^1.4.0
+  progressive_image: ^2.0.0
+  network_to_file_image: ^6.0.1
+  flutter_cache_manager: ^3.3.0
+
+  # Page, Scroll, ListView, Views, Story_view
+  photo_view: ^0.15.0
+  story_view: ^0.16.5
+  introduction_screen: ^3.0.2
+  swipeable_page_route: ^0.4.3
+  swipe_to: ^1.0.2
+  scrollable_positioned_list: ^0.3.5
+  dismissible_page: ^1.0.2
+  # swipedetector: ^1.2.0
+  visibility_detector: ^0.4.0+2
+  grouped_list: ^6.0.0
+
+  # Downloader, Networks, Notifications, Background Handler
+  http: ^0.13.5
+  internet_connection_checker: ^1.0.0+1
+  flutter_downloader: ^1.9.1
+  flutter_background: ^1.2.0
+  flutter_isolate: ^2.0.4
+  connectivity_plus: ^6.0.3
+  flutter_local_notifications: ^17.1.2
+
+  # utils
+  change_app_package_name: ^1.1.0
+  path: ^1.8.1
+  path_provider: ^2.0.11
+  xid: ^1.0.12
+  flutter_screenutil: ^5.6.0
+  confetti: ^0.7.0
+  widget_and_text_animator: ^1.0.9
+  flutter_native_splash: ^2.2.9
+  permission_handler: ^11.3.1
+  external_path: ^1.0.3
+  package_info_plus: ^8.0.0
+  device_information: ^0.0.4
+  rxdart: ^0.27.5
+  json_annotation: ^4.4.0
+  age_calculator: ^1.0.0
+  recase: ^4.1.0
+  widget_size: ^1.0.0
+  mime: ^1.0.2
+  vibration: ^1.7.6
+  expandable_page_view: ^1.0.17
+  sliding_up_panel: ^2.0.0+1
+  image: ^4.2.0
+  flutter_statusbarcolor_ns: ^0.5.0
+  flutter_dotenv: ^5.1.0
+  firebase_app_check: ^0.3.0+2
+  pull_to_refresh: ^2.0.0
+  auto_size_text: ^3.0.0
+  sprung: ^3.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+  build_runner: ^2.0.0
+  json_serializable: ^6.3.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env.dev
+    - .env.prod
+    - assets/audios/
+    - assets/
+    - assets/images/
+    - assets/animations/
+    - assets/images/core.assets/
+    - assets/images/emoji.reactions/
+    - assets/images/eventtype.icons/
+    - assets/images/months.calendarscreens/
+    - assets/images/useful.logos/
+
+  fonts:
+    - family: Calibri
+      fonts:
+        - asset: assets/fonts/calibri.ttf
+    - family: Comic Sans MS
+      fonts:
+        - asset: assets/fonts/comic sans ms.ttf
+    - family: Helvetica
+      fonts:
+        - asset: assets/fonts/helvetica.ttf
+    - family: Moderat
+      fonts:
+        - asset: assets/fonts/moderat.ttf
+    - family: Parnaso
+      fonts:
+        - asset: assets/fonts/parnaso.ttf
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+    - family: Simula
+      fonts:
+        - asset: assets/fonts/simula.ttf

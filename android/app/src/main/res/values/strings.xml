@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fb_login_protocol_scheme">fb1065914927446004</string>
+    <string name="facebook_client_token">d0423d28f1bf48044fca122d1f760099</string>
+
+    <!-- <string name="flutter_downloader_notification_started">Le téléchargement a commencé</string>
+    <string name="flutter_downloader_notification_in_progress">Téléchargement en cours</string>
+    <string name="flutter_downloader_notification_canceled">Téléchargement annulé</string>
+    <string name="flutter_downloader_notification_failed">Le téléchargement a échoué</string>
+    <string name="flutter_downloader_notification_complete">Téléchargement terminé</string>
+    <string name="flutter_downloader_notification_paused">Téléchargement en pause</string> -->
+
+    <string name="flutter_downloader_notification_started">Download started</string>
+    <string name="flutter_downloader_notification_in_progress">Download in progress</string>
+    <string name="flutter_downloader_notification_canceled">Download canceled</string>
+    <string name="flutter_downloader_notification_failed">Download failed</string>
+    <string name="flutter_downloader_notification_complete">Download complete</string>
+    <string name="flutter_downloader_notification_paused">Download paused</string>
+</resources>
