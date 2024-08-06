@@ -57,19 +57,46 @@ Make every occasion memorable and stay effortlessly connected with those who mat
   - **Support and Answers**: Get answers and support. The Help Center will assist you with any issues
   - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
-<br><br>
-
-
-# App Screenshots
-
-![App Screenshot](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
 <br>
 You can find a complete walkthrough here:<br>
 🔗 [Wesh.com](https://wesh.royalgaetan.com)
 
-
 <br><br>
+
+## Tech Stack & Behind the Scenes
+
+### 🛠️ How is Wesh Built?
+Wesh is crafted with a blend of cutting-edge technologies. For the mobile experience on both Android and iOS, we use **Flutter**, providing a smooth and responsive interface. 
+
+On the backend, we rely on **Firebase** to handle data storage, authentication, and real-time updates. 
+
+Developing the first version of Wesh took a dedicated three months of full-time effort, and we’re excited to continue evolving it!
+<br><br>
+
+### 🚀 What Problems Are We Solving?
+In today’s fast-paced world, it's easy to forget important moments or events that could make a big difference in our lives. 
+
+Wesh addresses this by keeping you connected with the events and people that matter most. 
+
+Our goal is to help you cherish those moments and stay engaged with your loved ones in a dynamic, social-like environment.
+<br><br>
+
+### 🔍 What Challenges Did We Face?
+Building a social media app from scratch is no small feat. We faced numerous challenges, including managing time and resources effectively, defining our target audience, and developing a cohesive app architecture. 
+
+Initially, we underestimated some features, which turned out to be more complex and time-consuming than anticipated. Despite these hurdles, the journey has been incredibly rewarding.
+<br><br>
+
+### 📚 What Did We Learn?
+The process of developing Wesh has taught us that **great things take time and dedication**. 
+
+We’ve gained valuable insights into design, user experience, project architecture, and clean coding practices. 
+
+Additionally, we’ve deepened our understanding of algorithms and the inner workings of both Android and iOS platforms. 
+
+Not to mention, we've learned how to effectively market and present our app to the world.
+<br><br><br>
 
 # Wesh v0.3 Roadmap 🚀
 
