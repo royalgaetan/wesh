@@ -31,7 +31,7 @@ class BackgroundTaskHandler {
       log('ListenServerChanges is listening...');
       listenToCreatedOrUpdatedEvents();
       listenToIncomingMessages();
-      listenToUnseenStories();
+      // listenToUnseenStories();
     } catch (e) {
       log('ListenServerChanges has error: $e !');
     }

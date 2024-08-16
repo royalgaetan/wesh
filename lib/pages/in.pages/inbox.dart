@@ -16,7 +16,6 @@ import 'package:rxdart/rxdart.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sprung/sprung.dart';
 import 'package:swipeable_page_route/swipeable_page_route.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:wesh/models/message.dart';
@@ -422,7 +421,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
   }
 
   startVoiceNoteRecording() async {
-    debugPrint('ZOZO: => Start Voicenote Recording');
+    debugPrint('=> Start Voicenote Recording');
 
     // VIBRATE
     triggerVibration();
@@ -482,7 +481,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
   }
 
   sendVoiceNoteMessage() async {
-    debugPrint('ZOZO: => Send Voicenote');
+    debugPrint('=> Send Voicenote');
 
     // Get last message : NB: last is 1st
     if (listMsg.isNotEmpty) {
@@ -552,7 +551,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
   }
 
   cancelVoiceNoteRecoding() {
-    debugPrint('ZOZO: => Cancel Voicenote');
+    debugPrint('=> Cancel Voicenote');
 
     // Delete recording and reset Recorder()
     recorderController.refresh();
@@ -964,7 +963,7 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
             )),
         body: Column(
           children: [
-            // Display all Messags
+            // Display all Messages
             Expanded(
               child: isLoading
                   ? Center(
@@ -1586,80 +1585,79 @@ class _InboxState extends State<InboxPage> with AutomaticKeepAliveClientMixin {
                 ),
 
                 // [ACTION BUTTONS] Send Message Button or Mic Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    AnimatedContainer(
-                      curve: Sprung.underDamped,
-                      duration: const Duration(milliseconds: 750),
-                      margin: const EdgeInsets.only(right: 5),
-                      child: AnimatedCrossFade(
-                        duration: const Duration(milliseconds: 100),
-                        crossFadeState: messageTextValue == '' ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-
-                        // MIC BUTTON: record a voicenote
-                        firstChild: GestureDetector(
-                          onLongPressDown: (_) {
-                            startVoiceNoteRecording();
-                          },
-                          onLongPressEnd: (_) {
-                            sendVoiceNoteMessage();
-                          },
-                          onVerticalDragUpdate: (details) {
-                            if (details.delta.dx > 10 || details.delta.dy > 10) {
-                              // On vertical drag: cancel recording
-                              cancelVoiceNoteRecoding();
-                            }
-                          },
-                          onHorizontalDragUpdate: (details) {
-                            // Update the position of the Record Button during the left drag only
-                            setState(() {
-                              voiceNoteRecordButtonLeftPosition += (details.delta.dx * 25) / 100;
-                            });
-                          },
-                          onHorizontalDragEnd: (details) {
-                            cancelVoiceNoteRecoding();
-                          },
-                          child: Tooltip(
-                            triggerMode: TooltipTriggerMode.tap,
-                            message: 'Hold to record, release to send',
-                            child: Transform.translate(
-                              offset: Offset(voiceNoteRecordButtonLeftPosition, 0),
-                              child: Transform.scale(
-                                scale: isRecordingVoiceNote ? 1.7 : 1,
-                                child: CircleAvatar(
-                                  backgroundColor: kSecondColor,
-                                  radius: 0.077.sw,
-                                  child: Icon(
-                                    Icons.mic,
-                                    size: 0.06.sw,
-                                    color: Colors.white,
+                Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (messageTextValue == '') {
+                            // MIC BUTTON: record a voicenote
+                            return GestureDetector(
+                              onLongPressDown: (_) {
+                                startVoiceNoteRecording();
+                              },
+                              onLongPressEnd: (_) {
+                                sendVoiceNoteMessage();
+                              },
+                              onVerticalDragUpdate: (details) {
+                                if (details.delta.dx > 10 || details.delta.dy > 10) {
+                                  // On vertical drag: cancel recording
+                                  cancelVoiceNoteRecoding();
+                                }
+                              },
+                              onHorizontalDragUpdate: (details) {
+                                // Update the position of the Record Button during the left drag only
+                                setState(() {
+                                  voiceNoteRecordButtonLeftPosition += (details.delta.dx * 25) / 100;
+                                });
+                              },
+                              onHorizontalDragEnd: (details) {
+                                cancelVoiceNoteRecoding();
+                              },
+                              child: Tooltip(
+                                triggerMode: TooltipTriggerMode.tap,
+                                message: 'Hold to record, release to send',
+                                child: Transform.translate(
+                                  offset: Offset(voiceNoteRecordButtonLeftPosition, 0),
+                                  child: Transform.scale(
+                                    scale: isRecordingVoiceNote ? 1.7 : 1,
+                                    child: CircleAvatar(
+                                      backgroundColor: kSecondColor,
+                                      radius: 0.077.sw,
+                                      child: Icon(
+                                        Icons.mic,
+                                        size: 0.06.sw,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-
-                        // SEND MESSAGE BUTTON
-                        secondChild: InkWell(
-                          borderRadius: BorderRadius.circular(50),
-                          onTap: () {
-                            sendNormalMessage();
-                          },
-                          child: CircleAvatar(
-                            backgroundColor: kSecondColor,
-                            radius: 0.077.sw,
-                            child: Icon(
-                              Icons.send_rounded,
-                              size: 0.06.sw,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                            );
+                          } else {
+                            // SEND MESSAGE BUTTON
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(50),
+                              onTap: () {
+                                sendNormalMessage();
+                              },
+                              child: CircleAvatar(
+                                backgroundColor: kSecondColor,
+                                radius: 0.077.sw,
+                                child: Icon(
+                                  Icons.send_rounded,
+                                  size: 0.06.sw,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

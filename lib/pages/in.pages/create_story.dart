@@ -840,7 +840,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                                               addImage(source: ImageSource.gallery);
                                             },
                                             child: const Text(
-                                              '+ Ajouter une image',
+                                              '+ Add an image',
                                               style: TextStyle(
                                                 color: Colors.white70,
                                               ),
@@ -914,7 +914,7 @@ class _CreateStoryState extends State<CreateStory> with SingleTickerProviderStat
                                           );
                                         },
                                         child: const Text(
-                                          '+ Ajouter une video',
+                                          '+ Add a video',
                                           style: TextStyle(
                                             color: Colors.white70,
                                           ),
