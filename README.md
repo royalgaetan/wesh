@@ -15,8 +15,8 @@ Experience a new way to celebrate and connect!
 
 # Features
 
-- **Onboarding**: 
-  - **Welcome Screen**: This is the first page you land on after you sign up
+- **Getting Started**: 
+  - **Welcome Screens**: Enjoy a smooth start with easy sign-up, a brief intro, and instant access to your homepage
   - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
 - **Events**:
@@ -37,6 +37,10 @@ Experience a new way to celebrate and connect!
 
 - **Profile**:
   - **Manage Your Data**: Control your events, reminders, followers, and personal data in one place
+  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
+
+- **Notifications**:
+  - **"Stay ahead**: Personalized updates keep you in the loop and ready for what’s next
   - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
 
 - **Search**:
