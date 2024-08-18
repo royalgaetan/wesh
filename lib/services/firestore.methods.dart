@@ -200,7 +200,7 @@ class FirestoreMethods {
       });
       return true;
     } catch (e) {
-      showSnackbar(context, 'An error occured! lors de la suppression de l\'évènement', null);
+      showSnackbar(context, 'An error occured while deleting the event!', null);
       return false;
     }
   }
@@ -308,7 +308,7 @@ class FirestoreMethods {
       return true;
     } catch (e) {
       if (context != null) {
-        showSnackbar(context, 'An error occured! lors de la suppression du rappel', null);
+        showSnackbar(context, 'An error occured while deleting the reminder!', null);
       }
 
       return false;
@@ -427,7 +427,7 @@ class FirestoreMethods {
 
       return true;
     } catch (e) {
-      showSnackbar(context, 'An error occured! lors de la suppression de la story', null);
+      showSnackbar(context, 'An error occured while deleting the story!', null);
       return false;
     }
   }
@@ -1073,7 +1073,7 @@ class FirestoreMethods {
 
       return;
     } catch (e) {
-      showSnackbar(context, 'An error occured! de la suppression', null);
+      showSnackbar(context, 'An error occured while deleting!', null);
       return;
     }
   }
