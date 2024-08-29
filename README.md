@@ -1,12 +1,9 @@
-# ![Wesh](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/e1dbc88f-6474-4403-b1b3-1f354b55a199.png)
-
+# <img src="https://www.royalgaetan.com/assets/wesh%20logo.png" width="100" alt="Wesh">
 Create. Celebrate. Share.
 <br><br>
 
 # About
-🔗 [Wesh.com](https://wesh.royalgaetan.com)
-
-Wesh transforms how you celebrate life's milestones 🎉. 
+[Wesh](https://royalgaetan.com/wesh) transforms how you celebrate life's milestones 🎉. 
 
 From intelligent reminders and instant messaging to captivating stories, Wesh keeps you in touch with what matters most 💌. 
 
@@ -15,53 +12,28 @@ Experience a new way to celebrate and connect!
 
 # Features
 
-- **Getting Started**: 
-  - **Welcome Screens**: Enjoy a smooth start with easy sign-up, a brief intro, and instant access to your homepage
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
+- **Getting Started**: Easy sign-up and instant homepage access 🚀
+- **Events**: Create, edit, view, and add events and reminders 📅
+- **Stories**: Share content that lasts 24 hours 📸
+- **Forevers**: Save stories permanently ⏳
+- **Chats**: Real-time messaging with various media 💬
+- **Profile**: Manage events, reminders, and data 🛠️
+- **Notifications**: Stay updated with personalized alerts 📲
+- **Search**: Find events and people with powerful filters 🔍
+- **Share & Forward**: Share and receive content easily 🔄
+- **Special Happy Birthday**: Receive special birthday wishes 🎉
+- **Help Center**: Get support and answers to issues 🆘
 
-- **Events**:
-  - **Manage Events**: Create, edit, view, and add reminders to events of all sorts
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Stories**:
-  - **Ephemeral Content**: Stories are content that stay on your profile for 24 hours. Share instant moments effortlessly
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Forevers**:
-  - **Permanent Stories**: Save your stories forever, even after their 24-hour expiration
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Chats**:
-  - **Real-Time Messaging**: Send real-time messages to your friends and followers, including videos, images, voice messages, money, gifts, etc.
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Profile**:
-  - **Manage Your Data**: Control your events, reminders, followers, and personal data in one place
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Notifications**:
-  - **"Stay ahead**: Personalized updates keep you in the loop and ready for what’s next
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Search**:
-  - **Find What’s Happening**: Search for events and people, applying powerful filters to find anything and anyone
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Share & Forward**:
-  - **Content Sharing**: Share interesting content from the internet with your followers. And vice-versa: share useful content with people outside of Wesh
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Special Happy Birthday**:
-  - **Birthday Wishes**: Wesh takes events seriously and ensures you receive a special wish on your day :)
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
-
-- **Help Center**:
-  - **Support and Answers**: Get answers and support. The Help Center will assist you with any issues
-  - ![Video Preview](https://us-ms.gr-cdn.com/getresponse-tubnk/photos/71ad93cc-8833-469b-b99c-374e87060417.png)
+<br><br>
+<div style="display: flex; justify-content: space-between;">
+  <img src="https://www.royalgaetan.com/assets/wesh%20previews/Story%20v0.2.png" width="150" />
+  <img src="https://www.royalgaetan.com/assets/wesh%20previews/Home%20Page%20v0.2.png" width="150" />
+  <img src="https://www.royalgaetan.com/assets/wesh%20previews/Special%20Happy%20Birthday%20v0.2.png" width="150" />
+</div>
 <br><br>
 
 You can find a complete walkthrough here:
-🔗 [Wesh.com](https://wesh.royalgaetan.com)
+🔗 [Wesh.com](https://royalgaetan.com/wesh)
 <br><br><br>
 
 # Wesh v0.3 Roadmap 🚀
